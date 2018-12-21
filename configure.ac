@@ -205,6 +205,21 @@ else
 fi
 AM_CONDITIONAL(HAVE_ALSA, test $choice = 1)
 
+dnl -- Do you want multithreading?
+AC_ARG_ENABLE(threads,AC_HELP_STRING([--enable-threads],[Enable multi-threaded code]),enable_threads=$enableval,enable_threads=yes)
+
+dnl -- Do you have pthreads? Do you want it?
+AC_CHECK_CXXFLAGS([ -pthread ],has_pthreads=yes,has_pthreads=no)
+AC_ARG_ENABLE(pthreads,AC_HELP_STRING([--enable-pthreads],[Enable pthread support]),enable_pthreads=$enableval,enable_pthreads=yes)
+if test x"$has_pthreads" == x"yes" -a x"$enable_pthreads" == x"yes" -a x"$enable_threads" == x"yes"; then
+    AC_DEFINE(HAVE_PTHREADS, 1, [Has pthreads library])
+    choice=1
+else
+    choice=0
+fi
+AM_CONDITIONAL(HAVE_PTHREADS, test $choice = 1)
+
+dnl --- done
 AC_CONFIG_FILES([ 
 Makefile
 ])

@@ -624,6 +624,8 @@ ac_subst_vars='am__EXEEXT_FALSE
 am__EXEEXT_TRUE
 LTLIBOBJS
 LIBOBJS
+HAVE_PTHREADS_FALSE
+HAVE_PTHREADS_TRUE
 HAVE_ALSA_FALSE
 HAVE_ALSA_TRUE
 ALSA_LIBS
@@ -744,6 +746,8 @@ enable_silent_rules
 enable_dependency_tracking
 enable_largefile
 enable_alsa
+enable_threads
+enable_pthreads
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1390,6 +1394,8 @@ Optional Features:
                           speeds up one-time build
   --disable-largefile     omit support for large files
   --enable-alsa           Enable ALSA support (yes by default)
+  --enable-threads        Enable multi-threaded code
+  --enable-pthreads       Enable pthread support
 
 Some influential environment variables:
   CC          C compiler command
@@ -7069,6 +7075,76 @@ else
 fi
 
 
+# Check whether --enable-threads was given.
+if test "${enable_threads+set}" = set; then :
+  enableval=$enable_threads; enable_threads=$enableval
+else
+  enable_threads=yes
+fi
+
+
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CXX accepts \" -pthread \"" >&5
+$as_echo_n "checking whether $CXX accepts \" -pthread \"... " >&6; }
+cat > conftest.c++ << EOF
+int main(){
+  return 0;
+}
+EOF
+if $CXX $CPPFLAGS $CXXFLAGS -o conftest.o conftest.c++  -pthread  > /dev/null 2>&1
+then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+  CXXFLAGS="${CXXFLAGS}  -pthread "
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CPP accepts \" -pthread \"" >&5
+$as_echo_n "checking whether $CPP accepts \" -pthread \"... " >&6; }
+  temp_check_cppflags="${CPPFLAGS}"
+  CPPFLAGS=" -pthread  ${CPPFLAGS}"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+int main(void){return 0;}
+_ACEOF
+if ac_fn_c_try_cpp "$LINENO"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }; CPPFLAGS="${temp_check_cppflags}"
+fi
+rm -f conftest.err conftest.i conftest.$ac_ext
+
+  has_pthreads=yes
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+  has_pthreads=no
+fi
+
+# Check whether --enable-pthreads was given.
+if test "${enable_pthreads+set}" = set; then :
+  enableval=$enable_pthreads; enable_pthreads=$enableval
+else
+  enable_pthreads=yes
+fi
+
+if test x"$has_pthreads" == x"yes" -a x"$enable_pthreads" == x"yes" -a x"$enable_threads" == x"yes"; then
+
+$as_echo "#define HAVE_PTHREADS 1" >>confdefs.h
+
+    choice=1
+else
+    choice=0
+fi
+ if test $choice = 1; then
+  HAVE_PTHREADS_TRUE=
+  HAVE_PTHREADS_FALSE='#'
+else
+  HAVE_PTHREADS_TRUE='#'
+  HAVE_PTHREADS_FALSE=
+fi
+
+
 ac_config_files="$ac_config_files Makefile"
 
 cat >confcache <<\_ACEOF
@@ -7215,6 +7291,10 @@ fi
 
 if test -z "${HAVE_ALSA_TRUE}" && test -z "${HAVE_ALSA_FALSE}"; then
   as_fn_error $? "conditional \"HAVE_ALSA\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${HAVE_PTHREADS_TRUE}" && test -z "${HAVE_PTHREADS_FALSE}"; then
+  as_fn_error $? "conditional \"HAVE_PTHREADS\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 
