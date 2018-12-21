@@ -194,10 +194,16 @@ AC_CHECK_CXXFLAGS([ -Wno-extended-offsetof ])
 
 dnl library support
 
-dnl --- Do you have ALSA?
-AC_DEFINE(HAVE_ALSA, 1, [Has ALSA library])
+dnl --- Do you have ALSA? Do you want it?
 PKG_CHECK_MODULES([ALSA],[alsa],[has_alsa=yes],[has_alsa=no])
-AM_CONDITIONAL(HAVE_ALSA, test x"$has_alsa" == x"yes")
+AC_ARG_ENABLE(alsa,AC_HELP_STRING([--enable-alsa],[Enable ALSA support (yes by default)]),enable_alsa=$enableval,enable_alsa=yes)
+if test x"$has_alsa" == x"yes" -a x"$enable_alsa" == x"yes"; then
+    AC_DEFINE(HAVE_ALSA, 1, [Has ALSA library])
+    choice=1
+else
+    choice=0
+fi
+AM_CONDITIONAL(HAVE_ALSA, test $choice = 1)
 
 AC_CONFIG_FILES([ 
 Makefile
