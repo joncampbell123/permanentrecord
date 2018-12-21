@@ -195,7 +195,9 @@ AC_CHECK_CXXFLAGS([ -Wno-extended-offsetof ])
 dnl library support
 
 dnl --- Do you have ALSA?
-PKG_CHECK_MODULES([ALSA],[alsa])
+AC_DEFINE(HAVE_ALSA, 1, [Has ALSA library])
+PKG_CHECK_MODULES([ALSA],[alsa],[has_alsa=yes],[has_alsa=no])
+AM_CONDITIONAL(HAVE_ALSA, test x"$has_alsa" == x"yes")
 
 AC_CONFIG_FILES([ 
 Makefile
