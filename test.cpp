@@ -6,7 +6,7 @@
 namespace PermanentRecord {
 
     enum IObjTypeId {
-        IOI_NONE = 0
+        IOI_IDontKnow = 0
     };
 
     typedef int IObjRefcountType;
@@ -24,7 +24,7 @@ namespace PermanentRecord {
             virtual bool                    QueryInterface(const enum IObjTypeId type_id,IDontKnow **ret);
             virtual void                    on_refcount_zero(void); // override if you want something other than "delete this"
         public:
-            IObjTypeId                      object_type_id = IOI_NONE;
+            IObjTypeId                      object_type_id = IOI_IDontKnow;
             IObjRefcountType                refcount = 0;
             bool                            delete_on_refcount_zero = false;
         public:
@@ -107,12 +107,12 @@ int main(int argc,char **argv) {
     PermanentRecord::LOG_MSG("Hello %u",123);
 
     {
-        PermanentRecord::IDontKnow val(PermanentRecord::IOI_NONE);
+        PermanentRecord::IDontKnow val(PermanentRecord::IOI_IDontKnow);
         val.AddRef();
 
         {
             PermanentRecord::IDontKnow *v = NULL;
-            if (val.QueryInterface(PermanentRecord::IOI_NONE,&v)) {
+            if (val.QueryInterface(PermanentRecord::IOI_IDontKnow,&v)) {
                 fprintf(stderr,"Yay\n");
                 v->Release();
             }
