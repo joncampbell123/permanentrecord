@@ -122,6 +122,21 @@ int main(int argc,char **argv) {
         val.Release();
     }
 
+    {
+        PermanentRecord::IDontKnow *val = new PermanentRecord::IDontKnow(PermanentRecord::IOI_IDontKnow);
+        val->AddRef();
+
+        {
+            PermanentRecord::IDontKnow *v = NULL;
+            if (val->QueryInterface(PermanentRecord::IOI_IDontKnow,&v)) {
+                fprintf(stderr,"Yay\n");
+                v->Release();
+            }
+        }
+
+        val->Release();
+    }
+
     return 0;
 }
 
