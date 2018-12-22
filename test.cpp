@@ -26,7 +26,7 @@ namespace PermanentRecord {
         public:
             IObjTypeId                      object_type_id = IOI_IDontKnow;
             IObjRefcountType                refcount = 0;
-            bool                            delete_on_refcount_zero = false;
+            bool                            delete_on_refcount_zero = true;
         public:
             inline void                     DeleteOnRefcountZero(const bool en = true) {
                 delete_on_refcount_zero = en;
@@ -108,6 +108,7 @@ int main(int argc,char **argv) {
 
     {
         PermanentRecord::IDontKnow val(PermanentRecord::IOI_IDontKnow);
+        val.DeleteOnRefcountZero(false);
         val.AddRef();
 
         {
