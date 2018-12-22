@@ -21,9 +21,15 @@ namespace PermanentRecord {
         public:
             virtual IObjRefcountType        AddRef(void);
             virtual IObjRefcountType        Release(void);
+            virtual void                    on_refcount_zero(void); // override if you want something other than "delete this"
         public:
             IObjTypeId                      object_type_id = IOI_NONE;
-            IObjRefcountType                refcount = 1;
+            IObjRefcountType                refcount = 0;
+            bool                            delete_on_refcount_zero = false;
+        public:
+            inline void                     DeleteOnRefcountZero(const bool en = true) {
+                delete_on_refcount_zero = en;
+            }
     };
 
 }
@@ -50,6 +56,36 @@ namespace PermanentRecord {
             LOG_MSG_callback(LOG_TMP);
     }
 
+    /* Base class */
+    IDontKnow::IDontKnow(const IObjTypeId _type_id) : object_type_id(_type_id) {
+    }
+
+    IDontKnow::~IDontKnow() {
+        if (refcount != 0) LOG_MSG("WARNING: Object %p deleted with refcount %d",(void*)this,refcount);
+    }
+
+    IObjRefcountType IDontKnow::AddRef(void) {
+        return ++refcount;
+    }
+
+    IObjRefcountType IDontKnow::Release(void) {
+        // NTS: Decrement, store to stack storage.
+        //      If this function deletes *this on refcount == 0 we'll
+        //      still have a valid value to return.
+        const IObjRefcountType ret = --refcount;
+
+        if (ret < 0) LOG_MSG("WARNING: Object %p refcount negative (%d)",(void*)this,refcount);
+        if (ret == 0) on_refcount_zero();
+
+        return ret;
+    }
+
+    void IDontKnow::on_refcount_zero(void) {
+        // Default on refcount == 0
+        if (delete_on_refcount_zero)
+            delete this;
+    }
+
 }
 
 int main(int argc,char **argv) {
@@ -58,6 +94,12 @@ int main(int argc,char **argv) {
 
     PermanentRecord::LOG_MSG("Hello");
     PermanentRecord::LOG_MSG("Hello %u",123);
+
+    {
+        PermanentRecord::IDontKnow val(PermanentRecord::IOI_NONE);
+        val.AddRef();
+        val.Release();
+    }
 
     return 0;
 }
