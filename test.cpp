@@ -99,21 +99,23 @@ namespace PermanentRecord {
 
 }
 
+using namespace PermanentRecord;
+
 int main(int argc,char **argv) {
     (void)argc;
     (void)argv;
 
-    PermanentRecord::LOG_MSG("Hello");
-    PermanentRecord::LOG_MSG("Hello %u",123);
+    LOG_MSG("Hello");
+    LOG_MSG("Hello %u",123);
 
     {
-        PermanentRecord::IDontKnow val(PermanentRecord::IOI_IDontKnow);
+        IDontKnow val(IOI_IDontKnow);
         val.DeleteOnRefcountZero(false);
         val.AddRef();
 
         {
-            PermanentRecord::IDontKnow *v = NULL;
-            if (val.QueryInterface(PermanentRecord::IOI_IDontKnow,&v)) {
+            IDontKnow *v = NULL;
+            if (val.QueryInterface(IOI_IDontKnow,&v)) {
                 fprintf(stderr,"Yay\n");
                 v->Release();
             }
@@ -123,12 +125,12 @@ int main(int argc,char **argv) {
     }
 
     {
-        PermanentRecord::IDontKnow *val = new PermanentRecord::IDontKnow(PermanentRecord::IOI_IDontKnow);
+        IDontKnow *val = new IDontKnow(IOI_IDontKnow);
         val->AddRef();
 
         {
-            PermanentRecord::IDontKnow *v = NULL;
-            if (val->QueryInterface(PermanentRecord::IOI_IDontKnow,&v)) {
+            IDontKnow *v = NULL;
+            if (val->QueryInterface(IOI_IDontKnow,&v)) {
                 fprintf(stderr,"Yay\n");
                 v->Release();
             }
