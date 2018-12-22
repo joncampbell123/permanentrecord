@@ -21,6 +21,7 @@ namespace PermanentRecord {
         public:
             virtual IObjRefcountType        AddRef(void);
             virtual IObjRefcountType        Release(void);
+            virtual bool                    QueryInterface(const enum IObjTypeId type_id,IDontKnow **ret);
             virtual void                    on_refcount_zero(void); // override if you want something other than "delete this"
         public:
             IObjTypeId                      object_type_id = IOI_NONE;
@@ -80,6 +81,16 @@ namespace PermanentRecord {
         return ret;
     }
 
+    bool IDontKnow::QueryInterface(const enum IObjTypeId type_id,IDontKnow **ret) {
+        if (type_id == object_type_id) {
+            AddRef();
+            *ret = static_cast<IDontKnow*>(this);
+            return true;
+        }
+
+        return false;
+    }
+
     void IDontKnow::on_refcount_zero(void) {
         // Default on refcount == 0
         if (delete_on_refcount_zero)
@@ -98,6 +109,15 @@ int main(int argc,char **argv) {
     {
         PermanentRecord::IDontKnow val(PermanentRecord::IOI_NONE);
         val.AddRef();
+
+        {
+            PermanentRecord::IDontKnow *v = NULL;
+            if (val.QueryInterface(PermanentRecord::IOI_NONE,&v)) {
+                fprintf(stderr,"Yay\n");
+                v->Release();
+            }
+        }
+
         val.Release();
     }
 
