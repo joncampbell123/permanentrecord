@@ -30,25 +30,25 @@ namespace PermanentRecord {
 
 namespace PermanentRecord {
 
-static char LOG_TMP[1024];
+    static char LOG_TMP[1024];
 
-void LOG_MSG_callback_stderr(const char * const str) {
-    fprintf(stderr,"PR::LOG_MSG: %s\n",str);
-}
+    void LOG_MSG_callback_stderr(const char * const str) {
+        fprintf(stderr,"PR::LOG_MSG: %s\n",str);
+    }
 
-void (*LOG_MSG_callback)(const char * const str) = LOG_MSG_callback_stderr;
+    void (*LOG_MSG_callback)(const char * const str) = LOG_MSG_callback_stderr;
 
-void LOG_MSG(const char * const fmt,...) {
-    va_list va;
+    void LOG_MSG(const char * const fmt,...) {
+        va_list va;
 
-    va_start(va,fmt);
-    LOG_TMP[sizeof(LOG_TMP)-1] = 0;
-    vsnprintf(LOG_TMP,sizeof(LOG_TMP)-1,fmt,va);
-    va_end(va);
+        va_start(va,fmt);
+        LOG_TMP[sizeof(LOG_TMP)-1] = 0;
+        vsnprintf(LOG_TMP,sizeof(LOG_TMP)-1,fmt,va);
+        va_end(va);
 
-    if (LOG_MSG_callback != NULL)
-        LOG_MSG_callback(LOG_TMP);
-}
+        if (LOG_MSG_callback != NULL)
+            LOG_MSG_callback(LOG_TMP);
+    }
 
 }
 
