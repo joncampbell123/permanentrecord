@@ -111,6 +111,7 @@ public:
     virtual int Open(void) { return -ENOSPC; }
     virtual int Close(void) { return -ENOSPC; }
     virtual bool IsOpen(void) { return false; }
+    virtual int GetAvailable(void) { return -ENOSPC; }
     virtual int Read(void *buffer,unsigned int bytes) { (void)buffer; (void)bytes; return -ENOSPC; }
     virtual const char *GetSourceName(void) { return "baseclass"; }
     virtual const char *GetDeviceName(void) { return ""; }
@@ -282,6 +283,20 @@ public:
 
         fmt.updateFrameInfo();
         alsa_close();
+        return 0;
+    }
+    virtual int GetAvailable(void) {
+        if (IsOpen()) {
+            snd_pcm_sframes_t avail=0,delay=0;
+
+            (void)avail;
+            (void)delay;
+
+            snd_pcm_avail_delay(alsa_pcm,&avail,&delay);
+
+            return (int)(avail * chosen_format.bytes_per_frame);
+        }
+
         return 0;
     }
 private:
