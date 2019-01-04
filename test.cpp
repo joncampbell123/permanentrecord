@@ -382,7 +382,8 @@ private:
                 snd_pcm_hw_params_set_channels(alsa_pcm,alsa_pcm_hw_params,alsa_channels);
             }
 
-            /* apply */
+            /* apply. NOTE: This puts alsa_pcm into PREPARED state which prevents further changes.
+             *              Using this code to test formats requires calling alsa_close() afterward. */
 	        snd_pcm_hw_params(alsa_pcm,alsa_pcm_hw_params);
             snd_pcm_hw_params_current(alsa_pcm,alsa_pcm_hw_params);
 	
@@ -533,6 +534,8 @@ int main(int argc,char **argv) {
             fprintf(stderr,"Cannot set format\n");
         if (alsa.Open() < 0)
             fprintf(stderr,"Cannot open\n");
+        if (!alsa.IsOpen())
+            fprintf(stderr,"Not open\n");
 
         fprintf(stderr,"Format: type=%u rate=%lu channels=%u bitspersample=%u\n",
                 fmt.format_tag,
