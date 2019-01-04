@@ -623,7 +623,7 @@ int main(int argc,char **argv) {
 
             tmp[sizeof(tmp)-1] = 'x';
             while ((r=alsa.Read(tmp,(unsigned int)sizeof(tmp)-1u)) >= 0) {
-                write(1,tmp,r);
+                write(1,tmp,(size_t)r);
                 assert(tmp[sizeof(tmp)-1] == 'x');
             }
         }
