@@ -8,7 +8,8 @@
 namespace PermanentRecord {
 
     enum IObjTypeId {
-        IOI_IDontKnow = 0
+        IOI_IDontKnow = 0,
+        IOI_IClockSource = 1
     };
 
     typedef int IObjRefcountType;
@@ -112,7 +113,7 @@ namespace PermanentRecord {
     }
 
     bool IDontKnow::QueryInterface(const enum IObjTypeId type_id,IDontKnow **ret) {
-        if (type_id == object_type_id) {
+        if (type_id == object_type_id || type_id == IOI_IDontKnow) {
             AddRef();
             *ret = static_cast<IDontKnow*>(this);
             return true;
@@ -125,6 +126,37 @@ namespace PermanentRecord {
         // Default on refcount == 0
         if (delete_on_refcount_zero)
             delete this;
+    }
+
+}
+
+///////////////////////////////////////////////////////
+
+namespace PermanentRecord {
+
+    /* Base class */
+    class IClockSource : public IDontKnow {
+        public:
+                                            IClockSource(const IObjTypeId _type_id=IOI_IClockSource);
+            virtual                         ~IClockSource();
+        public:
+            static IClockSource *Create(void) {
+                return stock_create_and_addref<IClockSource>();
+            }
+    };
+
+}
+
+///////////////////////////////////////////////////////
+
+namespace PermanentRecord {
+
+    /* Base class */
+    IClockSource::IClockSource(const IObjTypeId _type_id) : IDontKnow(_type_id) {
+    }
+
+    IClockSource::~IClockSource() {
+        if (refcount != 0) LOG_MSG("WARNING: Object %p deleted with refcount %d",(void*)this,refcount);
     }
 
 }
@@ -147,6 +179,24 @@ int main(int argc,char **argv) {
             IDontKnow *v = NULL;
             if (val->QueryInterface(IOI_IDontKnow,&v)) {
                 fprintf(stderr,"Yay\n");
+                v->Release();
+            }
+        }
+
+        val->Release();
+    }
+
+    {
+        IClockSource *val = IClockSource::Create();
+
+        {
+            IDontKnow *v = NULL;
+            if (val->QueryInterface(IOI_IDontKnow,&v)) {
+                fprintf(stderr,"Yay2\n");
+                v->Release();
+            }
+            if (val->QueryInterface(IOI_IClockSource,&v)) {
+                fprintf(stderr,"Yay2\n");
                 v->Release();
             }
         }
