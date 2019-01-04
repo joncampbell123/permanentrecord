@@ -523,6 +523,7 @@ private:
 
         if (alsa_pcm == NULL) {
             assert(alsa_pcm_hw_params == NULL);
+            /* NTS: Prefer format conversion, or else on my laptop all audio will be 32-bit/sample recordings! */
             if ((err=snd_pcm_open(&alsa_pcm,alsa_device_string.c_str(),SND_PCM_STREAM_CAPTURE,SND_PCM_NONBLOCK | SND_PCM_NO_AUTO_CHANNELS | SND_PCM_NO_AUTO_RESAMPLE/* | SND_PCM_NO_AUTO_FORMAT*/ | SND_PCM_NO_SOFTVOL)) < 0) {
                 alsa_close();
                 return -1;
