@@ -212,17 +212,23 @@ public:
             return -ENODEV;
 
         AudioFormat tmp = fmt;
-        if (!alsa_apply_format(/*&*/tmp))
+        if (!alsa_apply_format(/*&*/tmp)) {
+            alsa_close();
             return -EINVAL;
+        }
 
         chosen_format = tmp;
+        alsa_close();
         return 0;
     }
     virtual int init_format(void) {
         if (!alsa_open())
             return -ENODEV;
-        if (!alsa_apply_format(/*&*/chosen_format))
+        if (!alsa_apply_format(/*&*/chosen_format)) {
+            alsa_close();
             return -EINVAL;
+        }
+        alsa_close();
         return 0;
     }
     virtual int GetFormat(struct AudioFormat &fmt) {
@@ -239,14 +245,17 @@ public:
             return -EBUSY;
 
         if (!format_is_valid(fmt))
-            return false;
+            return -EINVAL;
 
         if (!alsa_open())
             return -ENODEV;
 
-        if (!alsa_apply_format(/*&*/fmt))
+        if (!alsa_apply_format(/*&*/fmt)) {
+            alsa_close();
             return -EINVAL;
+        }
 
+        alsa_close();
         return 0;
     }
 private:
@@ -266,6 +275,8 @@ private:
                 return false;
             if (fmt.bits_per_sample == 0)
                 return false;
+
+            return true;
         }
 
         return false;
@@ -439,7 +450,7 @@ private:
 
         if (alsa_pcm == NULL) {
             assert(alsa_pcm_hw_params == NULL);
-            if ((err=snd_pcm_open(&alsa_pcm,alsa_device_string.c_str(),SND_PCM_STREAM_CAPTURE,SND_PCM_NONBLOCK | SND_PCM_NO_AUTO_CHANNELS | SND_PCM_NO_AUTO_RESAMPLE | SND_PCM_NO_AUTO_FORMAT | SND_PCM_NO_SOFTVOL)) < 0) {
+            if ((err=snd_pcm_open(&alsa_pcm,alsa_device_string.c_str(),SND_PCM_STREAM_CAPTURE,SND_PCM_NONBLOCK | SND_PCM_NO_AUTO_CHANNELS | SND_PCM_NO_AUTO_RESAMPLE/* | SND_PCM_NO_AUTO_FORMAT*/ | SND_PCM_NO_SOFTVOL)) < 0) {
                 alsa_close();
                 return -1;
             }
@@ -515,7 +526,7 @@ int main(int argc,char **argv) {
             fprintf(stderr,"Failed to get format\n");
             return 1;
         }
-        fmt.bits_per_sample = 32;
+        fmt.bits_per_sample = 16;
         if (alsa.QueryFormat(fmt) < 0)
             fprintf(stderr,"Cannot query format\n");
         if (alsa.SetFormat(fmt) < 0)
