@@ -147,6 +147,17 @@ namespace PermanentRecord {
         public:
             virtual int                     UpdateClockValue(void) {
                 return -ENOSYS;
+///////////////////////////////////////////////////////
+
+namespace PermanentRecord {
+
+    /* return wall clock time */
+    timestamp_t getWallClockTime(void) {
+        return 0;
+    }
+
+}
+
             }
         public:
             std::string                     clock_name;
