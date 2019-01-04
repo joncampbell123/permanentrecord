@@ -11,12 +11,18 @@ namespace PermanentRecord {
 
     typedef int IObjRefcountType;
 
+    template <class T> T* stock_create_and_addref(void) {
+        T* ret = new T();
+        if (ret != NULL) ret->AddRef();
+        return ret;
+    }
+
     void LOG_MSG(const char *fmt,...);
 
     /* Base class */
     class IDontKnow {
         public:
-                                            IDontKnow(const IObjTypeId _type_id);
+                                            IDontKnow(const IObjTypeId _type_id=IOI_IDontKnow);
             virtual                         ~IDontKnow();
         public:
             virtual IObjRefcountType        AddRef(void);
@@ -30,6 +36,10 @@ namespace PermanentRecord {
         public:
             inline void                     DeleteOnRefcountZero(const bool en = true) {
                 delete_on_refcount_zero = en;
+            }
+        public:
+            static IDontKnow *Create(void) {
+                return stock_create_and_addref<IDontKnow>();
             }
     };
 
@@ -109,24 +119,7 @@ int main(int argc,char **argv) {
     LOG_MSG("Hello %u",123);
 
     {
-        IDontKnow val(IOI_IDontKnow);
-        val.DeleteOnRefcountZero(false);
-        val.AddRef();
-
-        {
-            IDontKnow *v = NULL;
-            if (val.QueryInterface(IOI_IDontKnow,&v)) {
-                fprintf(stderr,"Yay\n");
-                v->Release();
-            }
-        }
-
-        val.Release();
-    }
-
-    {
-        IDontKnow *val = new IDontKnow(IOI_IDontKnow);
-        val->AddRef();
+        IDontKnow *val = IDontKnow::Create();
 
         {
             IDontKnow *v = NULL;
