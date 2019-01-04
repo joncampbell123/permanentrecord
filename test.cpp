@@ -173,7 +173,7 @@ private:
     std::string                 alsa_device_string;
 private:
     void alsa_force_close(void) {
-        /* TODO */
+        while (IsOpen()) Close();
     }
 };
 #endif
