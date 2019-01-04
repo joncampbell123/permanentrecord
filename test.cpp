@@ -91,9 +91,6 @@ public:
     virtual int Read(void *buffer,unsigned int bytes) { (void)buffer; (void)bytes; return -ENOSPC; }
     virtual const char *GetSourceName(void) { return "baseclass"; }
     virtual const char *GetDeviceName(void) { return ""; }
-public:
-    virtual unsigned int GetBytesPerFrame(void) { return 0; }
-    virtual unsigned int GetSamplesPerFrame(void) { return 0; }
 };
 
 #if defined(HAVE_ALSA)
@@ -252,9 +249,6 @@ public:
 
         return 0;
     }
-public:
-    virtual unsigned int GetBytesPerFrame(void) { return bytes_per_frame; }
-    virtual unsigned int GetSamplesPerFrame(void) { return samples_per_frame; }
 private:
     snd_pcm_t*			        alsa_pcm;
     snd_pcm_hw_params_t*		alsa_pcm_hw_params;
