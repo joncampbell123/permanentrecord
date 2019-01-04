@@ -3,6 +3,8 @@
 #include <string.h>
 #include <stdarg.h>
 
+///////////////////////////////////////////////////////
+
 namespace PermanentRecord {
 
     enum IObjTypeId {
@@ -11,13 +13,49 @@ namespace PermanentRecord {
 
     typedef int IObjRefcountType;
 
+}
+
+///////////////////////////////////////////////////////
+
+namespace PermanentRecord {
+
     template <class T> static inline T* stock_create_and_addref(void) {
         T* ret = new T();
         if (ret != NULL) ret->AddRef();
         return ret;
     }
 
-    void LOG_MSG(const char *fmt,...);
+}
+
+///////////////////////////////////////////////////////
+
+namespace PermanentRecord {
+
+    static char LOG_TMP[1024];
+
+    void LOG_MSG_callback_stderr(const char * const str) {
+        fprintf(stderr,"PR::LOG_MSG: %s\n",str);
+    }
+
+    void (*LOG_MSG_callback)(const char * const str) = LOG_MSG_callback_stderr;
+
+    void LOG_MSG(const char * const fmt,...) {
+        va_list va;
+
+        va_start(va,fmt);
+        LOG_TMP[sizeof(LOG_TMP)-1] = 0;
+        vsnprintf(LOG_TMP,sizeof(LOG_TMP)-1,fmt,va);
+        va_end(va);
+
+        if (LOG_MSG_callback != NULL)
+            LOG_MSG_callback(LOG_TMP);
+    }
+
+}
+
+///////////////////////////////////////////////////////
+
+namespace PermanentRecord {
 
     /* Base class */
     class IDontKnow {
@@ -45,27 +83,9 @@ namespace PermanentRecord {
 
 }
 
+///////////////////////////////////////////////////////
+
 namespace PermanentRecord {
-
-    static char LOG_TMP[1024];
-
-    void LOG_MSG_callback_stderr(const char * const str) {
-        fprintf(stderr,"PR::LOG_MSG: %s\n",str);
-    }
-
-    void (*LOG_MSG_callback)(const char * const str) = LOG_MSG_callback_stderr;
-
-    void LOG_MSG(const char * const fmt,...) {
-        va_list va;
-
-        va_start(va,fmt);
-        LOG_TMP[sizeof(LOG_TMP)-1] = 0;
-        vsnprintf(LOG_TMP,sizeof(LOG_TMP)-1,fmt,va);
-        va_end(va);
-
-        if (LOG_MSG_callback != NULL)
-            LOG_MSG_callback(LOG_TMP);
-    }
 
     /* Base class */
     IDontKnow::IDontKnow(const IObjTypeId _type_id) : object_type_id(_type_id) {
