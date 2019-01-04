@@ -299,6 +299,37 @@ public:
 
         return 0;
     }
+    virtual int Read(void *buffer,unsigned int bytes) {
+        if (IsOpen()) {
+            unsigned int samples = bytes / chosen_format.bytes_per_frame;
+            snd_pcm_sframes_t r = 0;
+            int err;
+
+            if (samples > 0) {
+                r = snd_pcm_readi(alsa_pcm,buffer,samples);
+                if (r >= 0) {
+                    return (int)((unsigned int)r * chosen_format.bytes_per_frame);
+                }
+                else if (r < 0) {
+                    if (r == -EPIPE) {
+                        fprintf(stderr,"ALSA warning: PCM underrun\n");
+                        if ((err=snd_pcm_prepare(alsa_pcm)) < 0)
+                            fprintf(stderr,"ALSA warning: Failure to re-prepare the device after underrun, %s\n",snd_strerror(err));
+                    }
+                    else if (r == -EAGAIN) {
+                        return 0;
+                    }
+                    else {
+                        return (int)r;
+                    }
+                }
+            }
+
+            return 0;
+        }
+
+        return -EINVAL;
+    }
 private:
     snd_pcm_t*			        alsa_pcm;
     snd_pcm_hw_params_t*		alsa_pcm_hw_params;
@@ -585,6 +616,17 @@ int main(int argc,char **argv) {
                 fmt.bits_per_sample,
                 fmt.bytes_per_frame,
                 fmt.samples_per_frame);
+
+        {
+            unsigned char tmp[4096+1];
+            int r;
+
+            tmp[sizeof(tmp)-1] = 'x';
+            while ((r=alsa.Read(tmp,(unsigned int)sizeof(tmp)-1u)) >= 0) {
+                write(1,tmp,r);
+                assert(tmp[sizeof(tmp)-1] == 'x');
+            }
+        }
     }
 
 #if defined(HAVE_ALSA)
