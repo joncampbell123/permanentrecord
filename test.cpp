@@ -432,7 +432,8 @@ private:
         return false;
     }
     void alsa_force_close(void) {
-        while (IsOpen()) Close();
+        Close();
+        alsa_close();
     }
     bool alsa_open(void) { // does NOT start capture
         int err;
@@ -460,15 +461,13 @@ private:
         return true;
     }
     void alsa_close(void) {
+        if (alsa_pcm_hw_params != NULL) {
+            snd_pcm_hw_params_free(alsa_pcm_hw_params);
+            alsa_pcm_hw_params = NULL;
+        }
         if (alsa_pcm != NULL) {
-            if (alsa_pcm_hw_params != NULL) {
-                snd_pcm_hw_params_free(alsa_pcm_hw_params);
-                alsa_pcm_hw_params = NULL;
-            }
-            if (alsa_pcm != NULL) {
-                snd_pcm_close(alsa_pcm);
-                alsa_pcm = NULL;
-            }
+            snd_pcm_close(alsa_pcm);
+            alsa_pcm = NULL;
         }
     }
     bool alsa_try_params(void) {
@@ -519,23 +518,20 @@ int main(int argc,char **argv) {
     if (parse_argv(argc,argv))
         return 1;
 
-    AudioSourceALSA alsa;
-    AudioFormat fmt;
+    {
+        AudioSourceALSA alsa;
+        AudioFormat fmt;
 
-    if (alsa.Open() < 0) {
-        fprintf(stderr,"Failed to open\n");
-        return 1;
+        if (alsa.GetFormat(fmt) < 0) {
+            fprintf(stderr,"Failed to get format\n");
+            return 1;
+        }
+        fprintf(stderr,"Format: type=%u rate=%lu channels=%u bitspersample=%u\n",
+                fmt.format_tag,
+                (unsigned long)fmt.sample_rate,
+                fmt.channels,
+                fmt.bits_per_sample);
     }
-    if (alsa.GetFormat(fmt) < 0) {
-        fprintf(stderr,"Failed to get format\n");
-        return 1;
-    }
-    fprintf(stderr,"Format: type=%u rate=%lu channels=%u bitspersample=%u\n",
-        fmt.format_tag,
-        (unsigned long)fmt.sample_rate,
-        fmt.channels,
-        fmt.bits_per_sample);
-    alsa.Close();
 
 #if defined(HAVE_ALSA)
     snd_config_update_free_global();
