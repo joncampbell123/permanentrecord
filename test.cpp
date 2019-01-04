@@ -11,7 +11,7 @@ namespace PermanentRecord {
 
     typedef int IObjRefcountType;
 
-    template <class T> T* stock_create_and_addref(void) {
+    template <class T> static inline T* stock_create_and_addref(void) {
         T* ret = new T();
         if (ret != NULL) ret->AddRef();
         return ret;
