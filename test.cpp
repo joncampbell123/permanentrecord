@@ -2,8 +2,41 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <time.h>
+
+#include "config.h"
+
+typedef uint64_t monotonic_clock_t;
+
+/* clock source pick */
+#if defined(C_CLOCK_GETTIME)
+static inline monotonic_clock_t monotonic_clock_rate(void) {
+    return 1000ul;
+}
+
+monotonic_clock_t monotonic_clock_gettime() {
+    struct timespec t;
+
+    if (clock_gettime(CLOCK_MONOTONIC,&t) >= 0) {
+        return
+            ((monotonic_clock_t)t.tv_sec  * (monotonic_clock_t)1000ul) +        /* seconds to milliseconds */
+            ((monotonic_clock_t)t.tv_nsec / (monotonic_clock_t)1000000ul);      /* nanoseconds to millseconds */
+    }
+
+    return 0;
+}
+#endif
+
+monotonic_clock_t monotonic_clock() {
+#if defined(C_CLOCK_GETTIME)
+    return monotonic_clock_gettime();
+#else
+    return 0;
+#endif
+}
 
 static void help(void) {
     fprintf(stderr,"-h --help      Help text\n");
