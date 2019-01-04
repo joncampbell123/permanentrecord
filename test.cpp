@@ -188,6 +188,11 @@ public:
             if (!alsa_apply_format(chosen_format))
                 return false;
 
+            if (snd_pcm_prepare(alsa_pcm) < 0)
+                return false;
+            if (snd_pcm_start(alsa_pcm) < 0)
+                return false;
+
             isUserOpen = true;
         }
 
@@ -440,7 +445,7 @@ private:
 
         if (alsa_pcm == NULL) {
             assert(alsa_pcm_hw_params == NULL);
-            if ((err=snd_pcm_open(&alsa_pcm,alsa_device_string.c_str(),SND_PCM_STREAM_CAPTURE,SND_PCM_NONBLOCK | SND_PCM_NO_AUTO_CHANNELS | SND_PCM_NO_AUTO_RESAMPLE)) < 0) {
+            if ((err=snd_pcm_open(&alsa_pcm,alsa_device_string.c_str(),SND_PCM_STREAM_CAPTURE,SND_PCM_NONBLOCK | SND_PCM_NO_AUTO_CHANNELS | SND_PCM_NO_AUTO_RESAMPLE | SND_PCM_NO_AUTO_FORMAT | SND_PCM_NO_SOFTVOL)) < 0) {
                 alsa_close();
                 return -1;
             }
@@ -469,16 +474,6 @@ private:
             snd_pcm_close(alsa_pcm);
             alsa_pcm = NULL;
         }
-    }
-    bool alsa_try_params(void) {
-        int err;
-
-        if (alsa_pcm != NULL && alsa_pcm_hw_params != NULL) {
-            if ((err=snd_pcm_hw_params(alsa_pcm,alsa_pcm_hw_params)) < 0)
-                return false;
-        }
-
-        return false;
     }
 };
 #endif
@@ -526,6 +521,14 @@ int main(int argc,char **argv) {
             fprintf(stderr,"Failed to get format\n");
             return 1;
         }
+        fmt.bits_per_sample = 32;
+        if (alsa.QueryFormat(fmt) < 0)
+            fprintf(stderr,"Cannot query format\n");
+        if (alsa.SetFormat(fmt) < 0)
+            fprintf(stderr,"Cannot set format\n");
+        if (alsa.Open() < 0)
+            fprintf(stderr,"Cannot open\n");
+
         fprintf(stderr,"Format: type=%u rate=%lu channels=%u bitspersample=%u\n",
                 fmt.format_tag,
                 (unsigned long)fmt.sample_rate,
