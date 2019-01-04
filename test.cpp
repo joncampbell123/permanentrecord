@@ -227,6 +227,10 @@ int main(int argc,char **argv) {
         }
     }
 
+#if defined(HAVE_ALSA)
+    snd_config_update_free_global();
+#endif
+
     return 0;
 }
 
