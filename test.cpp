@@ -5,7 +5,12 @@
 #include <stdint.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <errno.h>
 #include <time.h>
+
+#include <string>
+#include <vector>
+#include <list>
 
 #include "config.h"
 
@@ -41,6 +46,40 @@ monotonic_clock_t monotonic_clock() {
     return 0;
 #endif
 }
+
+enum {
+    AFMT_PCMU=1,
+    AFMT_PCMS=2
+};
+
+struct AudioFormat {
+    uint16_t            format_tag;
+    uint32_t            sample_rate;
+    uint8_t             channels;
+    uint8_t             bits_per_sample;
+};
+
+class AudioSource {
+public:
+    AudioSource() { };
+    virtual ~AudioSource() { }
+public:
+    virtual int EnumOptions(std::vector<std::string> &names) { (void)names; return -ENOSPC; }
+    virtual int SetOption(const char *name,const char *value) { (void)name; (void)value; return -ENOSPC; }
+    virtual int SelectDevice(const char *str) { (void)str; return -ENOSPC; }
+    virtual int EnumDevices(std::vector<std::string> &names) { (void)names; return -ENOSPC; }
+    virtual int SetFormat(const struct AudioFormat &fmt) { (void)fmt; return -ENOSPC; }
+    virtual int GetFormat(struct AudioFormat &fmt) { (void)fmt; return -ENOSPC; }
+    virtual int QueryFormat(struct AudioFormat &fmt) { (void)fmt; return -ENOSPC; }
+    virtual int Open(void) { return -ENOSPC; }
+    virtual int Close(void) { return -ENOSPC; }
+    virtual int Read(void *buffer,unsigned int bytes) { (void)buffer; (void)bytes; return -ENOSPC; }
+    virtual const char *GetSourceName(void) { return "baseclass"; }
+    virtual const char *GetDeviceName(void) { return ""; }
+public:
+    virtual unsigned int GetBytesPerFrame(void) { return 0; }
+    virtual unsigned int GetSamplesPerFrame(void) { return 0; }
+};
 
 static void help(void) {
     fprintf(stderr,"-h --help      Help text\n");
