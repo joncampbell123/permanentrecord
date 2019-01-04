@@ -2,6 +2,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
+#include <stdint.h>
+
+#include <string>
 
 ///////////////////////////////////////////////////////
 
@@ -13,6 +16,8 @@ namespace PermanentRecord {
     };
 
     typedef int IObjRefcountType;
+
+    typedef double timestamp_t;
 
 }
 
@@ -139,6 +144,13 @@ namespace PermanentRecord {
         public:
                                             IClockSource(const IObjTypeId _type_id=IOI_IClockSource);
             virtual                         ~IClockSource();
+        public:
+            virtual int                     UpdateClockValue(void) {
+                return -ENOSYS;
+            }
+        public:
+            std::string                     clock_name;
+            timestamp_t                     clock_value = 0; /* in seconds */
         public:
             static IClockSource *Create(void) {
                 return stock_create_and_addref<IClockSource>();
