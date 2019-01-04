@@ -63,6 +63,29 @@ struct AudioFormat {
     uint32_t            sample_rate;
     uint8_t             channels;
     uint8_t             bits_per_sample;
+
+    uint32_t            bytes_per_frame;
+    uint32_t            samples_per_frame;
+
+    void updateFrameInfo_PCM(void) {
+        bytes_per_frame = ((bits_per_sample + 7u) / 8u) * channels;
+        samples_per_frame = 1;
+    }
+    void updateFrameInfo_NONE(void) {
+        bytes_per_frame = 0;
+        samples_per_frame = 0;
+    }
+    void updateFrameInfo(void) {
+        switch (format_tag) {
+            case AFMT_PCMU:
+            case AFMT_PCMS:
+                updateFrameInfo_PCM();
+                break;
+            default:
+                updateFrameInfo_NONE();
+                break;
+        }
+    }
 };
 
 struct AudioOptionPair {
@@ -218,6 +241,7 @@ public:
         }
 
         chosen_format = tmp;
+        chosen_format.updateFrameInfo();
         alsa_close();
         return 0;
     }
@@ -228,6 +252,7 @@ public:
             alsa_close();
             return -EINVAL;
         }
+        chosen_format.updateFrameInfo();
         alsa_close();
         return 0;
     }
@@ -255,6 +280,7 @@ public:
             return -EINVAL;
         }
 
+        fmt.updateFrameInfo();
         alsa_close();
         return 0;
     }
@@ -537,11 +563,13 @@ int main(int argc,char **argv) {
         if (!alsa.IsOpen())
             fprintf(stderr,"Not open\n");
 
-        fprintf(stderr,"Format: type=%u rate=%lu channels=%u bitspersample=%u\n",
+        fprintf(stderr,"Format: type=%u rate=%lu channels=%u bits/sample=%u bytes/frame=%u samples/frame=%u\n",
                 fmt.format_tag,
                 (unsigned long)fmt.sample_rate,
                 fmt.channels,
-                fmt.bits_per_sample);
+                fmt.bits_per_sample,
+                fmt.bytes_per_frame,
+                fmt.samples_per_frame);
     }
 
 #if defined(HAVE_ALSA)
