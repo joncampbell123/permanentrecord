@@ -17,6 +17,10 @@ static inline monotonic_clock_t monotonic_clock_rate(void) {
     return 1000ul;
 }
 
+monotonic_clock_t monotonic_clock_gettime();
+#endif
+
+#if defined(C_CLOCK_GETTIME)
 monotonic_clock_t monotonic_clock_gettime() {
     struct timespec t;
 
