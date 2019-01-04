@@ -64,15 +64,23 @@ struct AudioFormat {
     uint8_t             bits_per_sample;
 };
 
+struct AudioOptionPair {
+    std::string         name,value;
+};
+
+struct AudioDevicePair {
+    std::string         name,desc;
+};
+
 class AudioSource {
 public:
     AudioSource() { };
     virtual ~AudioSource() { }
 public:
-    virtual int EnumOptions(std::vector< std::pair<std::string,std::string> > &names) { (void)names; return -ENOSPC; }
+    virtual int EnumOptions(std::vector<AudioOptionPair> &names) { (void)names; return -ENOSPC; }
     virtual int SetOption(const char *name,const char *value) { (void)name; (void)value; return -ENOSPC; }
     virtual int SelectDevice(const char *str) { (void)str; return -ENOSPC; }
-    virtual int EnumDevices(std::vector< std::pair<std::string,std::string> > &names) { (void)names; return -ENOSPC; }
+    virtual int EnumDevices(std::vector<AudioDevicePair> &names) { (void)names; return -ENOSPC; }
     virtual int SetFormat(const struct AudioFormat &fmt) { (void)fmt; return -ENOSPC; }
     virtual int GetFormat(struct AudioFormat &fmt) { (void)fmt; return -ENOSPC; }
     virtual int QueryFormat(struct AudioFormat &fmt) { (void)fmt; return -ENOSPC; }
@@ -101,7 +109,7 @@ public:
 
         return -EBUSY;
     }
-    virtual int EnumDevices(std::vector< std::pair<std::string,std::string> > &names) {
+    virtual int EnumDevices(std::vector<AudioDevicePair> &names) {
         void **hints,**n;
 
         names.clear();
@@ -134,7 +142,11 @@ public:
                             }
                         }
 
-                        names.push_back(std::pair<std::string,std::string>(name,desc!=NULL?desc:""));
+                        AudioDevicePair p;
+                        p.name = name;
+                        p.desc = desc!=NULL?desc:"";
+
+                        names.push_back(p);
                     }
                 }
 
@@ -204,14 +216,14 @@ int main(int argc,char **argv) {
     AudioSourceALSA alsa;
 
     {
-        std::vector<std::pair<std::string,std::string> > l;
+        std::vector<AudioDevicePair> l;
         alsa.EnumDevices(l);
 
         printf("Devices:\n");
         for (auto i=l.begin();i!=l.end();i++) {
             printf(" \"%s\"   %s\n",
-                (*i).first.c_str(),
-                (*i).second.c_str());
+                (*i).name.c_str(),
+                (*i).desc.c_str());
         }
     }
 
