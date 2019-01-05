@@ -1200,7 +1200,7 @@ public:
                 /* WAV only supports 8-bit unsigned or 16/24/32-bit signed PCM */
                 if (fmt.bits_per_sample == 8 && fmt.format_tag == AFMT_PCMS)
                     flip_sign = true;
-                else if (fmt.format_tag == AFMT_PCMU)
+                else if (fmt.bits_per_sample != 8 && fmt.format_tag == AFMT_PCMU)
                     flip_sign = true;
                 else
                     flip_sign = false;
@@ -1233,6 +1233,7 @@ public:
                     w->nChannels = htole16(fmt.channels);
                     w->nSamplesPerSec = htole32(fmt.sample_rate);
 
+                    bytes_per_sample = (fmt.bits_per_sample + 7u) / 8u;
                     w->nBlockAlign = (uint16_t)(((fmt.bits_per_sample + 7u) / 8u) * fmt.channels);
                     w->nAvgBytesPerSec = ((uint32_t)w->nBlockAlign * (uint32_t)fmt.sample_rate);
                     block_align = w->nBlockAlign;
@@ -1252,12 +1253,79 @@ public:
         return (fd >= 0);
     }
     int Write(const void *buffer,unsigned int len) {
-        if (IsOpen())
-            return _write_raw(buffer,len);
+        if (IsOpen()) {
+            if (flip_sign)
+                return _write_xlat(buffer,len);
+            else
+                return _write_raw(buffer,len);
+        }
 
         return -EINVAL;
     }
 private:
+    void _xlat(unsigned char *d,const unsigned char *s,unsigned int len) {
+        if (bytes_per_sample == 1) {
+            unsigned char x = flip_sign ? 0x80u : 0x00u;
+            while (len >= bytes_per_sample) {
+                *d++ = (*s++ ^ x);
+                len -= bytes_per_sample;
+            }
+        }
+        else if (bytes_per_sample == 2) {
+            uint16_t x = flip_sign ? 0x8000u : 0x0000u;
+            const uint16_t *s16 = (const uint16_t*)s;
+            uint16_t *d16 = (uint16_t*)d;
+
+            while (len >= bytes_per_sample) {
+                *d16++ = htole16(*s16++ ^ x);
+                len -= bytes_per_sample;
+            }
+        }
+        else if (bytes_per_sample == 4) {
+            uint32_t x = flip_sign ? 0x80000000ul : 0x00000000ul;
+            const uint32_t *s32 = (const uint32_t*)s;
+            uint32_t *d32 = (uint32_t*)d;
+
+            while (len >= bytes_per_sample) {
+                *d32++ = htole16(*s32++ ^ x);
+                len -= bytes_per_sample;
+            }
+        }
+        else {
+            abort();
+        }
+    }
+    int _write_xlat(const void *buffer,unsigned int len) {
+        int wd = 0,swd;
+
+        unsigned int tmpsz = 4096;
+        tmpsz -= tmpsz % block_align;
+        const unsigned char *s = (const unsigned char*)buffer;
+        unsigned char *tmp = new(std::nothrow) unsigned char [tmpsz];
+        if (tmp == NULL) return -ENOMEM;
+
+        while (len >= tmpsz) {
+            _xlat(tmp,s,tmpsz);
+            swd = _write_raw(tmp,tmpsz);
+            if (swd < 0) return swd;
+            wd += swd;
+            if ((unsigned int)swd != tmpsz) break;
+            len -= tmpsz;
+            s += tmpsz;
+        }
+
+        if (len > 0) {
+            _xlat(tmp,s,len);
+            swd = _write_raw(tmp,len);
+            if (swd < 0) return swd;
+            wd += swd;
+            len -= len;
+            s += len;
+        }
+
+        delete[] tmp;
+        return wd;
+    }
     int _write_raw(const void *buffer,unsigned int len) {
         int wd = 0;
 
@@ -1296,6 +1364,7 @@ private:
     uint32_t        wav_data_start;
     uint32_t        wav_data_limit;
     uint32_t        wav_write_pos;
+    unsigned int    bytes_per_sample;
     unsigned int    block_align;
 };
 
