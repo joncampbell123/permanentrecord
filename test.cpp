@@ -1000,7 +1000,7 @@ std::string make_recording_path_now(void) {
     char tmp[128];
 
     rec = "PERMREC";
-    if (mkdir(rec.c_str(),0644) < 0) {
+    if (mkdir(rec.c_str(),0755) < 0) {
         if (errno != EEXIST)
             return std::string();
     }
@@ -1010,7 +1010,7 @@ std::string make_recording_path_now(void) {
      * tm->tm_mday        = current day of the month */
     sprintf(tmp,"/%04u%02u%02u",tm->tm_year + 1900,tm->tm_mon + 1,tm->tm_mday);
     rec += tmp;
-    if (mkdir(rec.c_str(),0644) < 0) {
+    if (mkdir(rec.c_str(),0755) < 0) {
         if (errno != EEXIST)
             return std::string();
     }
