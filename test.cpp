@@ -1102,7 +1102,7 @@ const windows_GUID windows_KSDATAFORMAT_SUBTYPE_PCM = /* 00000001-0000-0010-8000
 
 class WAVWriter {
 public:
-    WAVWriter() : fd(-1), fmt_size(0) {
+    WAVWriter() : fd(-1), fmt_size(0), wav_data_limit((uint32_t)0x7F000000ul) {
     }
     ~WAVWriter() {
         Close();
@@ -1151,6 +1151,7 @@ public:
             return false;
         }
 
+        wav_data_start = (uint32_t)lseek(fd,0,SEEK_CUR);
         return true;
     }
     void Close(void) {
@@ -1238,6 +1239,8 @@ private:
     unsigned char   fmt[64];
     size_t          fmt_size;
     bool            flip_sign;
+    uint32_t        wav_data_start;
+    uint32_t        wav_data_limit;
 };
 
 std::string rec_path_wav;
