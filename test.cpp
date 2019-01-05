@@ -330,6 +330,10 @@ public:
 
         return -EINVAL;
     }
+public:
+    static AudioSource* AllocNew(void) {
+        return new AudioSourceALSA();
+    }
 private:
     snd_pcm_t*			        alsa_pcm;
     snd_pcm_hw_params_t*		alsa_pcm_hw_params;
@@ -560,16 +564,26 @@ private:
 struct AudioSourceListEntry {
     const char*             name;
     const char*             desc;
+    AudioSource*            (*alloc)(void);
 };
 
 const AudioSourceListEntry audio_source_list[] = {
-    {"ALSA",        "Linux Advanced Linux Sound Architecture" },
-    {NULL,          NULL}
+    {"ALSA",
+     "Linux Advanced Linux Sound Architecture",
+     &AudioSourceALSA::AllocNew},
+
+    {NULL,
+     NULL,
+     NULL}
 };
 
 AudioSource* GetAudioSource(const char *src) {
-    if (!strcasecmp(src,"ALSA"))
-        return new AudioSourceALSA;
+    size_t i=0;
+
+    for (i=0;audio_source_list[i].name != NULL;i++) {
+        if (!strcasecmp(src,audio_source_list[i].name))
+            return audio_source_list[i].alloc();
+    }
 
     return NULL;
 }
