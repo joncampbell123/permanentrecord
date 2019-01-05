@@ -5,6 +5,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <unistd.h>
+#include <signal.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <time.h>
@@ -14,6 +15,12 @@
 #include <list>
 
 #include "config.h"
+
+volatile int signal_to_die = 0;
+
+void sigma(int c) {
+    signal_to_die++;
+}
 
 #if defined(HAVE_ALSA)
 # define ALSA_PCM_NEW_HW_PARAMS_API
@@ -636,6 +643,7 @@ static void help(void) {
     fprintf(stderr," -d <device>\n");
     fprintf(stderr," -s <source>\n");
     fprintf(stderr," -c <command>\n");
+    fprintf(stderr,"    rec          Record\n");
     fprintf(stderr,"    test         Test format\n");
     fprintf(stderr,"    listsrc      List audio sources\n");
     fprintf(stderr,"    listdev      List audio devices\n");
@@ -791,9 +799,26 @@ bool ui_apply_options(AudioSource* alsa,AudioFormat &fmt) {
     return true;
 }
 
+static unsigned char audio_tmp[4096];
+
+bool record_main(AudioSource* alsa,AudioFormat &fmt) {
+    int rd;
+
+    while (1) {
+        if (signal_to_die) break;
+        usleep(10000);
+    }
+
+    return true;
+}
+
 int main(int argc,char **argv) {
     if (parse_argv(argc,argv))
         return 1;
+
+    signal(SIGINT,sigma);
+    signal(SIGQUIT,sigma);
+    signal(SIGTERM,sigma);
 
     if (ui_command == "test") {
         AudioSource* alsa = GetAudioSource(ui_source.c_str());
@@ -805,6 +830,23 @@ int main(int argc,char **argv) {
         }
 
         ui_apply_options(alsa,fmt);
+
+        alsa->Close();
+        delete alsa;
+    }
+    else if (ui_command == "rec") {
+        AudioSource* alsa = GetAudioSource(ui_source.c_str());
+        AudioFormat fmt;
+
+        if (alsa == NULL) {
+            fprintf(stderr,"No such audio source '%s'\n",ui_source.c_str());
+            return 1;
+        }
+
+        if (ui_apply_options(alsa,fmt)) {
+            if (!record_main(alsa,fmt))
+                fprintf(stderr,"Recording loop failed\n");
+        }
 
         alsa->Close();
         delete alsa;
