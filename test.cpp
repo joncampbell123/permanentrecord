@@ -364,88 +364,86 @@ private:
             unsigned int alsa_rate = 0;
             int	alsa_rate_dir = 0;
 
-            if (fmt.format_tag != 0) {
-                if (fmt.format_tag == AFMT_PCMU) {
-                    if (fmt.bits_per_sample == 8)
-                        alsafmt = SND_PCM_FORMAT_U8;
-                    else if (fmt.bits_per_sample == 16)
-                        alsafmt = SND_PCM_FORMAT_U16;
-                    else if (fmt.bits_per_sample == 24)
-                        alsafmt = SND_PCM_FORMAT_U24;
-                    else if (fmt.bits_per_sample == 32)
-                        alsafmt = SND_PCM_FORMAT_U32;
-                    else
-                        alsafmt = SND_PCM_FORMAT_U16;
-                }
-                else if (fmt.format_tag == AFMT_PCMS) {
-                    if (fmt.bits_per_sample == 8)
-                        alsafmt = SND_PCM_FORMAT_S8;
-                    else if (fmt.bits_per_sample == 16)
-                        alsafmt = SND_PCM_FORMAT_S16;
-                    else if (fmt.bits_per_sample == 24)
-                        alsafmt = SND_PCM_FORMAT_S24;
-                    else if (fmt.bits_per_sample == 32)
-                        alsafmt = SND_PCM_FORMAT_S32;
-                    else
-                        alsafmt = SND_PCM_FORMAT_S16;
-                }
-                else {
+            if (fmt.format_tag == AFMT_PCMU) {
+                if (fmt.bits_per_sample == 8)
+                    alsafmt = SND_PCM_FORMAT_U8;
+                else if (fmt.bits_per_sample == 16)
+                    alsafmt = SND_PCM_FORMAT_U16;
+                else if (fmt.bits_per_sample == 24)
+                    alsafmt = SND_PCM_FORMAT_U24;
+                else if (fmt.bits_per_sample == 32)
+                    alsafmt = SND_PCM_FORMAT_U32;
+                else
+                    alsafmt = SND_PCM_FORMAT_U16;
+            }
+            else if (fmt.format_tag == AFMT_PCMS) {
+                if (fmt.bits_per_sample == 8)
+                    alsafmt = SND_PCM_FORMAT_S8;
+                else if (fmt.bits_per_sample == 16)
                     alsafmt = SND_PCM_FORMAT_S16;
-                }
+                else if (fmt.bits_per_sample == 24)
+                    alsafmt = SND_PCM_FORMAT_S24;
+                else if (fmt.bits_per_sample == 32)
+                    alsafmt = SND_PCM_FORMAT_S32;
+                else
+                    alsafmt = SND_PCM_FORMAT_S16;
+            }
+            else {
+                alsafmt = SND_PCM_FORMAT_S16;
+            }
+
+            if (snd_pcm_hw_params_test_format(alsa_pcm,alsa_pcm_hw_params,alsafmt) < 0) {
+                switch (alsafmt) {
+                    case SND_PCM_FORMAT_U8:
+                        alsafmt = SND_PCM_FORMAT_S8;
+                        break;
+                    case SND_PCM_FORMAT_U16:
+                        alsafmt = SND_PCM_FORMAT_S16;
+                        break;
+                    case SND_PCM_FORMAT_U24:
+                        alsafmt = SND_PCM_FORMAT_S24;
+                        break;
+                    case SND_PCM_FORMAT_U32:
+                        alsafmt = SND_PCM_FORMAT_S32;
+                        break;
+                    default:
+                        break;
+                };
 
                 if (snd_pcm_hw_params_test_format(alsa_pcm,alsa_pcm_hw_params,alsafmt) < 0) {
                     switch (alsafmt) {
-                        case SND_PCM_FORMAT_U8:
-                            alsafmt = SND_PCM_FORMAT_S8;
-                            break;
-                        case SND_PCM_FORMAT_U16:
+                        case SND_PCM_FORMAT_S8:
                             alsafmt = SND_PCM_FORMAT_S16;
                             break;
+                        case SND_PCM_FORMAT_S16:
+                            alsafmt = SND_PCM_FORMAT_S8;
+                            break;
+                        case SND_PCM_FORMAT_S24:
+                            alsafmt = SND_PCM_FORMAT_S16;
+                            break;
+                        case SND_PCM_FORMAT_S32:
+                            alsafmt = SND_PCM_FORMAT_S16;
+                            break;
+                        case SND_PCM_FORMAT_U8:
+                            alsafmt = SND_PCM_FORMAT_U16;
+                            break;
+                        case SND_PCM_FORMAT_U16:
+                            alsafmt = SND_PCM_FORMAT_U8;
+                            break;
                         case SND_PCM_FORMAT_U24:
-                            alsafmt = SND_PCM_FORMAT_S24;
+                            alsafmt = SND_PCM_FORMAT_U16;
                             break;
                         case SND_PCM_FORMAT_U32:
-                            alsafmt = SND_PCM_FORMAT_S32;
+                            alsafmt = SND_PCM_FORMAT_U16;
                             break;
                         default:
                             break;
                     };
-
-                    if (snd_pcm_hw_params_test_format(alsa_pcm,alsa_pcm_hw_params,alsafmt) < 0) {
-                        switch (alsafmt) {
-                            case SND_PCM_FORMAT_S8:
-                                alsafmt = SND_PCM_FORMAT_S16;
-                                break;
-                            case SND_PCM_FORMAT_S16:
-                                alsafmt = SND_PCM_FORMAT_S8;
-                                break;
-                            case SND_PCM_FORMAT_S24:
-                                alsafmt = SND_PCM_FORMAT_S16;
-                                break;
-                            case SND_PCM_FORMAT_S32:
-                                alsafmt = SND_PCM_FORMAT_S16;
-                                break;
-                            case SND_PCM_FORMAT_U8:
-                                alsafmt = SND_PCM_FORMAT_U16;
-                                break;
-                            case SND_PCM_FORMAT_U16:
-                                alsafmt = SND_PCM_FORMAT_U8;
-                                break;
-                            case SND_PCM_FORMAT_U24:
-                                alsafmt = SND_PCM_FORMAT_U16;
-                                break;
-                            case SND_PCM_FORMAT_U32:
-                                alsafmt = SND_PCM_FORMAT_U16;
-                                break;
-                            default:
-                                break;
-                        };
-                    }
                 }
-
-                /* set params */
-                snd_pcm_hw_params_set_format(alsa_pcm,alsa_pcm_hw_params,alsafmt);
             }
+
+            /* set params */
+            snd_pcm_hw_params_set_format(alsa_pcm,alsa_pcm_hw_params,alsafmt);
 
             if (fmt.sample_rate != 0) {
                 alsa_rate_dir = 0;
