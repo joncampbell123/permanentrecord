@@ -1406,6 +1406,8 @@ void close_recording(void) {
     }
 }
 
+std::string ui_print_format(AudioFormat &fmt);
+
 bool open_recording(void) {
     if (wav_out != NULL || wav_info != NULL)
         return true;
@@ -1454,6 +1456,8 @@ bool open_recording(void) {
                     tm->tm_hour,
                     tm->tm_min,
                     tm->tm_sec);
+            fprintf(wav_info,"Recording format is: %s\n",
+                    ui_print_format(rec_fmt).c_str());
         }
     }
 
