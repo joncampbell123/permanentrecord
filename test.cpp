@@ -622,9 +622,19 @@ AudioSource* PickDefaultAudioSource(void) {
 static std::string          ui_command;
 static std::string          ui_source;
 static std::string          ui_device;
+static int                  ui_want_fmt = 0;
+static long                 ui_want_rate = 0;
+static int                  ui_want_channels = 0;
+static int                  ui_want_bits = 0;
 
 static void help(void) {
     fprintf(stderr," -h --help      Help text\n");
+    fprintf(stderr," -ch <channels>\n");
+    fprintf(stderr," -sr <sample rate>\n");
+    fprintf(stderr," -bs <bits/sample>\n");
+    fprintf(stderr," -fmt <format>\n");
+    fprintf(stderr,"    pcmu    unsigned PCM\n");
+    fprintf(stderr,"    pcms    signed PCM\n");
     fprintf(stderr," -d <device>\n");
     fprintf(stderr," -s <source>\n");
     fprintf(stderr," -c <command>\n");
@@ -644,6 +654,35 @@ static int parse_argv(int argc,char **argv) {
             if (!strcmp(a,"h") || !strcmp(a,"help")) {
                 help();
                 return 1;
+            }
+            else if (!strcmp(a,"fmt")) {
+                a = argv[i++];
+                if (a == NULL) return 1;
+
+                if (!strcmp(a,"pcmu"))
+                    ui_want_fmt = AFMT_PCMU;
+                else if (!strcmp(a,"pcms"))
+                    ui_want_fmt = AFMT_PCMS;
+                else
+                    return 1;
+            }
+            else if (!strcmp(a,"bs")) {
+                a = argv[i++];
+                if (a == NULL) return 1;
+                ui_want_bits = atoi(a);
+                if (ui_want_bits < 1 || ui_want_bits > 255) return 1;
+            }
+            else if (!strcmp(a,"ch")) {
+                a = argv[i++];
+                if (a == NULL) return 1;
+                ui_want_channels = atoi(a);
+                if (ui_want_channels < 1 || ui_want_channels > 255) return 1;
+            }
+            else if (!strcmp(a,"sr")) {
+                a = argv[i++];
+                if (a == NULL) return 1;
+                ui_want_rate = strtol(a,NULL,0);
+                if (ui_want_rate < 1l || ui_want_rate > 1000000l) return 1;
             }
             else if (!strcmp(a,"c")) {
                 a = argv[i++];
