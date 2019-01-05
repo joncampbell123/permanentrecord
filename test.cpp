@@ -771,6 +771,9 @@ int main(int argc,char **argv) {
             return 1;
         }
 
+        if (alsa->SelectDevice(ui_device.c_str()) < 0)
+            fprintf(stderr,"WARNING: Unable to set device\n");
+
         if (alsa->GetFormat(fmt) < 0)
             fprintf(stderr,"WARNING: Unable to get format\n");
 
