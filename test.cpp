@@ -1,4 +1,6 @@
 
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <stdio.h>
 #include <endian.h>
 #include <assert.h>
@@ -985,7 +987,33 @@ void VU_advance(const void *audio_tmp,unsigned int rd) {
     }
 }
 
+std::string make_recording_path_now(void) {
+    time_t now = time(NULL);
+    struct tm *tm = localtime(&now);
+    if (tm == NULL) return std::string();
+
+    std::string rec;
+    char tmp[128];
+
+    rec = "PERMREC";
+    if (mkdir(rec.c_str(),0644) < 0) return std::string();
+
+    /* tm->tm_year + 1900 = current year
+     * tm->tm_mon + 1     = current month (1=January)
+     * tm->tm_mday        = current day of the month */
+    sprintf(tmp,"/%04u%02u%02u",tm->tm_year + 1900,tm->tm_mon + 1,tm->tm_mday);
+    rec += tmp;
+    if (mkdir(rec.c_str(),0644) < 0) return std::string();
+
+    /* caller must add file extension needed */
+    sprintf(tmp,"/TM%02u%02u%02u",tm->tm_hour,tm->tm_min,tm->tm_sec);
+    rec += tmp;
+
+    return rec;
+}
+
 bool record_main(AudioSource* alsa,AudioFormat &fmt) {
+    std::string rec_path;
     int rd,i;
 
     for (i=0;i < 8;i++) {
@@ -994,6 +1022,10 @@ bool record_main(AudioSource* alsa,AudioFormat &fmt) {
     }
     framecount = 0;
     rec_fmt = fmt;
+
+    rec_path = make_recording_path_now();
+    if (rec_path.empty()) return false;
+    printf("Recording to: %s\n",rec_path.c_str());
 
     while (1) {
         if (signal_to_die) break;
