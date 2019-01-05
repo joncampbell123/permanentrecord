@@ -1102,7 +1102,7 @@ const windows_GUID windows_KSDATAFORMAT_SUBTYPE_PCM = /* 00000001-0000-0010-8000
 
 class WAVWriter {
 public:
-    WAVWriter() : fd(-1), fmt_size(0), wav_data_limit((uint32_t)0x7F000000ul) {
+    WAVWriter() : fd(-1), fmt_size(0), wav_data_start(0), wav_data_limit((uint32_t)0x7F000000ul) {
     }
     ~WAVWriter() {
         Close();
@@ -1156,9 +1156,32 @@ public:
     }
     void Close(void) {
         if (fd >= 0) {
+            if (wav_data_start != 0) {
+                uint32_t length = (uint32_t)lseek(fd,0,SEEK_END);
+                uint32_t v;
+
+                if (length < wav_data_start)
+                    length = wav_data_start;
+
+                /* finalize the WAV file by updating chunk lengths */
+
+                /* RIFF:WAVE length */
+                v = length - 8;
+                v = htole32(v);
+                lseek(fd,4,SEEK_SET); // length field of RIFF:WAVE
+                write(fd,&v,4);
+
+                /* data length */
+                v = length - wav_data_start;
+                v = htole32(v);
+                lseek(fd,(off_t)(wav_data_start - 4ul),SEEK_SET); // length field of 'data'
+                write(fd,&v,4);
+            }
+
             close(fd);
             fd = -1;
         }
+        wav_data_start = 0;
     }
     bool SetFormat(const AudioFormat &fmt) {
         if (IsOpen()) return false;
