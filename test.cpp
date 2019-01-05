@@ -558,10 +558,13 @@ private:
 #endif
 
 static std::string          ui_command;
+static std::string          ui_source;
 
 static void help(void) {
     fprintf(stderr," -h --help      Help text\n");
+    fprintf(stderr," -s <source>\n");
     fprintf(stderr," -c <command>\n");
+    fprintf(stderr,"    listsrc      List audio sources\n");
     fprintf(stderr,"    listdev      List audio devices\n");
 }
 
@@ -582,6 +585,11 @@ static int parse_argv(int argc,char **argv) {
                 a = argv[i++];
                 if (a == NULL) return 1;
                 ui_command = a;
+            }
+            else if (!strcmp(a,"s")) {
+                a = argv[i++];
+                if (a == NULL) return 1;
+                ui_source = a;
             }
             else {
                 fprintf(stderr,"Unknown switch %s\n",a);
@@ -606,7 +614,11 @@ int main(int argc,char **argv) {
     if (parse_argv(argc,argv))
         return 1;
 
-    if (ui_command == "listdev") {
+    if (ui_command == "listsrc") {
+        printf("Audio sources:\n");
+        printf("    \"ALSA\" which is \"Linux ALSA audio interface\"\n");
+    }
+    else if (ui_command == "listdev") {
         std::vector<AudioDevicePair> l;
         AudioSourceALSA alsa;
 
