@@ -1408,6 +1408,33 @@ void close_recording(void) {
 
 std::string ui_print_format(AudioFormat &fmt);
 
+const time_t cut_interval = (time_t)60 * (time_t)60; // 1 hour, on the hour
+
+time_t next_auto_cut = 0;
+
+void compute_auto_cut(void) {
+    time_t now = time(NULL);
+    struct tm *tmnow = localtime(&now);
+    if (tmnow == NULL) return;
+    struct tm tmday = *tmnow;
+    tmday.tm_hour = 0;
+    tmday.tm_min = 0;
+    tmday.tm_sec = 0;
+    time_t daystart = mktime(&tmday);
+    if (daystart == (time_t)-1) return;
+
+    if (now < daystart) {
+        fprintf(stderr,"mktime() problem with start of day\n");
+        abort();
+    }
+
+    time_t delta = now - daystart;
+    delta -= delta % cut_interval;
+    delta += cut_interval;
+
+    next_auto_cut = daystart + delta;
+}
+
 bool open_recording(void) {
     if (wav_out != NULL || wav_info != NULL)
         return true;
@@ -1461,9 +1488,20 @@ bool open_recording(void) {
         }
     }
 
+    compute_auto_cut();
+
     printf("Recording to: %s\n",rec_path_wav.c_str());
 
     return true;
+}
+
+bool time_to_auto_cut(void) {
+    time_t now = time(NULL);
+
+    if (next_auto_cut != (time_t)0 && now >= next_auto_cut)
+        return true;
+
+    return false;
 }
 
 bool record_main(AudioSource* alsa,AudioFormat &fmt) {
@@ -1484,6 +1522,12 @@ bool record_main(AudioSource* alsa,AudioFormat &fmt) {
     while (1) {
         if (signal_to_die) break;
         usleep(10000);
+
+        if (time_to_auto_cut()) {
+            if (wav_info) fprintf(stderr,"Auto-cut commencing\n");
+            close_recording();
+            open_recording();
+        }
 
         do {
             audio_tmp[sizeof(audio_tmp) - OVERREAD] = 'x';
