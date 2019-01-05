@@ -1382,6 +1382,21 @@ FILE *wav_info = NULL;
 
 void close_recording(void) {
     if (wav_info != NULL) {
+        {
+            time_t now = time(NULL);
+            struct tm *tm = localtime(&now);
+
+            if (tm != NULL) {
+                fprintf(wav_info,"Recording stopped Y-M-D-H-M-S %04u-%02u-%02u %02u:%02u:%02u\n",
+                        tm->tm_year+1900,
+                        tm->tm_mon+1,
+                        tm->tm_mday,
+                        tm->tm_hour,
+                        tm->tm_min,
+                        tm->tm_sec);
+            }
+        }
+
         fclose(wav_info);
         wav_info = NULL;
     }
@@ -1425,6 +1440,21 @@ bool open_recording(void) {
         fprintf(stderr,"WAVE open failed\n");
         close_recording();
         return false;
+    }
+
+    {
+        time_t now = time(NULL);
+        struct tm *tm = localtime(&now);
+
+        if (tm != NULL) {
+            fprintf(wav_info,"Recording began Y-M-D-H-M-S %04u-%02u-%02u %02u:%02u:%02u\n",
+                    tm->tm_year+1900,
+                    tm->tm_mon+1,
+                    tm->tm_mday,
+                    tm->tm_hour,
+                    tm->tm_min,
+                    tm->tm_sec);
+        }
     }
 
     printf("Recording to: %s\n",rec_path_wav.c_str());
