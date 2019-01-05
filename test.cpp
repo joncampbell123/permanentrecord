@@ -1252,28 +1252,31 @@ public:
         return (fd >= 0);
     }
     int Write(const void *buffer,unsigned int len) {
-        if (IsOpen()) {
-            int wd = 0;
-
-            /* for simplicity sake require nBlockAlign alignment */
-            len -= len % block_align;
-
-            if (len > 0) {
-                wav_write_pos = (uint32_t)lseek(fd,0,SEEK_CUR);
-
-                if ((wav_write_pos+(uint32_t)len) > wav_data_limit)
-                    return -ENOSPC;
-
-                wd = (int)write(fd,buffer,len);
-                if (wd < 0) return -errno;
-
-                wav_write_pos += (uint32_t)wd;
-            }
-
-            return wd;
-        }
+        if (IsOpen())
+            return _write_raw(buffer,len);
 
         return -EINVAL;
+    }
+private:
+    int _write_raw(const void *buffer,unsigned int len) {
+        int wd = 0;
+
+        /* for simplicity sake require nBlockAlign alignment */
+        len -= len % block_align;
+
+        if (len > 0) {
+            wav_write_pos = (uint32_t)lseek(fd,0,SEEK_CUR);
+
+            if ((wav_write_pos+(uint32_t)len) > wav_data_limit)
+                return -ENOSPC;
+
+            wd = (int)write(fd,buffer,len);
+            if (wd < 0) return -errno;
+
+            wav_write_pos += (uint32_t)wd;
+        }
+
+        return wd;
     }
 private:
     windows_WAVEFORMAT *waveformat(void) {
