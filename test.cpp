@@ -1219,6 +1219,8 @@ public:
                         windows_WAVEFORMATEXTENSIBLE *wx = waveformatextensible();
                         fmt_size = sizeof(windows_WAVEFORMATEXTENSIBLE);
                         w->wFormatTag = htole16(0xFFFE); // WAVE_FORMAT_EXTENSIBLE
+                        wx->Format.cbSize = (uint16_t)(sizeof(windows_WAVEFORMATEXTENSIBLE) - sizeof(windows_WAVEFORMATEX)); /* 22 */
+                        wx->Format.cbSize = htole16(wx->Format.cbSize);
 
                         wx->Samples.wValidBitsPerSample = htole16(fmt.bits_per_sample);
 
