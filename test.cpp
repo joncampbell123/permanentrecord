@@ -852,11 +852,12 @@ void ui_recording_draw(void) {
             d = (d + 48) / 48;
             if (d < 0) d = 0;
             if (d > 1) d = 1;
-            im = (unsigned int)(d * barl);
+            im = (unsigned int)((d * barl) + 0.5);
             for (i=0;i < im;i++) tmp[i] = '=';
             for (   ;i < barl;i++) tmp[i] = ' ';
-            assert(i < sizeof(tmp));
-            tmp[i] = 0;
+            tmp[i++] = VUclip[ch] > 0l ? '@' : ' ';
+            tmp[i++] = 0;
+            assert(i <= sizeof(tmp));
 
             printf("%s",tmp);
         }
@@ -871,6 +872,11 @@ void VU_advance_ch(const unsigned int ch,const unsigned int val) {
         VU[ch] = val;
     else if (VU[ch] > 0u)
         VU[ch]--;
+
+    if (VU[ch] >= 0xFFF0u)
+        VUclip[ch] = rec_fmt.sample_rate;
+    else if (VUclip[ch] > 0u)
+        VUclip[ch]--;
 }
 
 void VU_advance_pcmu_8(const uint8_t *audio_tmp,unsigned int rds) {
