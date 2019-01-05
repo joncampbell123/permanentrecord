@@ -1380,6 +1380,20 @@ bool record_main(AudioSource* alsa,AudioFormat &fmt) {
                 ui_recording_draw();
 
                 framecount += (unsigned long long)((unsigned int)rd / fmt.bytes_per_frame);
+
+                if (wav_out != NULL) {
+                    if (wav_out->Write(audio_tmp,(unsigned int)rd) != rd) {
+                        fprintf(stderr,"WAV writing error, closing and reopening\n");
+                        close_recording();
+                    }
+                }
+                if (wav_out == NULL) {
+                    if (!open_recording()) {
+                        fprintf(stderr,"Unable to open recording\n");
+                        signal_to_die = 1;
+                        break;
+                    }
+                }
             }
         } while (rd > 0);
 
