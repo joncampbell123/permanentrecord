@@ -718,11 +718,77 @@ static int parse_argv(int argc,char **argv) {
     return 0;
 }
 
+std::string ui_print_format(AudioFormat &fmt) {
+    std::string ret;
+    char tmp[64];
+
+    switch (fmt.format_tag) {
+        case AFMT_PCMU:
+            ret += "pcm-unsigned";
+            break;
+        case AFMT_PCMS:
+            ret += "pcm-signed";
+            break;
+        case 0:
+            ret += "none";
+            break;
+        default:
+            ret += "?";
+            break;
+    };
+
+    sprintf(tmp," %luHz",(unsigned long)fmt.sample_rate);
+    ret += tmp;
+
+    sprintf(tmp," %u-ch",(unsigned int)fmt.channels);
+    ret += tmp;
+
+    sprintf(tmp," %u-bit",(unsigned int)fmt.bits_per_sample);
+    ret += tmp;
+
+    return ret;
+}
+
+void ui_apply_format(AudioFormat &fmt) {
+    if (ui_want_fmt > 0)
+        fmt.format_tag = (uint16_t)ui_want_fmt;
+    if (ui_want_rate > 0l)
+        fmt.sample_rate = (uint32_t)ui_want_rate;
+    if (ui_want_channels > 0)
+        fmt.channels = (uint8_t)ui_want_channels;
+    if (ui_want_bits > 0)
+        fmt.bits_per_sample = (uint8_t)ui_want_bits;
+}
+
 int main(int argc,char **argv) {
     if (parse_argv(argc,argv))
         return 1;
 
-    if (ui_command == "listsrc") {
+    if (ui_command == "test") {
+        AudioSource* alsa = GetAudioSource(ui_source.c_str());
+        AudioFormat fmt;
+
+        if (alsa == NULL) {
+            fprintf(stderr,"No such audio source '%s'\n",ui_source.c_str());
+            return 1;
+        }
+
+        if (alsa->GetFormat(fmt) < 0)
+            fprintf(stderr,"WARNING: Unable to get format\n");
+
+        ui_apply_format(fmt);
+        if (alsa->SetFormat(fmt) < 0)
+            fprintf(stderr,"WARNING: Unable to set format\n");
+
+        if (alsa->GetFormat(fmt) < 0)
+            fprintf(stderr,"WARNING: Unable to get format\n");
+
+        printf("Recording format: %s\n",ui_print_format(fmt).c_str());
+
+        alsa->Close();
+        delete alsa;
+    }
+    else if (ui_command == "listsrc") {
         size_t i;
 
         printf("Audio sources:\n");
