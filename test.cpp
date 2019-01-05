@@ -1151,7 +1151,7 @@ public:
             return false;
         }
 
-        wav_data_start = (uint32_t)lseek(fd,0,SEEK_CUR);
+        wav_data_start = wav_write_pos = (uint32_t)lseek(fd,0,SEEK_CUR);
         return true;
     }
     void Close(void) {
@@ -1181,7 +1181,7 @@ public:
             close(fd);
             fd = -1;
         }
-        wav_data_start = 0;
+        wav_data_start = wav_write_pos = 0;
     }
     bool SetFormat(const AudioFormat &fmt) {
         if (IsOpen()) return false;
@@ -1264,6 +1264,7 @@ private:
     bool            flip_sign;
     uint32_t        wav_data_start;
     uint32_t        wav_data_limit;
+    uint32_t        wav_write_pos;
 };
 
 std::string rec_path_wav;
