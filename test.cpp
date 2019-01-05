@@ -1576,6 +1576,10 @@ int main(int argc,char **argv) {
     if (parse_argv(argc,argv))
         return 1;
 
+    /* I wrote this code in a hurry, please do not run as root */
+    if (geteuid() == 0 || getuid() == 0)
+        fprintf(stderr,"WARNING: Do not run this program as root if you can help it!\n");
+
     signal(SIGINT,sigma);
     signal(SIGQUIT,sigma);
     signal(SIGTERM,sigma);
