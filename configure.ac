@@ -121,7 +121,10 @@ AC_COMPILE_IFELSE([AC_LANG_SOURCE([
 ])],[],[AC_DEFINE([socklen_t],[int],[Define to `int` if you don't have socklen_t])])
 
 AC_MSG_CHECKING([checking for C++11 support])
-AC_CHECK_CXXFLAGS([ -std=gnu++11 ], [  ], [ ])
+AC_CHECK_CXXFLAGS([ -std=gnu++11 ], [ checkagain=0 ], [ checkagain=1 ])
+if test x$checkagain = x1; then
+AC_CHECK_CXXFLAGS([ -std=gnu++0x ], [ checkagain=0 ], [ checkagain=1 ])
+fi
 
 dnl FIXME: Remove default "-O2" set by some autotools versions. TODO: check availability of sed.
 CFLAGS=["`echo $CFLAGS' ' | sed -e 's/-O[^ ]* //g'`"]

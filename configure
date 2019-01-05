@@ -6366,13 +6366,53 @@ $as_echo "no" >&6; }; CPPFLAGS="${temp_check_cppflags}"
 fi
 rm -f conftest.err conftest.i conftest.$ac_ext
 
-
+   checkagain=0
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-
+   checkagain=1
 fi
 
+if test x$checkagain = x1; then
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CXX accepts \" -std=gnu++0x \"" >&5
+$as_echo_n "checking whether $CXX accepts \" -std=gnu++0x \"... " >&6; }
+cat > conftest.c++ << EOF
+int main(){
+  return 0;
+}
+EOF
+if $CXX $CPPFLAGS $CXXFLAGS -o conftest.o conftest.c++  -std=gnu++0x  > /dev/null 2>&1
+then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+  CXXFLAGS="${CXXFLAGS}  -std=gnu++0x "
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CPP accepts \" -std=gnu++0x \"" >&5
+$as_echo_n "checking whether $CPP accepts \" -std=gnu++0x \"... " >&6; }
+  temp_check_cppflags="${CPPFLAGS}"
+  CPPFLAGS=" -std=gnu++0x  ${CPPFLAGS}"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+int main(void){return 0;}
+_ACEOF
+if ac_fn_c_try_cpp "$LINENO"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }; CPPFLAGS="${temp_check_cppflags}"
+fi
+rm -f conftest.err conftest.i conftest.$ac_ext
+
+   checkagain=0
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+   checkagain=1
+fi
+
+fi
 
 CFLAGS="`echo $CFLAGS' ' | sed -e 's/-O[^ ]* //g'`"
 CXXFLAGS="`echo $CXXFLAGS' ' | sed -e 's/-O[^ ]* //g'`"
