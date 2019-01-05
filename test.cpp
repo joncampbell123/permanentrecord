@@ -20,6 +20,10 @@
 
 #include "config.h"
 
+#ifndef O_BINARY
+#define O_BINARY (0)
+#endif
+
 volatile int signal_to_die = 0;
 
 void sigma(int c) {
@@ -996,14 +1000,20 @@ std::string make_recording_path_now(void) {
     char tmp[128];
 
     rec = "PERMREC";
-    if (mkdir(rec.c_str(),0644) < 0) return std::string();
+    if (mkdir(rec.c_str(),0644) < 0) {
+        if (errno != EEXIST)
+            return std::string();
+    }
 
     /* tm->tm_year + 1900 = current year
      * tm->tm_mon + 1     = current month (1=January)
      * tm->tm_mday        = current day of the month */
     sprintf(tmp,"/%04u%02u%02u",tm->tm_year + 1900,tm->tm_mon + 1,tm->tm_mday);
     rec += tmp;
-    if (mkdir(rec.c_str(),0644) < 0) return std::string();
+    if (mkdir(rec.c_str(),0644) < 0) {
+        if (errno != EEXIST)
+            return std::string();
+    }
 
     /* caller must add file extension needed */
     sprintf(tmp,"/TM%02u%02u%02u",tm->tm_hour,tm->tm_min,tm->tm_sec);
@@ -1078,6 +1088,11 @@ typedef struct {                                            /* (sizeof) (offset 
 
 #pragma pack(pop)
 
+static const uint32_t _RIFF_listcc_RIFF = 0x52494646;       /* 'RIFF' */
+#define RIFF_listcc_RIFF            be32toh(_RIFF_listcc_RIFF)
+static const uint32_t _RIFF_fourcc_WAVE = 0x57415645;       /* 'WAVE" */
+#define RIFF_fourcc_WAVE            be32toh(_RIFF_fourcc_WAVE)
+
 const windows_GUID windows_KSDATAFORMAT_SUBTYPE_PCM = /* 00000001-0000-0010-8000-00aa00389b71 */
 	{htole32(0x00000001),htole16(0x0000),htole16(0x0010),{0x80,0x00},{0x00,0xaa,0x00,0x38,0x9b,0x71}};
 
@@ -1090,7 +1105,28 @@ public:
     }
 public:
     bool Open(const std::string &path) {
-        return false;
+        RIFF_LIST_chunk chk;
+
+        if (IsOpen())
+            return true;
+        if (fmt_size == 0)
+            return false;
+
+        fd = open(path.c_str(),O_RDWR|O_CREAT|O_TRUNC|O_BINARY,0644);
+        if (fd < 0) {
+            fprintf(stderr,"Failed to open WAV output, %s\n",strerror(errno));
+            return false;
+        }
+
+        chk.listcc = RIFF_listcc_RIFF;
+        chk.length = 0xFFFFFFFFu; /* placeholder until finalized */
+        chk.fourcc = RIFF_fourcc_WAVE;
+        if (write(fd,&chk,sizeof(chk)) != sizeof(chk)) {
+            Close();
+            return false;
+        }
+
+        return true;
     }
     void Close(void) {
         if (fd >= 0) {
@@ -1105,9 +1141,9 @@ public:
         switch (fmt.format_tag) {
             case AFMT_PCMU:
             case AFMT_PCMS:
-                if (!(fmt.bits_per_sample == 8 || fmt.bits_per_sample == 16 || fmt.bits_per_sample == 24 || fmt.bits_per_sample ==32))
+                if (!(fmt.bits_per_sample == 8 || fmt.bits_per_sample == 16 || fmt.bits_per_sample == 24 || fmt.bits_per_sample == 32))
                     return false;
-                if (!(fmt.channels < 1 || fmt.channels > 8))
+                if (fmt.channels < 1 || fmt.channels > 8)
                     return false;
                 if (fmt.sample_rate < 1000 || fmt.sample_rate > 192000)
                     return false;
@@ -1200,13 +1236,17 @@ bool open_recording(void) {
         return true;
 
     rec_path_base = make_recording_path_now();
-    if (rec_path_base.empty()) return false;
+    if (rec_path_base.empty()) {
+        fprintf(stderr,"Unable to make recording path\n");
+        return false;
+    }
 
     rec_path_wav = rec_path_base + ".WAV";
     rec_path_info = rec_path_base + ".TXT";
 
     wav_info = fopen(rec_path_info.c_str(),"w");
     if (wav_info == NULL) {
+        fprintf(stderr,"Unable to open %s, %s\n",rec_path_info.c_str(),strerror(errno));
         close_recording();
         return false;
     }
@@ -1216,8 +1256,13 @@ bool open_recording(void) {
         close_recording();
         return false;
     }
-    wav_out->SetFormat(rec_fmt);
+    if (!wav_out->SetFormat(rec_fmt)) {
+        fprintf(stderr,"WAVE format rejected\n");
+        close_recording();
+        return false;
+    }
     if (!wav_out->Open(rec_path_wav)) {
+        fprintf(stderr,"WAVE open failed\n");
         close_recording();
         return false;
     }
