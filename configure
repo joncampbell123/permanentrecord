@@ -7233,7 +7233,7 @@ if test "x$ac_cv_lib_rt_clock_gettime" = xyes; then :
 fi
 
 if test x"$have_clock_gettime" = x"yes"; then
-    LDFLAGS="$LDFLAGS -lrt"
+    LDFLAGS="$LDFLAGS -lrt -lm"
 
 $as_echo "#define C_CLOCK_GETTIME 1" >>confdefs.h
 

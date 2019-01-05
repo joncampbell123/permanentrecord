@@ -9,6 +9,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <time.h>
+#include <math.h>
 
 #include <string>
 #include <vector>
@@ -19,6 +20,8 @@
 volatile int signal_to_die = 0;
 
 void sigma(int c) {
+    (void)c;
+
     signal_to_die++;
 }
 
@@ -799,16 +802,130 @@ bool ui_apply_options(AudioSource* alsa,AudioFormat &fmt) {
     return true;
 }
 
-static unsigned char audio_tmp[4096];
+/* opposite: convert sample to decibels */
+double dBFS_measure(double sample) {
+	return 20.0 * log10(sample);
+}
+
+#define OVERREAD (16u)
+
+static unsigned char audio_tmp[4096u + OVERREAD];
+
+AudioFormat rec_fmt;
+unsigned long long framecount = 0;
+unsigned int VU[8];
+
+void ui_recording_draw(void) {
+    printf("\x0D");
+
+    {
+        unsigned long long samples = framecount * (unsigned long long)rec_fmt.samples_per_frame;
+        unsigned int H,M,S,ss;
+
+        ss = (unsigned int)(samples % (unsigned long long)rec_fmt.sample_rate);
+        ss = (unsigned int)(((unsigned long)ss * 100ul) / (unsigned long)rec_fmt.sample_rate);
+
+        S = (unsigned int)(samples / (unsigned long long)rec_fmt.sample_rate);
+
+        M = S / 60u;
+        S %= 60u;
+
+        H = M / 60u;
+        M %= 60u;
+
+        printf("%02u:%02u:%02u.%02u ",H,M,S,ss);
+    }
+
+    {
+        unsigned int barl = 34u / rec_fmt.channels;
+        unsigned int i,im,ch,chmax;
+        double d;
+        char tmp[21];
+
+        chmax = rec_fmt.channels;
+        if (chmax > 2) chmax = 2;
+
+        for (ch=0;ch < chmax;ch++) {
+            d = dBFS_measure((double)VU[ch] / 65535);
+            d = (d + 48) / 48;
+            if (d < 0) d = 0;
+            if (d > 1) d = 1;
+            im = (unsigned int)(d * barl);
+            for (i=0;i < im;i++) tmp[i] = '=';
+            for (   ;i < barl;i++) tmp[i] = ' ';
+            assert(i < sizeof(tmp));
+            tmp[i] = 0;
+
+            printf("%s",tmp);
+        }
+    }
+
+    printf("\x0D");
+    fflush(stdout);
+}
+
+void VU_advance_pcms_16(const int16_t *audio_tmp,unsigned int rds) {
+    unsigned int ch;
+
+    while (rds-- > 0u) {
+        for (ch=0;ch < rec_fmt.channels;ch++) {
+            unsigned int val = (unsigned int)abs(audio_tmp[ch]) * 2u;
+            if (VU[ch] < val)
+                VU[ch] = val;
+            else if (VU[ch] > 0u)
+                VU[ch]--;
+        }
+
+        audio_tmp += rec_fmt.channels;
+    }
+}
+
+void VU_advance_pcms(const void *audio_tmp,unsigned int rds) {
+    if (rec_fmt.bits_per_sample == 16)
+        VU_advance_pcms_16((const int16_t*)audio_tmp,rds);
+}
+
+void VU_advance(const void *audio_tmp,unsigned int rd) {
+    if (rec_fmt.format_tag == AFMT_PCMU) {
+        rd /= rec_fmt.bytes_per_frame;
+    }
+    else if (rec_fmt.format_tag == AFMT_PCMS) {
+        VU_advance_pcms(audio_tmp,rd / rec_fmt.bytes_per_frame);
+    }
+}
 
 bool record_main(AudioSource* alsa,AudioFormat &fmt) {
-    int rd;
+    int rd,i;
+
+    for (i=0;i < 8;i++) VU[i] = 0u;
+    framecount = 0;
+    rec_fmt = fmt;
 
     while (1) {
         if (signal_to_die) break;
         usleep(10000);
+
+        audio_tmp[sizeof(audio_tmp) - OVERREAD] = 'x';
+        rd = alsa->Read(audio_tmp,(unsigned int)(sizeof(audio_tmp) - OVERREAD));
+        if (audio_tmp[sizeof(audio_tmp) - OVERREAD] != 'x') {
+            fprintf(stderr,"Read buffer overrun\n");
+            break;
+        }
+
+        if (rd > 0) {
+            VU_advance(audio_tmp,(unsigned int)rd);
+
+            ui_recording_draw();
+
+            framecount += (unsigned long long)((unsigned int)rd / fmt.bytes_per_frame);
+        }
+        else if (rd < 0) {
+            fprintf(stderr,"Problem with audio device\n");
+            break;
+        }
     }
 
+    printf("\n");
     return true;
 }
 

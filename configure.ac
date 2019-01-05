@@ -222,7 +222,7 @@ AM_CONDITIONAL(HAVE_PTHREADS, test $choice = 1)
 # clock_gettime?
 AC_CHECK_LIB(rt, clock_gettime, have_clock_gettime=yes, , )
 if test x"$have_clock_gettime" = x"yes"; then
-    LDFLAGS="$LDFLAGS -lrt"
+    LDFLAGS="$LDFLAGS -lrt -lm"
     AC_DEFINE(C_CLOCK_GETTIME, 1, [ Define to 1 if clock_gettime() is available. ])
 fi
 
