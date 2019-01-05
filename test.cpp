@@ -461,10 +461,11 @@ private:
                 snd_pcm_hw_params_set_rate_near(alsa_pcm,alsa_pcm_hw_params,&alsa_rate,&alsa_rate_dir);
             }
 
-            if (fmt.channels != 0) {
+            if (fmt.channels != 0)
                 alsa_channels = fmt.channels;
-                snd_pcm_hw_params_set_channels(alsa_pcm,alsa_pcm_hw_params,alsa_channels);
-            }
+            else
+                alsa_channels = 2;
+            snd_pcm_hw_params_set_channels(alsa_pcm,alsa_pcm_hw_params,alsa_channels);
 
             /* apply. NOTE: This puts alsa_pcm into PREPARED state which prevents further changes.
              *              Using this code to test formats requires calling alsa_close() afterward. */
@@ -536,7 +537,7 @@ private:
         if (alsa_pcm == NULL) {
             assert(alsa_pcm_hw_params == NULL);
             /* NTS: Prefer format conversion, or else on my laptop all audio will be 32-bit/sample recordings! */
-            if ((err=snd_pcm_open(&alsa_pcm,alsa_device_string.c_str(),SND_PCM_STREAM_CAPTURE,SND_PCM_NONBLOCK | SND_PCM_NO_AUTO_CHANNELS | SND_PCM_NO_AUTO_RESAMPLE/* | SND_PCM_NO_AUTO_FORMAT*/ | SND_PCM_NO_SOFTVOL)) < 0) {
+            if ((err=snd_pcm_open(&alsa_pcm,alsa_device_string.c_str(),SND_PCM_STREAM_CAPTURE,SND_PCM_NONBLOCK/* | SND_PCM_NO_AUTO_CHANNELS*/ | SND_PCM_NO_AUTO_RESAMPLE/* | SND_PCM_NO_AUTO_FORMAT*/ | SND_PCM_NO_SOFTVOL)) < 0) {
                 alsa_close();
                 return -1;
             }
@@ -839,8 +840,8 @@ void ui_recording_draw(void) {
     {
         unsigned int barl = 34u / rec_fmt.channels;
         unsigned int i,im,ch,chmax;
+        char tmp[36];
         double d;
-        char tmp[21];
 
         chmax = rec_fmt.channels;
         if (chmax > 2) chmax = 2;
@@ -998,21 +999,25 @@ bool record_main(AudioSource* alsa,AudioFormat &fmt) {
         if (signal_to_die) break;
         usleep(10000);
 
-        audio_tmp[sizeof(audio_tmp) - OVERREAD] = 'x';
-        rd = alsa->Read(audio_tmp,(unsigned int)(sizeof(audio_tmp) - OVERREAD));
-        if (audio_tmp[sizeof(audio_tmp) - OVERREAD] != 'x') {
-            fprintf(stderr,"Read buffer overrun\n");
-            break;
-        }
+        do {
+            audio_tmp[sizeof(audio_tmp) - OVERREAD] = 'x';
+            rd = alsa->Read(audio_tmp,(unsigned int)(sizeof(audio_tmp) - OVERREAD));
+            if (audio_tmp[sizeof(audio_tmp) - OVERREAD] != 'x') {
+                fprintf(stderr,"Read buffer overrun\n");
+                signal_to_die = 1;
+                break;
+            }
 
-        if (rd > 0) {
-            VU_advance(audio_tmp,(unsigned int)rd);
+            if (rd > 0) {
+                VU_advance(audio_tmp,(unsigned int)rd);
 
-            ui_recording_draw();
+                ui_recording_draw();
 
-            framecount += (unsigned long long)((unsigned int)rd / fmt.bytes_per_frame);
-        }
-        else if (rd < 0) {
+                framecount += (unsigned long long)((unsigned int)rd / fmt.bytes_per_frame);
+            }
+        } while (rd > 0);
+
+        if (rd < 0) {
             fprintf(stderr,"Problem with audio device\n");
             break;
         }
