@@ -783,6 +783,9 @@ int main(int argc,char **argv) {
 
         printf("Recording format: %s\n",ui_print_format(fmt).c_str());
 
+        if (alsa->Open() < 0)
+            fprintf(stderr,"Unable to open\n");
+
         alsa->Close();
         delete alsa;
     }
