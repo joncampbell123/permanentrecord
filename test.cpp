@@ -1232,6 +1232,7 @@ public:
 
                     w->nBlockAlign = (uint16_t)(((fmt.bits_per_sample + 7u) / 8u) * fmt.channels);
                     w->nAvgBytesPerSec = ((uint32_t)w->nBlockAlign * (uint32_t)fmt.sample_rate);
+                    block_align = w->nBlockAlign;
 
                     w->nBlockAlign = htole16(w->nBlockAlign);
                     w->nAvgBytesPerSec = htole32(w->nAvgBytesPerSec);
@@ -1250,6 +1251,9 @@ public:
     int Write(const void *buffer,unsigned int len) {
         if (IsOpen()) {
             int wd = 0;
+
+            /* for simplicity sake require nBlockAlign alignment */
+            len -= len % block_align;
 
             if (len > 0) {
                 wav_write_pos = (uint32_t)lseek(fd,0,SEEK_CUR);
@@ -1286,6 +1290,7 @@ private:
     uint32_t        wav_data_start;
     uint32_t        wav_data_limit;
     uint32_t        wav_write_pos;
+    unsigned int    block_align;
 };
 
 std::string rec_path_wav;
