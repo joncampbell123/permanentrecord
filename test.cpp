@@ -814,6 +814,7 @@ static unsigned char audio_tmp[4096u + OVERREAD];
 
 AudioFormat rec_fmt;
 unsigned long long framecount = 0;
+unsigned long VUclip[8];
 unsigned int VU[8];
 
 void ui_recording_draw(void) {
@@ -865,16 +866,20 @@ void ui_recording_draw(void) {
     fflush(stdout);
 }
 
+void VU_advance_ch(const unsigned int ch,const unsigned int val) {
+    if (VU[ch] < val)
+        VU[ch] = val;
+    else if (VU[ch] > 0u)
+        VU[ch]--;
+}
+
 void VU_advance_pcmu_8(const uint8_t *audio_tmp,unsigned int rds) {
     unsigned int ch;
 
     while (rds-- > 0u) {
         for (ch=0;ch < rec_fmt.channels;ch++) {
             unsigned int val = (unsigned int)labs((int)audio_tmp[ch] - 0x80) * 2u * 256u;
-            if (VU[ch] < val)
-                VU[ch] = val;
-            else if (VU[ch] > 0u)
-                VU[ch]--;
+            VU_advance_ch(ch,val);
         }
 
         audio_tmp += rec_fmt.channels;
@@ -887,10 +892,7 @@ void VU_advance_pcmu_16(const uint16_t *audio_tmp,unsigned int rds) {
     while (rds-- > 0u) {
         for (ch=0;ch < rec_fmt.channels;ch++) {
             unsigned int val = (unsigned int)labs((long)audio_tmp[ch] - 0x8000l) * 2u;
-            if (VU[ch] < val)
-                VU[ch] = val;
-            else if (VU[ch] > 0u)
-                VU[ch]--;
+            VU_advance_ch(ch,val);
         }
 
         audio_tmp += rec_fmt.channels;
@@ -903,10 +905,7 @@ void VU_advance_pcmu_32(const uint32_t *audio_tmp,unsigned int rds) {
     while (rds-- > 0u) {
         for (ch=0;ch < rec_fmt.channels;ch++) {
             unsigned int val = (unsigned int)labs(((long)audio_tmp[ch] - 0x80000000l) / 32768l);
-            if (VU[ch] < val)
-                VU[ch] = val;
-            else if (VU[ch] > 0u)
-                VU[ch]--;
+            VU_advance_ch(ch,val);
         }
 
         audio_tmp += rec_fmt.channels;
@@ -919,10 +918,7 @@ void VU_advance_pcms_8(const int8_t *audio_tmp,unsigned int rds) {
     while (rds-- > 0u) {
         for (ch=0;ch < rec_fmt.channels;ch++) {
             unsigned int val = (unsigned int)labs(audio_tmp[ch]) * 2u * 256u;
-            if (VU[ch] < val)
-                VU[ch] = val;
-            else if (VU[ch] > 0u)
-                VU[ch]--;
+            VU_advance_ch(ch,val);
         }
 
         audio_tmp += rec_fmt.channels;
@@ -935,10 +931,7 @@ void VU_advance_pcms_16(const int16_t *audio_tmp,unsigned int rds) {
     while (rds-- > 0u) {
         for (ch=0;ch < rec_fmt.channels;ch++) {
             unsigned int val = (unsigned int)labs(audio_tmp[ch]) * 2u;
-            if (VU[ch] < val)
-                VU[ch] = val;
-            else if (VU[ch] > 0u)
-                VU[ch]--;
+            VU_advance_ch(ch,val);
         }
 
         audio_tmp += rec_fmt.channels;
@@ -951,10 +944,7 @@ void VU_advance_pcms_32(const int32_t *audio_tmp,unsigned int rds) {
     while (rds-- > 0u) {
         for (ch=0;ch < rec_fmt.channels;ch++) {
             unsigned int val = (unsigned int)labs(audio_tmp[ch] / 32768l);
-            if (VU[ch] < val)
-                VU[ch] = val;
-            else if (VU[ch] > 0u)
-                VU[ch]--;
+            VU_advance_ch(ch,val);
         }
 
         audio_tmp += rec_fmt.channels;
@@ -991,7 +981,10 @@ void VU_advance(const void *audio_tmp,unsigned int rd) {
 bool record_main(AudioSource* alsa,AudioFormat &fmt) {
     int rd,i;
 
-    for (i=0;i < 8;i++) VU[i] = 0u;
+    for (i=0;i < 8;i++) {
+        VUclip[i] = 0u;
+        VU[i] = 0u;
+    }
     framecount = 0;
     rec_fmt = fmt;
 
