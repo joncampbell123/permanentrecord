@@ -557,6 +557,27 @@ private:
 };
 #endif
 
+struct AudioSourceListEntry {
+    const char*             name;
+    const char*             desc;
+};
+
+const AudioSourceListEntry audio_source_list[] = {
+    {"ALSA",        "Linux Advanced Linux Sound Architecture" },
+    {NULL,          NULL}
+};
+
+AudioSource* GetAudioSource(const char *src) {
+    if (!strcasecmp(src,"ALSA"))
+        return new AudioSourceALSA;
+
+    return NULL;
+}
+
+const char *GetDefaultAudioSource(void) {
+    return "ALSA";
+}
+
 static std::string          ui_command;
 static std::string          ui_source;
 
@@ -606,6 +627,8 @@ static int parse_argv(int argc,char **argv) {
         help();
         return 1;
     }
+    if (ui_source.empty())
+        ui_source = GetDefaultAudioSource();
 
     return 0;
 }
@@ -615,16 +638,26 @@ int main(int argc,char **argv) {
         return 1;
 
     if (ui_command == "listsrc") {
+        size_t i;
+
         printf("Audio sources:\n");
-        printf("    \"ALSA\" which is \"Linux ALSA audio interface\"\n");
+
+        for (i=0;audio_source_list[i].name != NULL;i++) {
+            printf("    \"%s\" which is \"%s\"\n",audio_source_list[i].name,audio_source_list[i].desc);
+        }
     }
     else if (ui_command == "listdev") {
         std::vector<AudioDevicePair> l;
-        AudioSourceALSA alsa;
+        AudioSource* alsa = GetAudioSource(ui_source.c_str());
 
-        printf("Enumerating devices from \"%s\":\n",alsa.GetSourceName());
+        if (alsa == NULL) {
+            fprintf(stderr,"No such audio source '%s'\n",ui_source.c_str());
+            return 1;
+        }
 
-        if (alsa.EnumDevices(l) < 0) {
+        printf("Enumerating devices from \"%s\":\n",alsa->GetSourceName());
+
+        if (alsa->EnumDevices(l) < 0) {
             fprintf(stderr,"Failed to enumerate devices\n");
             return 1;
         }
@@ -635,7 +668,7 @@ int main(int argc,char **argv) {
         }
 
         printf("\n");
-        printf("Default device is \"%s\"\n",alsa.GetDeviceName());
+        printf("Default device is \"%s\"\n",alsa->GetDeviceName());
     }
     else {
         fprintf(stderr,"Unknown command '%s'\n",ui_command.c_str());
