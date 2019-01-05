@@ -621,9 +621,11 @@ AudioSource* PickDefaultAudioSource(void) {
 
 static std::string          ui_command;
 static std::string          ui_source;
+static std::string          ui_device;
 
 static void help(void) {
     fprintf(stderr," -h --help      Help text\n");
+    fprintf(stderr," -d <device>\n");
     fprintf(stderr," -s <source>\n");
     fprintf(stderr," -c <command>\n");
     fprintf(stderr,"    listsrc      List audio sources\n");
@@ -652,6 +654,11 @@ static int parse_argv(int argc,char **argv) {
                 a = argv[i++];
                 if (a == NULL) return 1;
                 ui_source = a;
+            }
+            else if (!strcmp(a,"d")) {
+                a = argv[i++];
+                if (a == NULL) return 1;
+                ui_device = a;
             }
             else {
                 fprintf(stderr,"Unknown switch %s\n",a);
