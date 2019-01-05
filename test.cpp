@@ -698,6 +698,7 @@ int main(int argc,char **argv) {
 
         if (alsa->EnumDevices(l) < 0) {
             fprintf(stderr,"Failed to enumerate devices\n");
+            delete alsa;
             return 1;
         }
 
@@ -708,6 +709,8 @@ int main(int argc,char **argv) {
 
         printf("\n");
         printf("Default device is \"%s\"\n",alsa->GetDeviceName());
+
+        delete alsa;
     }
     else {
         fprintf(stderr,"Unknown command '%s'\n",ui_command.c_str());
