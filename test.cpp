@@ -636,6 +636,7 @@ static void help(void) {
     fprintf(stderr," -d <device>\n");
     fprintf(stderr," -s <source>\n");
     fprintf(stderr," -c <command>\n");
+    fprintf(stderr,"    test         Test format\n");
     fprintf(stderr,"    listsrc      List audio sources\n");
     fprintf(stderr,"    listdev      List audio devices\n");
 }
