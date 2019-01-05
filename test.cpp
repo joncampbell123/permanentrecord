@@ -1012,8 +1012,222 @@ std::string make_recording_path_now(void) {
     return rec;
 }
 
+/* Windows WAVE format specifications. All fields little Endian */
+#pragma pack(push,1)
+
+typedef struct {
+    uint32_t            fourcc;         /* ASCII 4-char ident such as 'fmt ' or 'data' */
+    uint32_t            length;         /* length of chunk */
+} RIFF_chunk;
+
+typedef struct {
+    uint32_t            listcc;         /* ASCII 4-char ident 'RIFF' or 'LIST' */
+    uint32_t            length;         /* length of chunk including next field */
+    uint32_t            fourcc;         /* ASCII 4-char ident such as 'WAVE' */
+} RIFF_LIST_chunk;
+
+typedef struct {                        /* (sizeof) (offset hex) (offset dec) */
+    uint32_t            a;              /* (4)   +0x00 +0 */
+    uint16_t            b,c;            /* (2,2) +0x04 +4 */
+    uint8_t             d[2];           /* (2)   +0x08 +8 */
+    uint8_t             e[6];           /* (6)   +0x0A +10 */
+} windows_GUID;                         /* (16)  =0x10 =16 */
+#define windows_GUID_size (16)
+
+typedef struct {						/* (sizeof) (offset hex) (offset dec) */
+    uint16_t            wFormatTag;     /* (2)  +0x00 +0 */
+    uint16_t            nChannels;      /* (2)  +0x02 +2 */
+    uint32_t            nSamplesPerSec; /* (4)  +0x04 +4 */
+    uint32_t            nAvgBytesPerSec;/* (4)  +0x08 +8 */
+    uint16_t            nBlockAlign;    /* (2)  +0x0C +12 */
+} windows_WAVEFORMATOLD;                /* (14) =0x0E =14 */
+#define windows_WAVEFORMATOLD_size (14)
+
+typedef struct {                        /* (sizeof) (offset hex) (offset dec) */
+    uint16_t            wFormatTag;     /* (2)  +0x00 +0 */
+    uint16_t            nChannels;      /* (2)  +0x02 +2 */
+    uint32_t            nSamplesPerSec; /* (4)  +0x04 +4 */
+    uint32_t            nAvgBytesPerSec;/* (4)  +0x08 +8 */
+    uint16_t            nBlockAlign;    /* (2)  +0x0C +12 */
+    uint16_t            wBitsPerSample; /* (2)  +0x0E +14 */
+} windows_WAVEFORMAT;                   /* (16) +0x10 +16 */
+#define windows_WAVEFORMAT_size (16)
+
+typedef struct {                        /* (sizeof) (offset hex) (offset dec) */
+    uint16_t            wFormatTag;     /* (2)  +0x00 +0 */
+    uint16_t            nChannels;      /* (2)  +0x02 +2 */
+    uint32_t            nSamplesPerSec; /* (4)  +0x04 +4 */
+    uint32_t            nAvgBytesPerSec;/* (4)  +0x08 +8 */
+    uint16_t            nBlockAlign;    /* (2)  +0x0C +12 */
+    uint16_t            wBitsPerSample; /* (2)  +0x0E +14 */
+    uint16_t            cbSize;         /* (2)  +0x10 +16 */
+} windows_WAVEFORMATEX;                 /* (18) =0x12 =18 */
+#define windows_WAVEFORMATEX_size (18)
+
+typedef struct {                                            /* (sizeof) (offset hex) (offset dec) */
+    windows_WAVEFORMATEX            Format;                 /* (18) +0x00 +0 */
+    union {
+        uint16_t                    wValidBitsPerSample;    /* <- if it's PCM */
+        uint16_t                    wSamplesPerBlock;       /* <- if it's not PCM, and compressed */
+        uint16_t                    wReserved;              /* <- if ??? */
+    } Samples;                                              /* (2)  +0x12 +18 */
+    uint32_t                        dwChannelMask;          /* (4)  +0x14 +20 */
+    windows_GUID                    SubFormat;              /* (16) +0x18 +24 */
+} windows_WAVEFORMATEXTENSIBLE;                             /* (40) =0x28 =40 */
+#define windows_WAVEFORMATEXTENSIBLE_size (40)
+
+#pragma pack(pop)
+
+const windows_GUID windows_KSDATAFORMAT_SUBTYPE_PCM = /* 00000001-0000-0010-8000-00aa00389b71 */
+	{htole32(0x00000001),htole16(0x0000),htole16(0x0010),{0x80,0x00},{0x00,0xaa,0x00,0x38,0x9b,0x71}};
+
+class WAVWriter {
+public:
+    WAVWriter() : fd(-1), fmt_size(0) {
+    }
+    ~WAVWriter() {
+        Close();
+    }
+public:
+    bool Open(const std::string &path) {
+        return false;
+    }
+    void Close(void) {
+        if (fd >= 0) {
+            close(fd);
+            fd = -1;
+        }
+    }
+    bool SetFormat(const AudioFormat &fmt) {
+        if (IsOpen()) return false;
+
+        // PCM formats ONLY
+        switch (fmt.format_tag) {
+            case AFMT_PCMU:
+            case AFMT_PCMS:
+                if (!(fmt.bits_per_sample == 8 || fmt.bits_per_sample == 16 || fmt.bits_per_sample == 24 || fmt.bits_per_sample ==32))
+                    return false;
+                if (!(fmt.channels < 1 || fmt.channels > 8))
+                    return false;
+                if (fmt.sample_rate < 1000 || fmt.sample_rate > 192000)
+                    return false;
+
+                /* WAV only supports 8-bit unsigned or 16/24/32-bit signed PCM */
+                if (fmt.bits_per_sample == 8 && fmt.format_tag == AFMT_PCMS)
+                    flip_sign = true;
+                else if (fmt.format_tag == AFMT_PCMU)
+                    flip_sign = true;
+                else
+                    flip_sign = false;
+
+                {
+                    windows_WAVEFORMAT *w = waveformat();
+
+                    /* mono/stereo 8/16 should use WAVEFORMAT */
+                    if (fmt.bits_per_sample <= 16 && fmt.channels <= 2) {
+                        fmt_size = sizeof(windows_WAVEFORMAT);
+                        w->wFormatTag = htole16(0x0001); // WAVE_FORMAT_PCM
+                    }
+                    /* anything else should use WAVEFORMATEXTENSIBLE.
+                     * WAVEFORMATEXTENSIBLE contains WAVEFORMATEX in the first 22 bytes. */
+                    else {
+                        windows_WAVEFORMATEXTENSIBLE *wx = waveformatextensible();
+                        fmt_size = sizeof(windows_WAVEFORMATEXTENSIBLE);
+
+                        wx->Samples.wValidBitsPerSample = htole16(fmt.bits_per_sample);
+
+                        wx->dwChannelMask = (1u << fmt.channels) - 1u; /*FIXME*/
+                        wx->dwChannelMask = htole32(wx->dwChannelMask);
+
+                        wx->SubFormat = windows_KSDATAFORMAT_SUBTYPE_PCM;
+                    }
+
+                    w->nChannels = htole16(fmt.channels);
+                    w->nSamplesPerSec = htole32(fmt.sample_rate);
+
+                    w->nBlockAlign = (uint16_t)(((fmt.bits_per_sample + 7u) / 8u) * fmt.channels);
+                    w->nAvgBytesPerSec = (w->nBlockAlign * (uint32_t)fmt.channels * (uint32_t)fmt.sample_rate);
+
+                    w->nBlockAlign = htole16(w->nBlockAlign);
+                    w->nAvgBytesPerSec = htole32(w->nAvgBytesPerSec);
+                }
+                break;
+            default:
+                return false;
+        }
+
+        return true;
+    }
+    bool IsOpen(void) const {
+        return (fd >= 0);
+    }
+private:
+    windows_WAVEFORMAT *waveformat(void) {
+        return (windows_WAVEFORMAT*)fmt;
+    }
+    windows_WAVEFORMATEX *waveformatex(void) {
+        return (windows_WAVEFORMATEX*)fmt;
+    }
+    windows_WAVEFORMATEXTENSIBLE *waveformatextensible(void) {
+        return (windows_WAVEFORMATEXTENSIBLE*)fmt;
+    }
+private:
+    int             fd;
+    unsigned char   fmt[64];
+    size_t          fmt_size;
+    bool            flip_sign;
+};
+
+std::string rec_path_wav;
+std::string rec_path_info;
+std::string rec_path_base;
+WAVWriter* wav_out = NULL;
+FILE *wav_info = NULL;
+
+void close_recording(void) {
+    if (wav_info != NULL) {
+        fclose(wav_info);
+        wav_info = NULL;
+    }
+    if (wav_out) {
+        delete wav_out;
+        wav_out = NULL;
+    }
+}
+
+bool open_recording(void) {
+    if (wav_out != NULL || wav_info != NULL)
+        return true;
+
+    rec_path_base = make_recording_path_now();
+    if (rec_path_base.empty()) return false;
+
+    rec_path_wav = rec_path_base + ".WAV";
+    rec_path_info = rec_path_base + ".TXT";
+
+    wav_info = fopen(rec_path_info.c_str(),"w");
+    if (wav_info == NULL) {
+        close_recording();
+        return false;
+    }
+
+    wav_out = new WAVWriter();
+    if (wav_out == NULL) {
+        close_recording();
+        return false;
+    }
+    wav_out->SetFormat(rec_fmt);
+    if (!wav_out->Open(rec_path_wav)) {
+        close_recording();
+        return false;
+    }
+
+    printf("Recording to: %s\n",rec_path_wav.c_str());
+
+    return true;
+}
+
 bool record_main(AudioSource* alsa,AudioFormat &fmt) {
-    std::string rec_path;
     int rd,i;
 
     for (i=0;i < 8;i++) {
@@ -1023,9 +1237,10 @@ bool record_main(AudioSource* alsa,AudioFormat &fmt) {
     framecount = 0;
     rec_fmt = fmt;
 
-    rec_path = make_recording_path_now();
-    if (rec_path.empty()) return false;
-    printf("Recording to: %s\n",rec_path.c_str());
+    if (!open_recording()) {
+        fprintf(stderr,"Unable to open recording\n");
+        return false;
+    }
 
     while (1) {
         if (signal_to_die) break;
@@ -1055,6 +1270,7 @@ bool record_main(AudioSource* alsa,AudioFormat &fmt) {
         }
     }
 
+    close_recording();
     printf("\n");
     return true;
 }
