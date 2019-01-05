@@ -1307,7 +1307,10 @@ private:
         while (len >= tmpsz) {
             _xlat(tmp,s,tmpsz);
             swd = _write_raw(tmp,tmpsz);
-            if (swd < 0) return swd;
+            if (swd < 0) {
+                delete[] tmp;
+                return swd;
+            }
             wd += swd;
             if ((unsigned int)swd != tmpsz) break;
             len -= tmpsz;
@@ -1317,7 +1320,10 @@ private:
         if (len > 0) {
             _xlat(tmp,s,len);
             swd = _write_raw(tmp,len);
-            if (swd < 0) return swd;
+            if (swd < 0) {
+                delete[] tmp;
+                return swd;
+            }
             wd += swd;
             len -= len;
             s += len;
