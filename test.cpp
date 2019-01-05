@@ -557,8 +557,12 @@ private:
 };
 #endif
 
+static std::string          ui_command;
+
 static void help(void) {
-    fprintf(stderr,"-h --help      Help text\n");
+    fprintf(stderr," -h --help      Help text\n");
+    fprintf(stderr," -c <command>\n");
+    fprintf(stderr,"    listdev      List audio devices\n");
 }
 
 static int parse_argv(int argc,char **argv) {
@@ -574,6 +578,11 @@ static int parse_argv(int argc,char **argv) {
                 help();
                 return 1;
             }
+            else if (!strcmp(a,"c")) {
+                a = argv[i++];
+                if (a == NULL) return 1;
+                ui_command = a;
+            }
             else {
                 fprintf(stderr,"Unknown switch %s\n",a);
                 return 1;
@@ -585,6 +594,11 @@ static int parse_argv(int argc,char **argv) {
         }
     }
 
+    if (ui_command.empty()) {
+        help();
+        return 1;
+    }
+
     return 0;
 }
 
@@ -592,42 +606,28 @@ int main(int argc,char **argv) {
     if (parse_argv(argc,argv))
         return 1;
 
-    {
+    if (ui_command == "listdev") {
+        std::vector<AudioDevicePair> l;
         AudioSourceALSA alsa;
-        AudioFormat fmt;
 
-        if (alsa.GetFormat(fmt) < 0) {
-            fprintf(stderr,"Failed to get format\n");
+        printf("Enumerating devices from \"%s\":\n",alsa.GetSourceName());
+
+        if (alsa.EnumDevices(l) < 0) {
+            fprintf(stderr,"Failed to enumerate devices\n");
             return 1;
         }
-        fmt.bits_per_sample = 16;
-        if (alsa.QueryFormat(fmt) < 0)
-            fprintf(stderr,"Cannot query format\n");
-        if (alsa.SetFormat(fmt) < 0)
-            fprintf(stderr,"Cannot set format\n");
-        if (alsa.Open() < 0)
-            fprintf(stderr,"Cannot open\n");
-        if (!alsa.IsOpen())
-            fprintf(stderr,"Not open\n");
 
-        fprintf(stderr,"Format: type=%u rate=%lu channels=%u bits/sample=%u bytes/frame=%u samples/frame=%u\n",
-                fmt.format_tag,
-                (unsigned long)fmt.sample_rate,
-                fmt.channels,
-                fmt.bits_per_sample,
-                fmt.bytes_per_frame,
-                fmt.samples_per_frame);
-
-        {
-            unsigned char tmp[4096+1];
-            int r;
-
-            tmp[sizeof(tmp)-1] = 'x';
-            while ((r=alsa.Read(tmp,(unsigned int)sizeof(tmp)-1u)) >= 0) {
-                write(1,tmp,(size_t)r);
-                assert(tmp[sizeof(tmp)-1] == 'x');
-            }
+        for (auto i=l.begin();i != l.end();i++) {
+            printf("    Device \"%s\":\n        which is \"%s\"\n",
+                (*i).name.c_str(),(*i).desc.c_str());
         }
+
+        printf("\n");
+        printf("Default device is \"%s\"\n",alsa.GetDeviceName());
+    }
+    else {
+        fprintf(stderr,"Unknown command '%s'\n",ui_command.c_str());
+        return 1;
     }
 
 #if defined(HAVE_ALSA)
