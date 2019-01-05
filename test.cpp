@@ -568,17 +568,24 @@ struct AudioSourceListEntry {
 };
 
 const AudioSourceListEntry audio_source_list[] = {
+#if defined(HAVE_ALSA)
     {"ALSA",
      "Linux Advanced Linux Sound Architecture",
      &AudioSourceALSA::AllocNew},
+#endif
 
     {NULL,
      NULL,
      NULL}
 };
 
-AudioSource* GetAudioSource(const char *src) {
+AudioSource* PickDefaultAudioSource(void);
+
+AudioSource* GetAudioSource(const char *src/*must not be NULL*/) {
     size_t i=0;
+
+    if (*src == 0)
+        return PickDefaultAudioSource();
 
     for (i=0;audio_source_list[i].name != NULL;i++) {
         if (!strcasecmp(src,audio_source_list[i].name))
@@ -588,8 +595,28 @@ AudioSource* GetAudioSource(const char *src) {
     return NULL;
 }
 
-const char *GetDefaultAudioSource(void) {
-    return "ALSA";
+typedef AudioSource* (*audiosourcealloc_t)(void);
+
+const audiosourcealloc_t default_source_order[] = {
+#if defined(HAVE_ALSA)
+     &AudioSourceALSA::AllocNew,
+#endif
+    NULL
+};
+
+AudioSource* PickDefaultAudioSource(void) {
+    const audiosourcealloc_t *s = default_source_order;
+
+    while (*s != NULL) {
+        AudioSource *src = (*s)();
+
+        if (src != NULL)
+            return src;
+
+        s++;
+    }
+
+    return NULL;
 }
 
 static std::string          ui_command;
@@ -641,8 +668,6 @@ static int parse_argv(int argc,char **argv) {
         help();
         return 1;
     }
-    if (ui_source.empty())
-        ui_source = GetDefaultAudioSource();
 
     return 0;
 }
