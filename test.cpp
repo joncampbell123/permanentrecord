@@ -803,7 +803,11 @@ int main(int argc,char **argv) {
             return 1;
         }
 
-        ui_apply_options(alsa,fmt);
+        if (!ui_apply_options(alsa,fmt)) {
+            alsa->Close();
+            delete alsa;
+            return 1;
+        }
 
         alsa->Close();
         delete alsa;
