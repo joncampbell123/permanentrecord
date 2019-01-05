@@ -758,6 +758,38 @@ void ui_apply_format(AudioFormat &fmt) {
         fmt.bits_per_sample = (uint8_t)ui_want_bits;
 }
 
+bool ui_apply_options(AudioSource* alsa,AudioFormat &fmt) {
+    if (alsa->SelectDevice(ui_device.c_str()) < 0) {
+        fprintf(stderr,"Unable to set device\n");
+        return false;
+    }
+
+    if (alsa->GetFormat(fmt) < 0) {
+        fprintf(stderr,"Unable to get format\n");
+        return false;
+    }
+
+    ui_apply_format(fmt);
+    if (alsa->SetFormat(fmt) < 0) {
+        fprintf(stderr,"Unable to set format\n");
+        return false;
+    }
+
+    if (alsa->GetFormat(fmt) < 0) {
+        fprintf(stderr,"Unable to get format\n");
+        return false;
+    }
+
+    printf("Recording format: %s\n",ui_print_format(fmt).c_str());
+
+    if (alsa->Open() < 0) {
+        fprintf(stderr,"Unable to open\n");
+        return false;
+    }
+
+    return true;
+}
+
 int main(int argc,char **argv) {
     if (parse_argv(argc,argv))
         return 1;
@@ -771,23 +803,7 @@ int main(int argc,char **argv) {
             return 1;
         }
 
-        if (alsa->SelectDevice(ui_device.c_str()) < 0)
-            fprintf(stderr,"WARNING: Unable to set device\n");
-
-        if (alsa->GetFormat(fmt) < 0)
-            fprintf(stderr,"WARNING: Unable to get format\n");
-
-        ui_apply_format(fmt);
-        if (alsa->SetFormat(fmt) < 0)
-            fprintf(stderr,"WARNING: Unable to set format\n");
-
-        if (alsa->GetFormat(fmt) < 0)
-            fprintf(stderr,"WARNING: Unable to get format\n");
-
-        printf("Recording format: %s\n",ui_print_format(fmt).c_str());
-
-        if (alsa->Open() < 0)
-            fprintf(stderr,"Unable to open\n");
+        ui_apply_options(alsa,fmt);
 
         alsa->Close();
         delete alsa;
