@@ -120,33 +120,8 @@ AC_COMPILE_IFELSE([AC_LANG_SOURCE([
 #endif
 ])],[],[AC_DEFINE([socklen_t],[int],[Define to `int` if you don't have socklen_t])])
 
-dnl C++0x is now considered deprecated.
-dnl This warning will stay here for a long enough period of time before making C++11 mandatory.
-
-dnl AC_CHECK_CXXFLAGS will prepend gnu++11 to CXXFLAGS if supported, for us.
-dnl our code adds -std=gnu++0x if not supported where the function would not do anything.
-dnl This code checks the CXX flags but does not keep the changes because AC_CHECK_CXXFLAGS
-dnl also adds it to CPPFLAGS which then also affects the C compilation (with warnings like
-dnl "-std=gnu++11 is not valid for C")
-OLDCFLAGS="$CFLAGS"
-OLDCPPFLAGS="$CPPFLAGS"
-OLDCXXFLAGS="$CXXFLAGS"
-
 AC_MSG_CHECKING([checking for C++11 support])
-AC_CHECK_CXXFLAGS([ -std=gnu++11 ], [  ], [
-    warn_cpp0x=1
-])
-
-CXXFLAGS="$OLDCXXFLAGS"
-CPPFLAGS="$OLDCPPFLAGS"
-CFLAGS="$OLDCFLAGS"
-
-if test x$warn_cpp0x = x1; then
-    AC_MSG_ERROR([ Your compiler must support C++11 or better ])
-fi
-
-CFLAGS="$CFLAGS -std=gnu11";
-CXXFLAGS="$CXXFLAGS -std=gnu++11";
+AC_CHECK_CXXFLAGS([ -std=gnu++11 ], [  ], [ ])
 
 dnl FIXME: Remove default "-O2" set by some autotools versions. TODO: check availability of sed.
 CFLAGS=["`echo $CFLAGS' ' | sed -e 's/-O[^ ]* //g'`"]

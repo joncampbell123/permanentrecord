@@ -6333,11 +6333,6 @@ $as_echo "#define socklen_t int" >>confdefs.h
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 
-
-OLDCFLAGS="$CFLAGS"
-OLDCPPFLAGS="$CPPFLAGS"
-OLDCXXFLAGS="$CXXFLAGS"
-
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking checking for C++11 support" >&5
 $as_echo_n "checking checking for C++11 support... " >&6; }
 
@@ -6376,21 +6371,8 @@ else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 
-    warn_cpp0x=1
-
 fi
 
-
-CXXFLAGS="$OLDCXXFLAGS"
-CPPFLAGS="$OLDCPPFLAGS"
-CFLAGS="$OLDCFLAGS"
-
-if test x$warn_cpp0x = x1; then
-    as_fn_error $? " Your compiler must support C++11 or better " "$LINENO" 5
-fi
-
-CFLAGS="$CFLAGS -std=gnu11";
-CXXFLAGS="$CXXFLAGS -std=gnu++11";
 
 CFLAGS="`echo $CFLAGS' ' | sed -e 's/-O[^ ]* //g'`"
 CXXFLAGS="`echo $CXXFLAGS' ' | sed -e 's/-O[^ ]* //g'`"
