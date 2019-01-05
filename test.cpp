@@ -1094,6 +1094,8 @@ static const uint32_t _RIFF_fourcc_WAVE = 0x57415645;       /* 'WAVE' */
 #define RIFF_fourcc_WAVE            be32toh(_RIFF_fourcc_WAVE)
 static const uint32_t _RIFF_fourcc_fmt  = 0x666D7420;       /* 'fmt ' */
 #define RIFF_fourcc_fmt             be32toh(_RIFF_fourcc_fmt)
+static const uint32_t _RIFF_fourcc_data = 0x64617461;       /* 'data' */
+#define RIFF_fourcc_data            be32toh(_RIFF_fourcc_data)
 
 const windows_GUID windows_KSDATAFORMAT_SUBTYPE_PCM = /* 00000001-0000-0010-8000-00aa00389b71 */
 	{htole32(0x00000001),htole16(0x0000),htole16(0x0010),{0x80,0x00},{0x00,0xaa,0x00,0x38,0x9b,0x71}};
@@ -1122,7 +1124,7 @@ public:
         }
 
         lchk.listcc = RIFF_listcc_RIFF;
-        lchk.length = 0xFFFFFFFFu; /* placeholder until finalized. no byte swapping needed, value is a palindrome */
+        lchk.length = 0xFFFFFFFFul; /* placeholder until finalized. no byte swapping needed, value is a palindrome */
         lchk.fourcc = RIFF_fourcc_WAVE;
         if (write(fd,&lchk,sizeof(lchk)) != sizeof(lchk)) {
             Close();
@@ -1137,6 +1139,14 @@ public:
             return false;
         }
         if ((size_t)write(fd,fmt,fmt_size) != fmt_size) {
+            Close();
+            return false;
+        }
+
+        /* then start the 'data' chunk. WAVE output will follow. */
+        chk.fourcc = RIFF_fourcc_data;
+        chk.length = (uint32_t)(0xFFFFFFFFul + 1ul - 12ul - 8ul - (unsigned long)fmt_size); /* placeholder until finalized */
+        if (write(fd,&chk,sizeof(chk)) != sizeof(chk)) {
             Close();
             return false;
         }
