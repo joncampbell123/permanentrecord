@@ -1,4 +1,7 @@
 
+#ifndef __AUFMT_H
+#define __AUFMT_H
+
 enum {
     AFMT_PCMU=1,
     AFMT_PCMS=2
@@ -17,4 +20,6 @@ struct AudioFormat {
     void updateFrameInfo_NONE(void);
     void updateFrameInfo(void);
 };
+
+#endif //__AUFMT_H
 
