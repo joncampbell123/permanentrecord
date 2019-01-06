@@ -17,19 +17,12 @@
 #include "common.h"
 #include "monclock.h"
 #include "aufmt.h"
+#include "audev.h"
 
 #if defined(HAVE_ALSA)
 # define ALSA_PCM_NEW_HW_PARAMS_API
 # include <alsa/asoundlib.h>
 #endif
-
-struct AudioOptionPair {
-    std::string         name,value;
-};
-
-struct AudioDevicePair {
-    std::string         name,desc;
-};
 
 class AudioSource {
 public:
