@@ -4,11 +4,11 @@ EXTRA_DIST = autogen.sh
 #SUBDIRS = src include
 
 bin_PROGRAMS = \
-	test
+	permrec_audio
 
-test_SOURCES = test.cpp
-test_CXXFLAGS = $(AM_CXXFLAGS) $(AM_CFLAGS) $(ALSA_CFLAGS)
-test_LDFLAGS = $(AM_LDFLAGS) $(ALSA_LIBS)
+permrec_audio_SOURCES = permrec_audio.cpp
+permrec_audio_CXXFLAGS = $(AM_CXXFLAGS) $(AM_CFLAGS) $(ALSA_CFLAGS)
+permrec_audio_LDFLAGS = $(AM_LDFLAGS) $(ALSA_LIBS)
 
 if HAVE_ALSA
 endif
