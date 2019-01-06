@@ -33,27 +33,58 @@ int AudioSource::SetOption(const char *name,const char *value) {
     return -ENOSPC;
 }
 
-int AudioSource::SelectDevice(const char *str) { (void)str; return -ENOSPC; }
+int AudioSource::SelectDevice(const char *str) {
+    (void)str;
+    return -ENOSPC;
+}
 
-int AudioSource::EnumDevices(std::vector<AudioDevicePair> &names) { (void)names; return -ENOSPC; }
+int AudioSource::EnumDevices(std::vector<AudioDevicePair> &names) {
+    (void)names;
+    return -ENOSPC;
+}
 
-int AudioSource::SetFormat(const struct AudioFormat &fmt) { (void)fmt; return -ENOSPC; }
+int AudioSource::SetFormat(const struct AudioFormat &fmt) {
+    (void)fmt;
+    return -ENOSPC;
+}
 
-int AudioSource::GetFormat(struct AudioFormat &fmt) { (void)fmt; return -ENOSPC; }
+int AudioSource::GetFormat(struct AudioFormat &fmt) {
+    (void)fmt;
+    return -ENOSPC;
+}
 
-int AudioSource::QueryFormat(struct AudioFormat &fmt) { (void)fmt; return -ENOSPC; }
+int AudioSource::QueryFormat(struct AudioFormat &fmt) {
+    (void)fmt;
+    return -ENOSPC;
+}
 
-int AudioSource::Open(void) { return -ENOSPC; }
+int AudioSource::Open(void) {
+    return -ENOSPC;
+}
 
-int AudioSource::Close(void) { return -ENOSPC; }
+int AudioSource::Close(void) {
+    return -ENOSPC;
+}
 
-bool AudioSource::IsOpen(void) { return false; }
+bool AudioSource::IsOpen(void) {
+    return false;
+}
 
-int AudioSource::GetAvailable(void) { return -ENOSPC; }
+int AudioSource::GetAvailable(void) {
+    return -ENOSPC;
+}
 
-int AudioSource::Read(void *buffer,unsigned int bytes) { (void)buffer; (void)bytes; return -ENOSPC; }
+int AudioSource::Read(void *buffer,unsigned int bytes) {
+    (void)buffer;
+    (void)bytes;
+    return -ENOSPC;
+}
 
-const char *AudioSource::GetSourceName(void) { return "baseclass"; }
+const char *AudioSource::GetSourceName(void) {
+    return "baseclass";
+}
 
-const char *AudioSource::GetDeviceName(void) { return ""; }
+const char *AudioSource::GetDeviceName(void) {
+    return "";
+}
 
