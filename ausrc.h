@@ -1,4 +1,7 @@
 
+#ifndef __AUSRC_H
+#define __AUSRC_H
+
 #include "common.h"
 #include "audev.h"
 
@@ -22,4 +25,6 @@ public:
     virtual const char* GetSourceName(void);
     virtual const char* GetDeviceName(void);
 };
+
+#endif //__AUSRC_H
 

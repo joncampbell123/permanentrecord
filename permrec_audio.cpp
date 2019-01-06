@@ -19,6 +19,7 @@
 #include "aufmt.h"
 #include "audev.h"
 #include "ausrc.h"
+#include "ausrcls.h"
 
 #if defined(HAVE_ALSA)
 # define ALSA_PCM_NEW_HW_PARAMS_API
@@ -246,10 +247,6 @@ public:
 
         return -EINVAL;
     }
-public:
-    static AudioSource* AllocNew(void) {
-        return new AudioSourceALSA();
-    }
 private:
     snd_pcm_t*			        alsa_pcm;
     snd_pcm_hw_params_t*		alsa_pcm_hw_params;
@@ -471,65 +468,11 @@ private:
         }
     }
 };
-#endif
 
-struct AudioSourceListEntry {
-    const char*             name;
-    const char*             desc;
-    AudioSource*            (*alloc)(void);
-};
-
-const AudioSourceListEntry audio_source_list[] = {
-#if defined(HAVE_ALSA)
-    {"ALSA",
-     "Linux Advanced Linux Sound Architecture",
-     &AudioSourceALSA::AllocNew},
-#endif
-
-    {NULL,
-     NULL,
-     NULL}
-};
-
-AudioSource* PickDefaultAudioSource(void);
-
-AudioSource* GetAudioSource(const char *src/*must not be NULL*/) {
-    size_t i=0;
-
-    if (*src == 0)
-        return PickDefaultAudioSource();
-
-    for (i=0;audio_source_list[i].name != NULL;i++) {
-        if (!strcasecmp(src,audio_source_list[i].name))
-            return audio_source_list[i].alloc();
-    }
-
-    return NULL;
+AudioSource* AudioSourceALSA_Alloc(void) {
+    return new AudioSourceALSA();
 }
-
-typedef AudioSource* (*audiosourcealloc_t)(void);
-
-const audiosourcealloc_t default_source_order[] = {
-#if defined(HAVE_ALSA)
-     &AudioSourceALSA::AllocNew,
 #endif
-    NULL
-};
-
-AudioSource* PickDefaultAudioSource(void) {
-    const audiosourcealloc_t *s = default_source_order;
-
-    while (*s != NULL) {
-        AudioSource *src = (*s)();
-
-        if (src != NULL)
-            return src;
-
-        s++;
-    }
-
-    return NULL;
-}
 
 static std::string          ui_command;
 static std::string          ui_source;
