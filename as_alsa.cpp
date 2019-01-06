@@ -211,7 +211,7 @@ public:
 
             snd_pcm_avail_delay(alsa_pcm,&avail,&delay);
 
-            return (int)(avail * chosen_format.bytes_per_frame);
+            return (int)((unsigned long)avail * (unsigned long)chosen_format.bytes_per_frame);
         }
 
         return 0;

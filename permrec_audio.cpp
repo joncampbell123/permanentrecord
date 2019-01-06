@@ -288,7 +288,7 @@ void VU_advance_pcmu_32(const uint32_t *audio_tmp,unsigned int rds) {
 
     while (rds-- > 0u) {
         for (ch=0;ch < rec_fmt.channels;ch++) {
-            unsigned int val = (unsigned int)labs(((long)audio_tmp[ch] - 0x80000000l) / 32768l);
+            unsigned int val = (unsigned int)labs(((long)((int32_t)(audio_tmp[ch] ^ (uint32_t)0x80000000ul))) / 32768l);
             VU_advance_ch(ch,val);
         }
 
