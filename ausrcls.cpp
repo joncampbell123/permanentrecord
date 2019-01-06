@@ -49,11 +49,11 @@ const AudioSourceListEntry audio_source_list[] = {
 };
 
 const audiosourcealloc_t default_source_order[] = {
-#if defined(HAVE_PULSE)
-    &AudioSourcePULSE_Alloc,
-#endif
 #if defined(HAVE_ALSA)
     &AudioSourceALSA_Alloc,
+#endif
+#if defined(HAVE_PULSE)/*PulseAudio has weird latency issues with my sound card, imposing a 32768 byte fragment size???*/
+    &AudioSourcePULSE_Alloc,
 #endif
     NULL
 };
