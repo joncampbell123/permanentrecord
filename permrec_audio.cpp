@@ -1223,8 +1223,6 @@ void close_recording(void) {
     }
 }
 
-std::string ui_print_format(AudioFormat &fmt);
-
 const time_t cut_interval = (time_t)60 * (time_t)60; // 1 hour, on the hour
 
 time_t next_auto_cut = 0;
