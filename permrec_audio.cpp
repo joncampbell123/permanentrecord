@@ -671,7 +671,7 @@ void ui_recording_draw(void) {
             im = (unsigned int)((d * barl) + 0.5);
             for (i=0;i < im;i++) tmp[i] = '=';
             for (   ;i < barl;i++) tmp[i] = ' ';
-            tmp[i++] = VUclip[ch] > 0l ? '@' : ' ';
+            tmp[i++] = VUclip[ch] > 0l ? '@' : '|';
             tmp[i++] = 0;
             assert(i <= sizeof(tmp));
 
