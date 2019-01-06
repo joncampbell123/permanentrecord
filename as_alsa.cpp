@@ -160,7 +160,7 @@ public:
             return -EBUSY;
 
         if (!format_is_valid(fmt))
-            return false;
+            return -EINVAL;
 
         if (!alsa_open())
             return -ENODEV;

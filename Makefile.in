@@ -105,6 +105,7 @@ am_permrec_audio_OBJECTS = permrec_audio-permrec_audio.$(OBJEXT) \
 	permrec_audio-aufmtui.$(OBJEXT) permrec_audio-dbfs.$(OBJEXT) \
 	permrec_audio-autocut.$(OBJEXT) \
 	permrec_audio-as_alsa.$(OBJEXT) \
+	permrec_audio-as_pulse.$(OBJEXT) \
 	permrec_audio-wavwrite.$(OBJEXT) \
 	permrec_audio-recpath.$(OBJEXT)
 permrec_audio_OBJECTS = $(am_permrec_audio_OBJECTS)
@@ -302,9 +303,9 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 EXTRA_DIST = autogen.sh
-permrec_audio_SOURCES = permrec_audio.cpp common.cpp monclock.cpp aufmt.cpp ausrc.cpp ausrcls.cpp aufmtui.cpp dbfs.cpp autocut.cpp as_alsa.cpp wavwrite.cpp recpath.cpp
-permrec_audio_CXXFLAGS = $(AM_CXXFLAGS) $(AM_CFLAGS) $(ALSA_CFLAGS)
-permrec_audio_LDFLAGS = $(AM_LDFLAGS) $(ALSA_LIBS)
+permrec_audio_SOURCES = permrec_audio.cpp common.cpp monclock.cpp aufmt.cpp ausrc.cpp ausrcls.cpp aufmtui.cpp dbfs.cpp autocut.cpp as_alsa.cpp as_pulse.cpp wavwrite.cpp recpath.cpp
+permrec_audio_CXXFLAGS = $(AM_CXXFLAGS) $(AM_CFLAGS) $(ALSA_CFLAGS) $(PULSE_CFLAGS)
+permrec_audio_LDFLAGS = $(AM_LDFLAGS) $(ALSA_LIBS) $(PULSE_LIBS)
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
 
@@ -413,6 +414,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/permrec_audio-as_alsa.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/permrec_audio-as_pulse.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/permrec_audio-aufmt.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/permrec_audio-aufmtui.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/permrec_audio-ausrc.Po@am__quote@
@@ -580,6 +582,20 @@ permrec_audio-as_alsa.obj: as_alsa.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='as_alsa.cpp' object='permrec_audio-as_alsa.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(permrec_audio_CXXFLAGS) $(CXXFLAGS) -c -o permrec_audio-as_alsa.obj `if test -f 'as_alsa.cpp'; then $(CYGPATH_W) 'as_alsa.cpp'; else $(CYGPATH_W) '$(srcdir)/as_alsa.cpp'; fi`
+
+permrec_audio-as_pulse.o: as_pulse.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(permrec_audio_CXXFLAGS) $(CXXFLAGS) -MT permrec_audio-as_pulse.o -MD -MP -MF $(DEPDIR)/permrec_audio-as_pulse.Tpo -c -o permrec_audio-as_pulse.o `test -f 'as_pulse.cpp' || echo '$(srcdir)/'`as_pulse.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/permrec_audio-as_pulse.Tpo $(DEPDIR)/permrec_audio-as_pulse.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='as_pulse.cpp' object='permrec_audio-as_pulse.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(permrec_audio_CXXFLAGS) $(CXXFLAGS) -c -o permrec_audio-as_pulse.o `test -f 'as_pulse.cpp' || echo '$(srcdir)/'`as_pulse.cpp
+
+permrec_audio-as_pulse.obj: as_pulse.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(permrec_audio_CXXFLAGS) $(CXXFLAGS) -MT permrec_audio-as_pulse.obj -MD -MP -MF $(DEPDIR)/permrec_audio-as_pulse.Tpo -c -o permrec_audio-as_pulse.obj `if test -f 'as_pulse.cpp'; then $(CYGPATH_W) 'as_pulse.cpp'; else $(CYGPATH_W) '$(srcdir)/as_pulse.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/permrec_audio-as_pulse.Tpo $(DEPDIR)/permrec_audio-as_pulse.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='as_pulse.cpp' object='permrec_audio-as_pulse.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(permrec_audio_CXXFLAGS) $(CXXFLAGS) -c -o permrec_audio-as_pulse.obj `if test -f 'as_pulse.cpp'; then $(CYGPATH_W) 'as_pulse.cpp'; else $(CYGPATH_W) '$(srcdir)/as_pulse.cpp'; fi`
 
 permrec_audio-wavwrite.o: wavwrite.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(permrec_audio_CXXFLAGS) $(CXXFLAGS) -MT permrec_audio-wavwrite.o -MD -MP -MF $(DEPDIR)/permrec_audio-wavwrite.Tpo -c -o permrec_audio-wavwrite.o `test -f 'wavwrite.cpp' || echo '$(srcdir)/'`wavwrite.cpp

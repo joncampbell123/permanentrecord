@@ -28,6 +28,7 @@
 #include "recpath.h"
 
 #include "as_alsa.h"
+#include "as_pulse.h"
 
 static std::string          ui_command;
 static std::string          ui_source;
@@ -158,7 +159,7 @@ bool ui_apply_options(AudioSource* alsa,AudioFormat &fmt) {
 
     ui_apply_format(fmt);
     if (alsa->SetFormat(fmt) < 0) {
-        fprintf(stderr,"Unable to set format\n");
+        fprintf(stderr,"Unable to set format '%s'\n",ui_print_format(fmt).c_str());
         return false;
     }
 

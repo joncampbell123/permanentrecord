@@ -20,11 +20,23 @@
 #include "audev.h"
 #include "ausrcls.h"
 
+#include "as_alsa.h"
+#include "as_pulse.h"
+
 #if defined(HAVE_ALSA)
 AudioSource* AudioSourceALSA_Alloc(void);
 #endif
 
+#if defined(HAVE_PULSE)
+AudioSource* AudioSourcePULSE_Alloc(void);
+#endif
+
 const AudioSourceListEntry audio_source_list[] = {
+#if defined(HAVE_PULSE)
+    {"PULSE",
+     "PulseAudio",
+     &AudioSourcePULSE_Alloc},
+#endif
 #if defined(HAVE_ALSA)
     {"ALSA",
      "Linux Advanced Linux Sound Architecture",
@@ -37,6 +49,9 @@ const AudioSourceListEntry audio_source_list[] = {
 };
 
 const audiosourcealloc_t default_source_order[] = {
+#if defined(HAVE_PULSE)
+    &AudioSourcePULSE_Alloc,
+#endif
 #if defined(HAVE_ALSA)
     &AudioSourceALSA_Alloc,
 #endif
