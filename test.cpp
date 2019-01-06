@@ -219,13 +219,23 @@ public:
         if (!IsOpen()) {
             if (!alsa_open())
                 return false;
-            if (!alsa_apply_format(chosen_format))
-                return false;
 
-            if (snd_pcm_prepare(alsa_pcm) < 0)
+            if (!alsa_apply_format(chosen_format)) {
+                alsa_close();
                 return false;
-            if (snd_pcm_start(alsa_pcm) < 0)
+            }
+            if (snd_pcm_hw_params(alsa_pcm,alsa_pcm_hw_params) < 0) {
+                alsa_close();
                 return false;
+            }
+            if (snd_pcm_prepare(alsa_pcm) < 0) {
+                alsa_close();
+                return false;
+            }
+            if (snd_pcm_start(alsa_pcm) < 0) {
+                alsa_close();
+                return false;
+            }
 
             isUserOpen = true;
         }
@@ -456,11 +466,6 @@ private:
             else
                 alsa_channels = 2;
             snd_pcm_hw_params_set_channels(alsa_pcm,alsa_pcm_hw_params,alsa_channels);
-
-            /* apply. NOTE: This puts alsa_pcm into PREPARED state which prevents further changes.
-             *              Using this code to test formats requires calling alsa_close() afterward. */
-	        snd_pcm_hw_params(alsa_pcm,alsa_pcm_hw_params);
-            snd_pcm_hw_params_current(alsa_pcm,alsa_pcm_hw_params);
 	
             /* read back */
 	        if (snd_pcm_hw_params_get_channels(alsa_pcm_hw_params,&alsa_channels) < 0 ||
