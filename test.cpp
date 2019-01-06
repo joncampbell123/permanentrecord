@@ -217,10 +217,6 @@ public:
 
     virtual int Open(void) {
         if (!IsOpen()) {
-            if (chosen_format.format_tag == 0) {
-                if (init_format() < 0)
-                    return -EINVAL;
-            }
             if (!alsa_open())
                 return false;
             if (!alsa_apply_format(chosen_format))
@@ -263,22 +259,9 @@ public:
         alsa_close();
         return 0;
     }
-    virtual int init_format(void) {
-        if (!alsa_open())
-            return -ENODEV;
-        if (!alsa_apply_format(/*&*/chosen_format)) {
-            alsa_close();
-            return -EINVAL;
-        }
-        chosen_format.updateFrameInfo();
-        alsa_close();
-        return 0;
-    }
     virtual int GetFormat(struct AudioFormat &fmt) {
-        if (chosen_format.format_tag == 0) {
-            if (init_format() < 0)
-                return -EINVAL;
-        }
+        if (chosen_format.format_tag == 0)
+            return -EINVAL;
 
         fmt = chosen_format;
         return 0;
@@ -784,9 +767,13 @@ bool ui_apply_options(AudioSource* alsa,AudioFormat &fmt) {
         return false;
     }
 
+    fmt.format_tag = 0;
     if (alsa->GetFormat(fmt) < 0) {
-        fprintf(stderr,"Unable to get format\n");
-        return false;
+        /* some sources don't have a default */
+        fmt.format_tag = AFMT_PCMS;
+        fmt.bits_per_sample = 16;
+        fmt.sample_rate = 48000;
+        fmt.channels = 2;
     }
 
     ui_apply_format(fmt);
