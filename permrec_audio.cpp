@@ -21,6 +21,7 @@
 #include "audev.h"
 #include "ausrc.h"
 #include "ausrcls.h"
+#include "dbfs.h"
 
 #if defined(HAVE_ALSA)
 # define ALSA_PCM_NEW_HW_PARAMS_API
@@ -621,11 +622,6 @@ bool ui_apply_options(AudioSource* alsa,AudioFormat &fmt) {
     }
 
     return true;
-}
-
-/* opposite: convert sample to decibels */
-double dBFS_measure(double sample) {
-	return 20.0 * log10(sample);
 }
 
 #define OVERREAD (16u)
