@@ -1,4 +1,7 @@
 
+#ifndef __WAVSTRUC_H
+#define __WAVSTRUC_H
+
 #include <stdint.h>
 
 /* Windows WAVE format specifications. All fields little Endian */
@@ -78,4 +81,6 @@ static const uint32_t _RIFF_fourcc_data = 0x64617461;       /* 'data' */
 
 const windows_GUID windows_KSDATAFORMAT_SUBTYPE_PCM = /* 00000001-0000-0010-8000-00aa00389b71 */
 	{htole32(0x00000001),htole16(0x0000),htole16(0x0010),{0x80,0x00},{0x00,0xaa,0x00,0x38,0x9b,0x71}};
+
+#endif //__WAVSTRUC_H
 

@@ -104,7 +104,8 @@ am_permrec_audio_OBJECTS = permrec_audio-permrec_audio.$(OBJEXT) \
 	permrec_audio-ausrc.$(OBJEXT) permrec_audio-ausrcls.$(OBJEXT) \
 	permrec_audio-aufmtui.$(OBJEXT) permrec_audio-dbfs.$(OBJEXT) \
 	permrec_audio-autocut.$(OBJEXT) \
-	permrec_audio-as_alsa.$(OBJEXT)
+	permrec_audio-as_alsa.$(OBJEXT) \
+	permrec_audio-wavwrite.$(OBJEXT)
 permrec_audio_OBJECTS = $(am_permrec_audio_OBJECTS)
 permrec_audio_LDADD = $(LDADD)
 permrec_audio_LINK = $(CXXLD) $(permrec_audio_CXXFLAGS) $(CXXFLAGS) \
@@ -298,7 +299,7 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 EXTRA_DIST = autogen.sh
-permrec_audio_SOURCES = permrec_audio.cpp common.cpp monclock.cpp aufmt.cpp ausrc.cpp ausrcls.cpp aufmtui.cpp dbfs.cpp autocut.cpp as_alsa.cpp
+permrec_audio_SOURCES = permrec_audio.cpp common.cpp monclock.cpp aufmt.cpp ausrc.cpp ausrcls.cpp aufmtui.cpp dbfs.cpp autocut.cpp as_alsa.cpp wavwrite.cpp
 permrec_audio_CXXFLAGS = $(AM_CXXFLAGS) $(AM_CFLAGS) $(ALSA_CFLAGS)
 permrec_audio_LDFLAGS = $(AM_LDFLAGS) $(ALSA_LIBS)
 all: config.h
@@ -418,6 +419,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/permrec_audio-dbfs.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/permrec_audio-monclock.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/permrec_audio-permrec_audio.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/permrec_audio-wavwrite.Po@am__quote@
 
 .cpp.o:
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
@@ -574,6 +576,20 @@ permrec_audio-as_alsa.obj: as_alsa.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='as_alsa.cpp' object='permrec_audio-as_alsa.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(permrec_audio_CXXFLAGS) $(CXXFLAGS) -c -o permrec_audio-as_alsa.obj `if test -f 'as_alsa.cpp'; then $(CYGPATH_W) 'as_alsa.cpp'; else $(CYGPATH_W) '$(srcdir)/as_alsa.cpp'; fi`
+
+permrec_audio-wavwrite.o: wavwrite.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(permrec_audio_CXXFLAGS) $(CXXFLAGS) -MT permrec_audio-wavwrite.o -MD -MP -MF $(DEPDIR)/permrec_audio-wavwrite.Tpo -c -o permrec_audio-wavwrite.o `test -f 'wavwrite.cpp' || echo '$(srcdir)/'`wavwrite.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/permrec_audio-wavwrite.Tpo $(DEPDIR)/permrec_audio-wavwrite.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='wavwrite.cpp' object='permrec_audio-wavwrite.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(permrec_audio_CXXFLAGS) $(CXXFLAGS) -c -o permrec_audio-wavwrite.o `test -f 'wavwrite.cpp' || echo '$(srcdir)/'`wavwrite.cpp
+
+permrec_audio-wavwrite.obj: wavwrite.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(permrec_audio_CXXFLAGS) $(CXXFLAGS) -MT permrec_audio-wavwrite.obj -MD -MP -MF $(DEPDIR)/permrec_audio-wavwrite.Tpo -c -o permrec_audio-wavwrite.obj `if test -f 'wavwrite.cpp'; then $(CYGPATH_W) 'wavwrite.cpp'; else $(CYGPATH_W) '$(srcdir)/wavwrite.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/permrec_audio-wavwrite.Tpo $(DEPDIR)/permrec_audio-wavwrite.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='wavwrite.cpp' object='permrec_audio-wavwrite.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(permrec_audio_CXXFLAGS) $(CXXFLAGS) -c -o permrec_audio-wavwrite.obj `if test -f 'wavwrite.cpp'; then $(CYGPATH_W) 'wavwrite.cpp'; else $(CYGPATH_W) '$(srcdir)/wavwrite.cpp'; fi`
 
 ID: $(am__tagged_files)
 	$(am__define_uniq_tagged_files); mkid -fID $$unique
