@@ -9,7 +9,11 @@
 #define O_BINARY (0)
 #endif
 
+typedef uint64_t monotonic_clock_t;
+
 extern volatile int signal_to_die;
 
 void sigma(int c);
+
+monotonic_clock_t monotonic_clock();
  
