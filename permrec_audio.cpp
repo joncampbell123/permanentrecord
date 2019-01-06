@@ -15,6 +15,7 @@
 #include <math.h>
 
 #include "common.h"
+#include "monclock.h"
 
 #if defined(HAVE_ALSA)
 # define ALSA_PCM_NEW_HW_PARAMS_API
