@@ -98,7 +98,8 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_permrec_audio_OBJECTS = permrec_audio-permrec_audio.$(OBJEXT)
+am_permrec_audio_OBJECTS = permrec_audio-permrec_audio.$(OBJEXT) \
+	permrec_audio-common.$(OBJEXT)
 permrec_audio_OBJECTS = $(am_permrec_audio_OBJECTS)
 permrec_audio_LDADD = $(LDADD)
 permrec_audio_LINK = $(CXXLD) $(permrec_audio_CXXFLAGS) $(CXXFLAGS) \
@@ -292,7 +293,7 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 EXTRA_DIST = autogen.sh
-permrec_audio_SOURCES = permrec_audio.cpp
+permrec_audio_SOURCES = permrec_audio.cpp common.cpp
 permrec_audio_CXXFLAGS = $(AM_CXXFLAGS) $(AM_CFLAGS) $(ALSA_CFLAGS)
 permrec_audio_LDFLAGS = $(AM_LDFLAGS) $(ALSA_LIBS)
 all: config.h
@@ -402,6 +403,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/permrec_audio-common.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/permrec_audio-permrec_audio.Po@am__quote@
 
 .cpp.o:
@@ -433,6 +435,20 @@ permrec_audio-permrec_audio.obj: permrec_audio.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='permrec_audio.cpp' object='permrec_audio-permrec_audio.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(permrec_audio_CXXFLAGS) $(CXXFLAGS) -c -o permrec_audio-permrec_audio.obj `if test -f 'permrec_audio.cpp'; then $(CYGPATH_W) 'permrec_audio.cpp'; else $(CYGPATH_W) '$(srcdir)/permrec_audio.cpp'; fi`
+
+permrec_audio-common.o: common.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(permrec_audio_CXXFLAGS) $(CXXFLAGS) -MT permrec_audio-common.o -MD -MP -MF $(DEPDIR)/permrec_audio-common.Tpo -c -o permrec_audio-common.o `test -f 'common.cpp' || echo '$(srcdir)/'`common.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/permrec_audio-common.Tpo $(DEPDIR)/permrec_audio-common.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='common.cpp' object='permrec_audio-common.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(permrec_audio_CXXFLAGS) $(CXXFLAGS) -c -o permrec_audio-common.o `test -f 'common.cpp' || echo '$(srcdir)/'`common.cpp
+
+permrec_audio-common.obj: common.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(permrec_audio_CXXFLAGS) $(CXXFLAGS) -MT permrec_audio-common.obj -MD -MP -MF $(DEPDIR)/permrec_audio-common.Tpo -c -o permrec_audio-common.obj `if test -f 'common.cpp'; then $(CYGPATH_W) 'common.cpp'; else $(CYGPATH_W) '$(srcdir)/common.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/permrec_audio-common.Tpo $(DEPDIR)/permrec_audio-common.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='common.cpp' object='permrec_audio-common.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(permrec_audio_CXXFLAGS) $(CXXFLAGS) -c -o permrec_audio-common.obj `if test -f 'common.cpp'; then $(CYGPATH_W) 'common.cpp'; else $(CYGPATH_W) '$(srcdir)/common.cpp'; fi`
 
 ID: $(am__tagged_files)
 	$(am__define_uniq_tagged_files); mkid -fID $$unique

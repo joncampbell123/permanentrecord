@@ -14,23 +14,7 @@
 #include <time.h>
 #include <math.h>
 
-#include <string>
-#include <vector>
-#include <list>
-
-#include "config.h"
-
-#ifndef O_BINARY
-#define O_BINARY (0)
-#endif
-
-volatile int signal_to_die = 0;
-
-void sigma(int c) {
-    (void)c;
-
-    signal_to_die++;
-}
+#include "common.h"
 
 #if defined(HAVE_ALSA)
 # define ALSA_PCM_NEW_HW_PARAMS_API
