@@ -6,7 +6,7 @@ EXTRA_DIST = autogen.sh
 bin_PROGRAMS = \
 	permrec_audio
 
-permrec_audio_SOURCES = permrec_audio.cpp common.cpp monclock.cpp
+permrec_audio_SOURCES = permrec_audio.cpp common.cpp monclock.cpp aufmt.cpp
 permrec_audio_CXXFLAGS = $(AM_CXXFLAGS) $(AM_CFLAGS) $(ALSA_CFLAGS)
 permrec_audio_LDFLAGS = $(AM_LDFLAGS) $(ALSA_LIBS)
 
