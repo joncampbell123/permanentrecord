@@ -629,6 +629,7 @@ bool ui_apply_options(AudioSource* alsa,AudioFormat &fmt) {
 static unsigned char audio_tmp[4096u + OVERREAD];
 
 AudioFormat rec_fmt;
+unsigned int VU_dec = 1;
 unsigned long long framecount = 0;
 unsigned long VUclip[8];
 unsigned int VU[8];
@@ -683,11 +684,18 @@ void ui_recording_draw(void) {
     fflush(stdout);
 }
 
+void VU_init(const AudioFormat &fmt) {
+    VU_dec = (unsigned int)((4410000ul / fmt.sample_rate) / 10ul);
+    if (VU_dec == 0) VU_dec = 1;
+}
+
 void VU_advance_ch(const unsigned int ch,const unsigned int val) {
     if (VU[ch] < val)
         VU[ch] = val;
+    else if (VU[ch] >= VU_dec)
+        VU[ch] -= VU_dec;
     else if (VU[ch] > 0u)
-        VU[ch]--;
+        VU[ch] = 0;
 
     if (VU[ch] >= 0xFFF0u)
         VUclip[ch] = rec_fmt.sample_rate;
@@ -1322,6 +1330,7 @@ bool record_main(AudioSource* alsa,AudioFormat &fmt) {
     }
     framecount = 0;
     rec_fmt = fmt;
+    VU_init(fmt);
 
     if (!open_recording()) {
         fprintf(stderr,"Unable to open recording\n");
