@@ -626,6 +626,10 @@ LTLIBOBJS
 LIBOBJS
 HAVE_PTHREADS_FALSE
 HAVE_PTHREADS_TRUE
+HAVE_PULSE_FALSE
+HAVE_PULSE_TRUE
+PULSE_LIBS
+PULSE_CFLAGS
 HAVE_ALSA_FALSE
 HAVE_ALSA_TRUE
 ALSA_LIBS
@@ -746,6 +750,7 @@ enable_silent_rules
 enable_dependency_tracking
 enable_largefile
 enable_alsa
+enable_pulse
 enable_threads
 enable_pthreads
 '
@@ -767,7 +772,9 @@ PKG_CONFIG
 PKG_CONFIG_PATH
 PKG_CONFIG_LIBDIR
 ALSA_CFLAGS
-ALSA_LIBS'
+ALSA_LIBS
+PULSE_CFLAGS
+PULSE_LIBS'
 
 
 # Initialize some variables set by options.
@@ -1394,6 +1401,7 @@ Optional Features:
                           speeds up one-time build
   --disable-largefile     omit support for large files
   --enable-alsa           Enable ALSA support (yes by default)
+  --enable-pulse          Enable PulseAudio support (yes by default)
   --enable-threads        Enable multi-threaded code
   --enable-pthreads       Enable pthread support
 
@@ -1417,6 +1425,9 @@ Some influential environment variables:
               path overriding pkg-config's built-in search path
   ALSA_CFLAGS C compiler flags for ALSA, overriding pkg-config
   ALSA_LIBS   linker flags for ALSA, overriding pkg-config
+  PULSE_CFLAGS
+              C compiler flags for PULSE, overriding pkg-config
+  PULSE_LIBS  linker flags for PULSE, overriding pkg-config
 
 Use these variables to override the choices made by `configure' or to help
 it to find libraries and programs with nonstandard names/locations.
@@ -7143,6 +7154,99 @@ else
 fi
 
 
+
+pkg_failed=no
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for PULSE" >&5
+$as_echo_n "checking for PULSE... " >&6; }
+
+if test -n "$PULSE_CFLAGS"; then
+    pkg_cv_PULSE_CFLAGS="$PULSE_CFLAGS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libpulse\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "libpulse") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_PULSE_CFLAGS=`$PKG_CONFIG --cflags "libpulse" 2>/dev/null`
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+if test -n "$PULSE_LIBS"; then
+    pkg_cv_PULSE_LIBS="$PULSE_LIBS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libpulse\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "libpulse") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_PULSE_LIBS=`$PKG_CONFIG --libs "libpulse" 2>/dev/null`
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+
+
+
+if test $pkg_failed = yes; then
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
+else
+        _pkg_short_errors_supported=no
+fi
+        if test $_pkg_short_errors_supported = yes; then
+	        PULSE_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors "libpulse" 2>&1`
+        else
+	        PULSE_PKG_ERRORS=`$PKG_CONFIG --print-errors "libpulse" 2>&1`
+        fi
+	# Put the nasty error message in config.log where it belongs
+	echo "$PULSE_PKG_ERRORS" >&5
+
+	has_pulse=no
+elif test $pkg_failed = untried; then
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	has_pulse=no
+else
+	PULSE_CFLAGS=$pkg_cv_PULSE_CFLAGS
+	PULSE_LIBS=$pkg_cv_PULSE_LIBS
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	has_pulse=yes
+fi
+# Check whether --enable-pulse was given.
+if test "${enable_pulse+set}" = set; then :
+  enableval=$enable_pulse; enable_pulse=$enableval
+else
+  enable_pulse=yes
+fi
+
+if test x"$has_pulse" == x"yes" -a x"$enable_pulse" == x"yes"; then
+
+$as_echo "#define HAVE_PULSE 1" >>confdefs.h
+
+    choice=1
+else
+    choice=0
+fi
+ if test $choice = 1; then
+  HAVE_PULSE_TRUE=
+  HAVE_PULSE_FALSE='#'
+else
+  HAVE_PULSE_TRUE='#'
+  HAVE_PULSE_FALSE=
+fi
+
+
 # Check whether --enable-threads was given.
 if test "${enable_threads+set}" = set; then :
   enableval=$enable_threads; enable_threads=$enableval
@@ -7407,6 +7511,10 @@ fi
 
 if test -z "${HAVE_ALSA_TRUE}" && test -z "${HAVE_ALSA_FALSE}"; then
   as_fn_error $? "conditional \"HAVE_ALSA\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${HAVE_PULSE_TRUE}" && test -z "${HAVE_PULSE_FALSE}"; then
+  as_fn_error $? "conditional \"HAVE_PULSE\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${HAVE_PTHREADS_TRUE}" && test -z "${HAVE_PTHREADS_FALSE}"; then

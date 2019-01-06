@@ -24,6 +24,9 @@
 /* Has pthreads library */
 #undef HAVE_PTHREADS
 
+/* Has PULSE library */
+#undef HAVE_PULSE
+
 /* Define to 1 if you have the <pwd.h> header file. */
 #undef HAVE_PWD_H
 

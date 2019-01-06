@@ -183,6 +183,17 @@ else
 fi
 AM_CONDITIONAL(HAVE_ALSA, test $choice = 1)
 
+dnl --- Do you have PULSE? Do you want it?
+PKG_CHECK_MODULES([PULSE],[libpulse],[has_pulse=yes],[has_pulse=no])
+AC_ARG_ENABLE(pulse,AC_HELP_STRING([--enable-pulse],[Enable PulseAudio support (yes by default)]),enable_pulse=$enableval,enable_pulse=yes)
+if test x"$has_pulse" == x"yes" -a x"$enable_pulse" == x"yes"; then
+    AC_DEFINE(HAVE_PULSE, 1, [Has PULSE library])
+    choice=1
+else
+    choice=0
+fi
+AM_CONDITIONAL(HAVE_PULSE, test $choice = 1)
+
 dnl -- Do you want multithreading?
 AC_ARG_ENABLE(threads,AC_HELP_STRING([--enable-threads],[Enable multi-threaded code]),enable_threads=$enableval,enable_threads=yes)
 
