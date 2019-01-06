@@ -25,6 +25,7 @@
 #include "autocut.h"
 #include "wavstruc.h"
 #include "wavwrite.h"
+#include "recpath.h"
 
 #include "as_alsa.h"
 
@@ -358,37 +359,6 @@ void VU_advance(const void *audio_tmp,unsigned int rd) {
     else if (rec_fmt.format_tag == AFMT_PCMS) {
         VU_advance_pcms(audio_tmp,rd / rec_fmt.bytes_per_frame);
     }
-}
-
-std::string make_recording_path_now(void) {
-    time_t now = time(NULL);
-    struct tm *tm = localtime(&now);
-    if (tm == NULL) return std::string();
-
-    std::string rec;
-    char tmp[128];
-
-    rec = "PERMREC";
-    if (mkdir(rec.c_str(),0755) < 0) {
-        if (errno != EEXIST)
-            return std::string();
-    }
-
-    /* tm->tm_year + 1900 = current year
-     * tm->tm_mon + 1     = current month (1=January)
-     * tm->tm_mday        = current day of the month */
-    sprintf(tmp,"/%04u%02u%02u",tm->tm_year + 1900,tm->tm_mon + 1,tm->tm_mday);
-    rec += tmp;
-    if (mkdir(rec.c_str(),0755) < 0) {
-        if (errno != EEXIST)
-            return std::string();
-    }
-
-    /* caller must add file extension needed */
-    sprintf(tmp,"/TM%02u%02u%02u",tm->tm_hour,tm->tm_min,tm->tm_sec);
-    rec += tmp;
-
-    return rec;
 }
 
 std::string rec_path_wav;
