@@ -135,6 +135,19 @@ public:
 };
 
 #if defined(HAVE_ALSA)
+
+static bool alsa_atexit_set = false;
+void alsa_atexit(void) {
+    snd_config_update_free_global();
+}
+
+void alsa_atexit_init(void) {
+    if (!alsa_atexit_set) {
+        alsa_atexit_set = 1;
+        atexit(alsa_atexit);
+    }
+}
+
 class AudioSourceALSA : public AudioSource {
 public:
     AudioSourceALSA() : alsa_pcm(NULL), alsa_pcm_hw_params(NULL), alsa_device_string("default"), bytes_per_frame(0), samples_per_frame(0), isUserOpen(false) {
@@ -161,6 +174,8 @@ public:
     }
     virtual int EnumDevices(std::vector<AudioDevicePair> &names) {
         void **hints,**n;
+
+        alsa_atexit_init();
 
         names.clear();
 
@@ -528,6 +543,8 @@ private:
     }
     bool alsa_open(void) { // does NOT start capture
         int err;
+
+        alsa_atexit_init();
 
         if (alsa_pcm == NULL) {
             assert(alsa_pcm_hw_params == NULL);
@@ -1649,10 +1666,6 @@ int main(int argc,char **argv) {
         fprintf(stderr,"Unknown command '%s'\n",ui_command.c_str());
         return 1;
     }
-
-#if defined(HAVE_ALSA)
-    snd_config_update_free_global();
-#endif
 
     return 0;
 }
