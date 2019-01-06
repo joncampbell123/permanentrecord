@@ -127,7 +127,7 @@ void pulse_atexit_init(void) {
 
 class AudioSourcePULSE : public AudioSource {
 public:
-    AudioSourcePULSE() : pulse_stream(NULL), bytes_per_frame(0), samples_per_frame(0), isUserOpen(false) {
+    AudioSourcePULSE() : pulse_stream(NULL), bytes_per_frame(0), samples_per_frame(0), isUserOpen(false), pending_data(NULL), pending_data_read(NULL), pending_data_fence(NULL) {
         pasampspec.format = PA_SAMPLE_INVALID;
         chosen_format.bits_per_sample = 0;
         chosen_format.sample_rate = 0;
@@ -309,9 +309,6 @@ public:
     }
 private:
     /* arrrrgh PulseAudio why doesn't your API just allow me to ask for some number of samples? */
-    unsigned char*              pending_data;
-    unsigned char*              pending_data_read;
-    unsigned char*              pending_data_fence;
     void pending_data_free(void) {
         if (pending_data != NULL) {
             delete[] pending_data;
@@ -341,6 +338,9 @@ private:
     unsigned int                bytes_per_frame;
     unsigned int                samples_per_frame;
     bool                        isUserOpen;
+    unsigned char*              pending_data;
+    unsigned char*              pending_data_read;
+    unsigned char*              pending_data_fence;
 private:
     bool format_is_valid(const AudioFormat &fmt) {
         if (fmt.sample_rate == 0)
