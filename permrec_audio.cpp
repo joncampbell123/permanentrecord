@@ -16,46 +16,34 @@
 
 #include "common.h"
 #include "monclock.h"
+#include "aufmt.h"
 
 #if defined(HAVE_ALSA)
 # define ALSA_PCM_NEW_HW_PARAMS_API
 # include <alsa/asoundlib.h>
 #endif
 
-enum {
-    AFMT_PCMU=1,
-    AFMT_PCMS=2
-};
+void AudioFormat::updateFrameInfo_PCM(void) {
+    bytes_per_frame = ((bits_per_sample + 7u) / 8u) * channels;
+    samples_per_frame = 1;
+}
 
-struct AudioFormat {
-    uint16_t            format_tag;
-    uint32_t            sample_rate;
-    uint8_t             channels;
-    uint8_t             bits_per_sample;
+void AudioFormat::updateFrameInfo_NONE(void) {
+    bytes_per_frame = 0;
+    samples_per_frame = 0;
+}
 
-    uint32_t            bytes_per_frame;
-    uint32_t            samples_per_frame;
-
-    void updateFrameInfo_PCM(void) {
-        bytes_per_frame = ((bits_per_sample + 7u) / 8u) * channels;
-        samples_per_frame = 1;
+void AudioFormat::updateFrameInfo(void) {
+    switch (format_tag) {
+        case AFMT_PCMU:
+        case AFMT_PCMS:
+            updateFrameInfo_PCM();
+            break;
+        default:
+            updateFrameInfo_NONE();
+            break;
     }
-    void updateFrameInfo_NONE(void) {
-        bytes_per_frame = 0;
-        samples_per_frame = 0;
-    }
-    void updateFrameInfo(void) {
-        switch (format_tag) {
-            case AFMT_PCMU:
-            case AFMT_PCMS:
-                updateFrameInfo_PCM();
-                break;
-            default:
-                updateFrameInfo_NONE();
-                break;
-        }
-    }
-};
+}
 
 struct AudioOptionPair {
     std::string         name,value;
