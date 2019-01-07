@@ -33,3 +33,59 @@ Development roadmap:
   MS-DOS/GUS           (MS-DOS 32-bit, with Gravis Ultrasound)
   MS-DOS/GUS           (MS-DOS 16-bit, with Gravis Ultrasound)
 
+==== Future tools ====
+
+- Video4linux audio/video capture (adaptations to video-capture-v1-public project)
+
+  - Permanent Record mode enable
+  - Record to AVI file in PERMREC directory structure if enabled
+  - Auto-cut AVI capture on the hour every hour if enabled
+
+- Screen capture with audio
+
+  - Video capture of the whole screen
+  - Video capture of a region of the screen
+  - Video capture of a region of the screen following a specific window
+  - Video capture of a specific window (i.e. compositor-based desktops, read the window surface)
+  - With audio device (same audio devices available in audio recorder)
+
+- Internet radio recorder
+
+  - Shoutcast MP3, AAC, Ogg Vorbis (and Opus?) recorder (reading from M3U link)
+  - Auto-segmentation of audio stream, using knowledge of the codec/format to
+    cut cleanly on codec frame boundary
+  - Ask for Shoutcast metadata, and retrieve from the stream
+  - Record Shoutcast metadata in TXT file alongside recording, with file offsets where event occured
+
+  Less important:
+
+  - WinAMP TV NSV streams (do they still exist??)
+
+- Internet live stream (HLS) recorder
+
+  - Obtain the M3U8 file (HLS stream)
+  - Determine all streams
+  - Download HLS fragments to recording directory
+  - Have code re-download HLS fragments that didn't download the first time around.
+    This is a gripe of mine with FFMPEG where it tries once and gives up too easily.
+  - If the fragments are MPEG transport streams, assemble completed fragments into an M2TS
+    file (auto-cut at the top of the hour).
+  - If fragments missed (no longer available), then move the incomplete or missing fragment
+    into another MISSED subdirectory and start a new M2TS file.
+  - If the fragments are part of an MP4 file, ...? (less common, fortunately)
+  - In this way modern live streams can be reliably recorded as-is without transcoding,
+    screen capture loss, or FFMPEG remuxing the transport stream in any way.
+
+- DVB/ATSC tuner recorder
+
+  - DVB Linux API support
+  - C++ code to read /etc/channels.conf (used by DVB tools)
+  - Channel selection on startup (to tune to)
+  - Tuner/frontend to use, selection
+  - Setup tuner on startup
+  - Ask tuner for raw MPEG transport stream, and record it to a .TS or .M2TS file
+  - Auto-cut at the top of the hour
+  - UI show error status (number of TS packets with errors, etc)
+  - Possible tool to tune and generate/update /etc/channels.conf in a faster
+    more efficient manner than the stock DVB tools.
+
