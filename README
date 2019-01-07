@@ -16,11 +16,11 @@ Development roadmap:
   Linux/OSS
   Windows/WinMM        (Windows 95, NT 4.0 and higher)
   Windows/DirectSound  (Windows 95, NT 4.0 and higher)
+  Windows/CoreAudio    (Windows Vista to 7 to 8 to 10)
   MacOSX/CoreAudio     (Mac OS X Sierra, El Capitan)
 
 - Even less important:
 
-  Windows/CoreAudio    (Windows Vista to 7 to 8 to 10)
   MacOSX/CoreAudio     (Mac OS X 10.4.x on an old PowerPC based Mac Mini 32-bit)
   Windows/WinMM        (Windows 3.1 Win32s 32-bit)
   Windows/WinMM        (Windows 3.0 to 3.1 16-bit, Windows 95/NT and higher 16-bit)
