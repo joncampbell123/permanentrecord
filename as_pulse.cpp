@@ -2,7 +2,6 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <stdio.h>
-#include <endian.h>
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
@@ -27,6 +26,8 @@
 #include "as_pulse.h"
 
 #if defined(HAVE_PULSE)
+# include <endian.h>
+
 static bool pulse_atexit_set = false;
 
 static pa_context*                  pulse_context = NULL;

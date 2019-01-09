@@ -2,7 +2,6 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <stdio.h>
-#include <endian.h>
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
