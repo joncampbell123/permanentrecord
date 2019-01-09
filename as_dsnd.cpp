@@ -145,7 +145,7 @@ bool dsound_dll_init(void) {
 
 class AudioSourceDSOUND : public AudioSource {
 public:
-    AudioSourceDSOUND() : bytes_per_frame(0), samples_per_frame(0), isUserOpen(false), dsndcap(NULL), dsndcapbuf(NULL) {
+    AudioSourceDSOUND() : bytes_per_frame(0), samples_per_frame(0), isUserOpen(false), dsndcap(NULL), dsndcapbuf(NULL), readpos(0) {
         chosen_format.bits_per_sample = 0;
         chosen_format.sample_rate = 0;
         chosen_format.format_tag = 0;
@@ -398,6 +398,8 @@ private:
 			return -EINVAL;
 		if (dsndcap == NULL)
 			return -EINVAL;
+
+		readpos = 0;
 	}
 
         return true;
@@ -412,10 +414,12 @@ private:
 		dsndcap->Release();
 		dsndcap = NULL;
 	}
+	readpos = 0;
     }
 private:
     IDirectSoundCapture*			dsndcap;
     IDirectSoundCaptureBuffer*			dsndcapbuf;
+    DWORD					readpos;
 };
 
 AudioSource* AudioSourceDSOUND_Alloc(void) {
