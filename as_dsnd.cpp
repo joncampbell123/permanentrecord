@@ -293,6 +293,10 @@ public:
         return 0;
     }
     virtual int Read(void *buffer,unsigned int bytes) {
+	if (IsOpen()) {
+		return 0;
+	}
+
         return -EINVAL;
     }
 private:
