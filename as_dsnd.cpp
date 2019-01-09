@@ -72,7 +72,25 @@ void OLEToCharConvertInPlace(char *sz,int cch) {
 	}
 }
 
-// This OLE32 functions deals in WCHAR, we need TCHAR
+// This OLE32 function deals in WCHAR, we need TCHAR
+HRESULT ans_CLSIDFromString(char *sz,LPCLSID pclsid) {
+	wchar_t tmp[128]; // should be large enough for GUID strings
+	unsigned int i;
+
+	i=0;
+	while (i < 127 && sz[i] != 0) {
+		if (sz[i] > 0x7F) return E_FAIL;
+		tmp[i] = (wchar_t)sz[i];
+		i++;
+	}
+	tmp[i] = 0;
+	if (i >= 127)
+		return E_FAIL;
+
+	return __CLSIDFromString((LPOLESTR)tmp,pclsid);
+}
+
+// This OLE32 function deals in WCHAR, we need TCHAR
 int ans_StringFromGUID2(REFGUID rguid,char *sz,int cchMax) {
 	int r;
 
