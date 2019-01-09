@@ -84,6 +84,8 @@ AC_CHECK_SIZEOF(unsigned long)
 AC_CHECK_SIZEOF(unsigned long long)
 AC_CHECK_SIZEOF(int *)
 
+AC_CHECK_HEADERS([endian.h])
+
 dnl some semi complex check for sys/socket so it works on darwin as well
 AC_CHECK_HEADERS([stdlib.h sys/types.h])
 AC_CHECK_HEADERS([sys/socket.h  netinet/in.h pwd.h], [], [],
