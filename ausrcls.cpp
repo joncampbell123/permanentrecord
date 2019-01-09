@@ -51,8 +51,6 @@ const AudioSourceListEntry audio_source_list[] = {
      "Microsoft DirectSound (DirectX)",
      &AudioSourceDSOUND_Alloc},
 #endif
-
-
     {NULL,
      NULL,
      NULL}
