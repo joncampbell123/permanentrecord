@@ -398,10 +398,6 @@ private:
                 return false;
             if (!(fmt.bits_per_sample == 8 || fmt.bits_per_sample == 16 || fmt.bits_per_sample == 24 || fmt.bits_per_sample == 32))
                 return false;
-	    if (fmt.format_tag == AFMT_PCMU && fmt.bits_per_sample != 8)
-		    return false;
-	    if (fmt.format_tag == AFMT_PCMS && fmt.bits_per_sample == 8)
-		    return false;
 
             return true;
         }
@@ -438,6 +434,11 @@ private:
                     wfmt.dwChannelMask = (1ul << (unsigned long)fmt.channels) - 1ul;
                     wfmt.SubFormat = windows_KSDATAFORMAT_SUBTYPE_PCM;
                 }
+
+		if (fmt.bits_per_sample == 8)
+			fmt.format_tag = AFMT_PCMU;
+		else
+			fmt.format_tag = AFMT_PCMS;
                 break;
             default:
                 return false;
