@@ -50,6 +50,7 @@ void dsound_atexit_init(void) {
 
 static HRESULT (WINAPI *__DirectSoundEnumerate)(LPDSENUMCALLBACK lpDSEnumCallback,LPVOID lpContext) = NULL;
 static int (WINAPI *__StringFromGUID2)(REFGUID rguid,LPOLESTR lpsz,int cchMax) = NULL;
+static HRESULT (WINAPI *__CLSIDFromString)(LPOLESTR lpsz,LPCLSID pclsid) = NULL;
 
 void OLEToCharConvertInPlace(char *sz,int cch) {
 	/* convert in place, cch chars of wchar_t to cch chars of char. cch should include the NUL character. */
@@ -104,6 +105,12 @@ bool dsound_dll_init(void) {
 			(int (WINAPI*)(REFGUID,LPOLESTR,int))
 			GetProcAddress(ole32_dll,"StringFromGUID2");
 		if (__StringFromGUID2 == NULL)
+			return false;
+
+		__CLSIDFromString =
+			(HRESULT (WINAPI *)(LPOLESTR,LPCLSID))
+			GetProcAddress(ole32_dll,"CLSIDFromString");
+		if (__CLSIDFromString == NULL)
 			return false;
 	}
 
