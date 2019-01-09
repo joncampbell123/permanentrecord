@@ -424,7 +424,7 @@ private:
 private:
     IDirectSoundCapture*			    dsndcap;
     IDirectSoundCaptureBuffer*			dsndcapbuf;
-    DWORD					readpos;
+    DWORD					            readpos;
 };
 
 AudioSource* AudioSourceDSOUND_Alloc(void) {
