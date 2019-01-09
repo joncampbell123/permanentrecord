@@ -217,6 +217,16 @@ public:
                 return false;
             }
 
+	    if (dsndcap == NULL || dsndcapbuf == NULL) {
+		dsound_close();
+		return false;
+	    }
+
+	    if (dsndcapbuf->Start(DSCBSTART_LOOPING) != DS_OK) {
+		dsound_close();
+		return false;
+	    }
+
             isUserOpen = true;
         }
 
@@ -394,6 +404,7 @@ private:
     }
     void dsound_close(void) {
 	if (dsndcapbuf != NULL) {
+		dsndcapbuf->Stop();
 		dsndcapbuf->Release();
 		dsndcapbuf = NULL;
 	}
