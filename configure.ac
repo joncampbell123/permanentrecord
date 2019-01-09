@@ -86,8 +86,8 @@ AC_CHECK_SIZEOF(int *)
 
 AC_CHECK_HEADERS([endian.h])
 
-if test "x$ac_cv_header_endian_h" = xyes; then
-    CXXFLAGS="-I"'$(abs_top_srcdir)'"/filler/endian/endian.h $CXXFLAGS"
+if test "x$ac_cv_header_endian_h" != xyes; then
+    CXXFLAGS="-I"'$(abs_top_srcdir)'"/fillin/endian $CXXFLAGS"
 fi
 
 dnl some semi complex check for sys/socket so it works on darwin as well
