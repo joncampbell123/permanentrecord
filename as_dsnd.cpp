@@ -22,6 +22,7 @@
 #include "ausrcls.h"
 #include "dbfs.h"
 #include "autocut.h"
+#include "wavstruc.h"
 
 #include "as_dsnd.h"
 
@@ -316,18 +317,25 @@ private:
 		return false;
 
 	DSCBUFFERDESC dsc;
-	WAVEFORMATEX wfmt;
+	windows_WAVEFORMATEXTENSIBLE wfmt;
 
 	switch (fmt.format_tag) {
 		case AFMT_PCMU:
 		case AFMT_PCMS:
-			wfmt.wFormatTag = WAVE_FORMAT_PCM;
-			wfmt.nChannels = fmt.channels;
-			wfmt.nSamplesPerSec = fmt.sample_rate;
-			wfmt.wBitsPerSample = fmt.bits_per_sample;
-			wfmt.nBlockAlign = (WORD)(((fmt.bits_per_sample + 7u) / 8u) * (unsigned int)fmt.channels);
-			wfmt.nAvgBytesPerSec = wfmt.nBlockAlign * wfmt.nSamplesPerSec;
-			wfmt.cbSize = 0;
+			wfmt.Format.wFormatTag = WAVE_FORMAT_PCM;
+			wfmt.Format.nChannels = fmt.channels;
+			wfmt.Format.nSamplesPerSec = fmt.sample_rate;
+			wfmt.Format.wBitsPerSample = fmt.bits_per_sample;
+			wfmt.Format.nBlockAlign = (WORD)(((fmt.bits_per_sample + 7u) / 8u) * (unsigned int)fmt.channels);
+			wfmt.Format.nAvgBytesPerSec = wfmt.Format.nBlockAlign * wfmt.Format.nSamplesPerSec;
+			wfmt.Format.cbSize = 0;
+
+			if (fmt.channels > 2 || fmt.bits_per_sample > 16) {
+				wfmt.Format.cbSize = sizeof(windows_WAVEFORMATEXTENSIBLE) - sizeof(windows_WAVEFORMATEX);
+				wfmt.Samples.wValidBitsPerSample = fmt.bits_per_sample;
+				wfmt.dwChannelMask = (1ul << (unsigned long)fmt.channels) - 1ul;
+				wfmt.SubFormat = windows_KSDATAFORMAT_SUBTYPE_PCM;
+			}
 			break;
 		default:
 			return false;
@@ -341,7 +349,7 @@ private:
 	memset(&dsc,0,sizeof(dsc));
 	dsc.dwSize = sizeof(DSBUFFERDESC1); // NTS: DirectX 7.0 or older compat. We don't care for WinXP FX
 	dsc.dwBufferBytes = fmt.sample_rate * ((fmt.bits_per_sample + 7u) / 8u) * fmt.channels;
-	dsc.lpwfxFormat = &wfmt;
+	dsc.lpwfxFormat = (WAVEFORMATEX*)(&wfmt);
 
 	if (dsndcap->CreateCaptureBuffer(&dsc,&dsndcapbuf,NULL) != DS_OK)
 		return false;
