@@ -74,7 +74,7 @@ void OLEToCharConvertInPlace(char *sz,int cch) {
 }
 
 // This OLE32 function deals in WCHAR, we need TCHAR
-HRESULT ans_CLSIDFromString(char *sz,LPCLSID pclsid) {
+HRESULT ans_CLSIDFromString(const char *sz,LPCLSID pclsid) {
 	wchar_t tmp[128]; // should be large enough for GUID strings
 	unsigned int i;
 
@@ -313,7 +313,14 @@ private:
 		return -EINVAL;
 
 	if (dsndcap == NULL) {
-		if (__DirectSoundCaptureCreate(NULL/*TODO*/,&dsndcap,NULL) != DS_OK)
+		GUID g;
+
+		if (!dsound_device_string.empty()) {
+			if (ans_CLSIDFromString(dsound_device_string.c_str(),&g) != S_OK)
+				return -ENODEV;
+		}
+
+		if (__DirectSoundCaptureCreate(dsound_device_string.empty() ? NULL : (&g),&dsndcap,NULL) != DS_OK)
 			return -EINVAL;
 		if (dsndcap == NULL)
 			return -EINVAL;
