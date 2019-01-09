@@ -54,7 +54,7 @@ static HRESULT (WINAPI *__DirectSoundCaptureEnumerate)(LPDSENUMCALLBACK lpDSEnum
 static int (WINAPI *__StringFromGUID2)(REFGUID rguid,LPOLESTR lpsz,int cchMax) = NULL;
 static HRESULT (WINAPI *__CLSIDFromString)(LPOLESTR lpsz,LPCLSID pclsid) = NULL;
 
-void OLEToCharConvertInPlace(char *sz,int cch) {
+static void OLEToCharConvertInPlace(char *sz,int cch) {
 	/* convert in place, cch chars of wchar_t to cch chars of char. cch should include the NUL character. */
 	/* cch is assumed to be the valid buffer size, this code will not go past the end of the buffer. */
 	/* this is used for calls that are primarily ASCII and do not need to worry about locale,
@@ -75,7 +75,7 @@ void OLEToCharConvertInPlace(char *sz,int cch) {
 }
 
 // This OLE32 function deals in WCHAR, we need TCHAR
-HRESULT ans_CLSIDFromString(const char *sz,LPCLSID pclsid) {
+static HRESULT ans_CLSIDFromString(const char *sz,LPCLSID pclsid) {
 	wchar_t tmp[128]; // should be large enough for GUID strings
 	unsigned int i;
 
@@ -93,7 +93,7 @@ HRESULT ans_CLSIDFromString(const char *sz,LPCLSID pclsid) {
 }
 
 // This OLE32 function deals in WCHAR, we need TCHAR
-int ans_StringFromGUID2(REFGUID rguid,char *sz,int cchMax) {
+static int ans_StringFromGUID2(REFGUID rguid,char *sz,int cchMax) {
 	int r;
 
 	r = __StringFromGUID2(rguid,(LPOLESTR)sz,/*size from chars to wchar_t of buffer*/(int)((unsigned int)cchMax / sizeof(wchar_t)));
