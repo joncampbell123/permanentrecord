@@ -6429,6 +6429,7 @@ case "$host" in
     # MinGW please do not make our EXE dependent on MinGW DLLs
     CXXFLAGS="$CXXFLAGS -static -static-libgcc"
     LDFLAGS="$LDFLAGS -static -static-libgcc"
+    enable_alt_dsound=yes
     ;;
 esac
 
@@ -7079,6 +7080,9 @@ fi
 
 done
 
+if test x"$enable_alt_dsound" == x"yes" -a x"$have_dsound" != x"yes"; then
+	echo fillin
+fi
 if test x"$have_dsound" = x"yes"; then
     LDFLAGS="$LDFLAGS -ldsound"
 

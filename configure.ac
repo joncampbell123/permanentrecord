@@ -144,6 +144,7 @@ case "$host" in
     # MinGW please do not make our EXE dependent on MinGW DLLs
     CXXFLAGS="$CXXFLAGS -static -static-libgcc"
     LDFLAGS="$LDFLAGS -static -static-libgcc"
+    enable_alt_dsound=yes
     ;;
 esac
 
@@ -228,6 +229,9 @@ AM_CONDITIONAL(HAVE_PTHREADS, test $choice = 1)
 
 # directsound?
 AC_CHECK_HEADERS([dsound.h], have_dsound=yes, , )
+if test x"$enable_alt_dsound" == x"yes" -a x"$have_dsound" != x"yes"; then
+	echo fillin
+fi
 if test x"$have_dsound" = x"yes"; then
     LDFLAGS="$LDFLAGS -ldsound"
     AC_DEFINE(C_DSOUND, 1, [ Define to 1 to enable DirectSound support ])
