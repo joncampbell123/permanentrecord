@@ -168,40 +168,40 @@ public:
         return -EBUSY;
     }
     static BOOL CALLBACK cb_dsenum(LPGUID lpGuid,LPCSTR lpcstrDescription,LPCSTR lpcstrModule,LPVOID lpContext) {
-            assert(lpContext != NULL);
-            std::vector<AudioDevicePair> &names = *((std::vector<AudioDevicePair>*)lpContext);
+        assert(lpContext != NULL);
+        std::vector<AudioDevicePair> &names = *((std::vector<AudioDevicePair>*)lpContext);
 
-	    AudioDevicePair p;
-	    char tmp[256];
+        AudioDevicePair p;
+        char tmp[256];
 
-	    // NTS: lpGuid == NULL for primary device
-	    if (lpGuid != NULL) {
-		    tmp[sizeof(tmp)-1] = 0;
-		    ans_StringFromGUID2(*lpGuid,tmp,sizeof(tmp)-1);
-		    p.name = tmp;
-	    }
+        // NTS: lpGuid == NULL for primary device
+        if (lpGuid != NULL) {
+            tmp[sizeof(tmp)-1] = 0;
+            ans_StringFromGUID2(*lpGuid,tmp,sizeof(tmp)-1);
+            p.name = tmp;
+        }
 
-	    p.desc = lpcstrDescription != NULL ? lpcstrDescription : "";
-	    if (lpcstrModule != NULL && *lpcstrModule != 0) {
-		    p.desc += " [";
-		    p.desc += lpcstrModule;
-		    p.desc += "]";
-	    }
+        p.desc = lpcstrDescription != NULL ? lpcstrDescription : "";
+        if (lpcstrModule != NULL && *lpcstrModule != 0) {
+            p.desc += " [";
+            p.desc += lpcstrModule;
+            p.desc += "]";
+        }
 
-	    names.push_back(p);
+        names.push_back(p);
 
-	    return TRUE;
+        return TRUE;
     }
     virtual int EnumDevices(std::vector<AudioDevicePair> &names) {
-	if (!dsound_dll_init())
-		return -EINVAL;
+        if (!dsound_dll_init())
+            return -EINVAL;
 
         names.clear();
 
-	if (__DirectSoundCaptureEnumerate(cb_dsenum,(void*)(&names)) != DS_OK)
-		return -EINVAL;
+        if (__DirectSoundCaptureEnumerate(cb_dsenum,(void*)(&names)) != DS_OK)
+            return -EINVAL;
 
-	return 0;
+        return 0;
     }
     virtual bool IsOpen(void) { return isUserOpen; }
     virtual const char *GetSourceName(void) { return "DirectSound (DirectX)"; }
@@ -317,64 +317,64 @@ private:
         return false;
     }
     bool dsound_apply_format(AudioFormat &fmt) {
-	if (fmt.format_tag == 0)
-		return false;
+        if (fmt.format_tag == 0)
+            return false;
 
-	if (dsndcap == NULL)
-		return false;
+        if (dsndcap == NULL)
+            return false;
 
-	if (fmt.format_tag == 0)
-		return false;
+        if (fmt.format_tag == 0)
+            return false;
 
-	DSCBUFFERDESC dsc;
-	windows_WAVEFORMATEXTENSIBLE wfmt;
+        DSCBUFFERDESC dsc;
+        windows_WAVEFORMATEXTENSIBLE wfmt;
 
-	switch (fmt.format_tag) {
-		case AFMT_PCMU:
-		case AFMT_PCMS:
-			wfmt.Format.wFormatTag = WAVE_FORMAT_PCM;
-			wfmt.Format.nChannels = fmt.channels;
-			wfmt.Format.nSamplesPerSec = fmt.sample_rate;
-			wfmt.Format.wBitsPerSample = fmt.bits_per_sample;
-			wfmt.Format.nBlockAlign = (WORD)(((fmt.bits_per_sample + 7u) / 8u) * (unsigned int)fmt.channels);
-			wfmt.Format.nAvgBytesPerSec = wfmt.Format.nBlockAlign * wfmt.Format.nSamplesPerSec;
-			wfmt.Format.cbSize = 0;
+        switch (fmt.format_tag) {
+            case AFMT_PCMU:
+            case AFMT_PCMS:
+                wfmt.Format.wFormatTag = WAVE_FORMAT_PCM;
+                wfmt.Format.nChannels = fmt.channels;
+                wfmt.Format.nSamplesPerSec = fmt.sample_rate;
+                wfmt.Format.wBitsPerSample = fmt.bits_per_sample;
+                wfmt.Format.nBlockAlign = (WORD)(((fmt.bits_per_sample + 7u) / 8u) * (unsigned int)fmt.channels);
+                wfmt.Format.nAvgBytesPerSec = wfmt.Format.nBlockAlign * wfmt.Format.nSamplesPerSec;
+                wfmt.Format.cbSize = 0;
 
-			if (fmt.channels > 2 || fmt.bits_per_sample > 16) {
-				wfmt.Format.cbSize = sizeof(windows_WAVEFORMATEXTENSIBLE) - sizeof(windows_WAVEFORMATEX);
-				wfmt.Samples.wValidBitsPerSample = fmt.bits_per_sample;
-				wfmt.dwChannelMask = (1ul << (unsigned long)fmt.channels) - 1ul;
-				wfmt.SubFormat = windows_KSDATAFORMAT_SUBTYPE_PCM;
-			}
-			break;
-		default:
-			return false;
-	}
+                if (fmt.channels > 2 || fmt.bits_per_sample > 16) {
+                    wfmt.Format.cbSize = sizeof(windows_WAVEFORMATEXTENSIBLE) - sizeof(windows_WAVEFORMATEX);
+                    wfmt.Samples.wValidBitsPerSample = fmt.bits_per_sample;
+                    wfmt.dwChannelMask = (1ul << (unsigned long)fmt.channels) - 1ul;
+                    wfmt.SubFormat = windows_KSDATAFORMAT_SUBTYPE_PCM;
+                }
+                break;
+            default:
+                return false;
+        }
 
-	if (dsndcapbuf != NULL) {
-		dsndcapbuf->Release();
-		dsndcapbuf = NULL;
-	}
+        if (dsndcapbuf != NULL) {
+            dsndcapbuf->Release();
+            dsndcapbuf = NULL;
+        }
 
-	memset(&dsc,0,sizeof(dsc));
-	dsc.dwSize = sizeof(DSBUFFERDESC1); // NTS: DirectX 7.0 or older compat. We don't care for WinXP FX
-	dsc.dwBufferBytes = fmt.sample_rate * ((fmt.bits_per_sample + 7u) / 8u) * fmt.channels;
-	dsc.lpwfxFormat = (WAVEFORMATEX*)(&wfmt);
+        memset(&dsc,0,sizeof(dsc));
+        dsc.dwSize = sizeof(DSBUFFERDESC1); // NTS: DirectX 7.0 or older compat. We don't care for WinXP FX
+        dsc.dwBufferBytes = fmt.sample_rate * ((fmt.bits_per_sample + 7u) / 8u) * fmt.channels;
+        dsc.lpwfxFormat = (WAVEFORMATEX*)(&wfmt);
 
-	if (dsndcap->CreateCaptureBuffer(&dsc,&dsndcapbuf,NULL) != DS_OK)
-		return false;
+        if (dsndcap->CreateCaptureBuffer(&dsc,&dsndcapbuf,NULL) != DS_OK)
+            return false;
 
-	{
-		DWORD fmtsz=0;
-		if (dsndcapbuf->GetFormat(NULL,4096/*assume API stupidity*/,&fmtsz) != DS_OK)
-			return false;
-		if (fmtsz > sizeof(wfmt))
-			return false;
-		if (dsndcapbuf->GetFormat((WAVEFORMATEX*)(&wfmt),sizeof(wfmt),&fmtsz) != DS_OK)
-			return false;
+        {
+            DWORD fmtsz=0;
+            if (dsndcapbuf->GetFormat(NULL,4096/*assume API stupidity*/,&fmtsz) != DS_OK)
+                return false;
+            if (fmtsz > sizeof(wfmt))
+                return false;
+            if (dsndcapbuf->GetFormat((WAVEFORMATEX*)(&wfmt),sizeof(wfmt),&fmtsz) != DS_OK)
+                return false;
 
-		fmt.sample_rate = wfmt.Format.nSamplesPerSec;
-	}
+            fmt.sample_rate = wfmt.Format.nSamplesPerSec;
+        }
 
         return true;
     }
@@ -383,38 +383,38 @@ private:
         dsound_close();
     }
     bool dsound_open(void) { // does NOT start capture
-	if (!dsound_dll_init())
-		return -EINVAL;
+        if (!dsound_dll_init())
+            return false;
 
-	if (dsndcap == NULL) {
-		GUID g;
+        if (dsndcap == NULL) {
+            GUID g;
 
-		if (!dsound_device_string.empty()) {
-			if (ans_CLSIDFromString(dsound_device_string.c_str(),&g) != S_OK)
-				return -ENODEV;
-		}
+            if (!dsound_device_string.empty()) {
+                if (ans_CLSIDFromString(dsound_device_string.c_str(),&g) != S_OK)
+                    return false;
+            }
 
-		if (__DirectSoundCaptureCreate(dsound_device_string.empty() ? NULL : (&g),&dsndcap,NULL) != DS_OK)
-			return -EINVAL;
-		if (dsndcap == NULL)
-			return -EINVAL;
-	}
+            if (__DirectSoundCaptureCreate(dsound_device_string.empty() ? NULL : (&g),&dsndcap,NULL) != DS_OK)
+                return false;
+            if (dsndcap == NULL)
+                return false;
+        }
 
         return true;
     }
     void dsound_close(void) {
-	if (dsndcapbuf != NULL) {
-		dsndcapbuf->Stop();
-		dsndcapbuf->Release();
-		dsndcapbuf = NULL;
-	}
-	if (dsndcap != NULL) {
-		dsndcap->Release();
-		dsndcap = NULL;
-	}
+        if (dsndcapbuf != NULL) {
+            dsndcapbuf->Stop();
+            dsndcapbuf->Release();
+            dsndcapbuf = NULL;
+        }
+        if (dsndcap != NULL) {
+            dsndcap->Release();
+            dsndcap = NULL;
+        }
     }
 private:
-    IDirectSoundCapture*			dsndcap;
+    IDirectSoundCapture*			    dsndcap;
     IDirectSoundCaptureBuffer*			dsndcapbuf;
 };
 
