@@ -406,6 +406,17 @@ private:
                 return false;
             if (dsndcap == NULL)
                 return false;
+
+            /* wherever it is, that is the starting point */
+            {
+                DWORD x;
+
+                readpos = 0;
+                if (dsndcap->GetCurrentPosition(&x/*capture*/,readpos) != DS_OK)
+                    return false;
+
+                fprintf(stderr,"Init read %u\n",(unsigned int)readpos);
+            }
         }
 
         return true;
@@ -420,6 +431,8 @@ private:
             dsndcap->Release();
             dsndcap = NULL;
         }
+
+        readpos = 0;
     }
 private:
     IDirectSoundCapture*			    dsndcap;
