@@ -286,6 +286,10 @@ public:
         return 0;
     }
     virtual int GetAvailable(void) {
+	if (IsOpen()) {
+		return 0;
+	}
+
         return 0;
     }
     virtual int Read(void *buffer,unsigned int bytes) {
