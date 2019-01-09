@@ -354,6 +354,18 @@ private:
 	if (dsndcap->CreateCaptureBuffer(&dsc,&dsndcapbuf,NULL) != DS_OK)
 		return false;
 
+	{
+		DWORD fmtsz=0;
+		if (dsndcapbuf->GetFormat(NULL,4096/*assume API stupidity*/,&fmtsz) != DS_OK)
+			return false;
+		if (fmtsz > sizeof(wfmt))
+			return false;
+		if (dsndcapbuf->GetFormat((WAVEFORMATEX*)(&wfmt),sizeof(wfmt),&fmtsz) != DS_OK)
+			return false;
+
+		fmt.sample_rate = wfmt.Format.nSamplesPerSec;
+	}
+
         return true;
     }
     void dsound_force_close(void) {
