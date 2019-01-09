@@ -48,7 +48,7 @@ void dsound_atexit_init(void) {
     }
 }
 
-static HRESULT (WINAPI *__DirectSoundEnumerate)(LPDSENUMCALLBACK lpDSEnumCallback,LPVOID lpContext) = NULL;
+static HRESULT (WINAPI *__DirectSoundCaptureEnumerate)(LPDSENUMCALLBACK lpDSEnumCallback,LPVOID lpContext) = NULL;
 static int (WINAPI *__StringFromGUID2)(REFGUID rguid,LPOLESTR lpsz,int cchMax) = NULL;
 static HRESULT (WINAPI *__CLSIDFromString)(LPOLESTR lpsz,LPCLSID pclsid) = NULL;
 
@@ -107,10 +107,10 @@ bool dsound_dll_init(void) {
 
 		dsound_atexit_init();
 
-		__DirectSoundEnumerate =
+		__DirectSoundCaptureEnumerate =
 			(HRESULT (WINAPI*)(LPDSENUMCALLBACK,LPVOID))
-			GetProcAddress(dsound_dll,"DirectSoundEnumerateA");
-		if (__DirectSoundEnumerate == NULL)
+			GetProcAddress(dsound_dll,"DirectSoundCaptureEnumerateA");
+		if (__DirectSoundCaptureEnumerate == NULL)
 			return false;
 	}
 	if (ole32_dll == NULL) {
@@ -190,7 +190,7 @@ public:
 
         names.clear();
 
-	if (__DirectSoundEnumerate(cb_dsenum,(void*)(&names)) != DS_OK)
+	if (__DirectSoundCaptureEnumerate(cb_dsenum,(void*)(&names)) != DS_OK)
 		return -EINVAL;
 
 	return 0;
