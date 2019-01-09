@@ -7081,7 +7081,7 @@ fi
 done
 
 if test x"$enable_alt_dsound" == x"yes" -a x"$have_dsound" != x"yes"; then
-	echo fillin
+    CXXFLAGS="-I"'$(abs_top_srcdir)'"/fillin/dsound $CXXFLAGS"
 fi
 if test x"$have_dsound" = x"yes"; then
     LDFLAGS="$LDFLAGS -ldsound"
