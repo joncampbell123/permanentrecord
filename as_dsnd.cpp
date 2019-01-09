@@ -175,8 +175,9 @@ public:
 
 	    p.desc = lpcstrDescription != NULL ? lpcstrDescription : "";
 	    if (lpcstrModule != NULL && *lpcstrModule != 0) {
-		    p.desc += " ";
+		    p.desc += " [";
 		    p.desc += lpcstrModule;
+		    p.desc += "]";
 	    }
 
 	    names.push_back(p);
