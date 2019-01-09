@@ -222,6 +222,7 @@ public:
                 return false;
             }
 
+	    bytes_per_frame = chosen_format.bytes_per_frame;
             if (dsndcapbuf->Start(DSCBSTART_LOOPING) != DS_OK) {
                 dsound_close();
                 return false;
