@@ -15,13 +15,13 @@
 #include <stdint.h>
 
 static inline uint16_t hax_bswap_16(uint16_t v) {
-    v = ((v >> 8u) & 0xFFu) | ((v << 8u) & 0xFF00u);
+    v = (uint16_t)((((unsigned int)v >> 8u) & 0xFFu) | (((unsigned int)v << 8u) & 0xFF00u));
     return v;
 }
 
 static inline uint32_t hax_bswap_32(uint32_t v) {
-    v = ((v >> 16u) & 0x0000FFFFu) | ((v << 16u) & 0xFFFF0000u);
-    v = ((v >>  8u) & 0x00FF00FFu) | ((v <<  8u) & 0xFF00FF00u);
+    v = (uint32_t)((((unsigned long)v >> 16ul) & 0x0000FFFFul) | (((unsigned long)v << 16ul) & 0xFFFF0000ul));
+    v = (uint32_t)((((unsigned long)v >>  8ul) & 0x00FF00FFul) | (((unsigned long)v <<  8ul) & 0xFF00FF00ul));
     return v;
 }
 
