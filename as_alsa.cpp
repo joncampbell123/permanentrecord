@@ -124,29 +124,29 @@ public:
     virtual int Open(void) {
         if (!IsOpen()) {
             if (!alsa_open())
-                return false;
+                return -1;
 
             if (!alsa_apply_format(chosen_format)) {
                 alsa_close();
-                return false;
+                return -1;
             }
             if (snd_pcm_hw_params(alsa_pcm,alsa_pcm_hw_params) < 0) {
                 alsa_close();
-                return false;
+                return -1;
             }
             if (snd_pcm_prepare(alsa_pcm) < 0) {
                 alsa_close();
-                return false;
+                return -1;
             }
             if (snd_pcm_start(alsa_pcm) < 0) {
                 alsa_close();
-                return false;
+                return -1;
             }
 
             isUserOpen = true;
         }
 
-        return true;
+        return 0;
     }
     virtual int Close(void) {
         isUserOpen = false;
@@ -438,19 +438,19 @@ private:
             /* NTS: Prefer format conversion, or else on my laptop all audio will be 32-bit/sample recordings! */
             if ((err=snd_pcm_open(&alsa_pcm,alsa_device_string.c_str(),SND_PCM_STREAM_CAPTURE,SND_PCM_NONBLOCK/* | SND_PCM_NO_AUTO_CHANNELS*/ | SND_PCM_NO_AUTO_RESAMPLE/* | SND_PCM_NO_AUTO_FORMAT*/ | SND_PCM_NO_SOFTVOL)) < 0) {
                 alsa_close();
-                return -1;
+                return false;
             }
             if ((err=snd_pcm_hw_params_malloc(&alsa_pcm_hw_params)) < 0) {
                 alsa_close();
-                return -1;
+                return false;
             }
             if ((err=snd_pcm_hw_params_any(alsa_pcm,alsa_pcm_hw_params)) < 0) {
                 alsa_close();
-                return -1;
+                return false;
             }
             if ((err=snd_pcm_hw_params_set_access(alsa_pcm,alsa_pcm_hw_params,SND_PCM_ACCESS_RW_INTERLEAVED)) < 0) {
                 alsa_close();
-                return -1;
+                return false;
             }
         }
 
