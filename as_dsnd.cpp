@@ -155,7 +155,7 @@ public:
 public:
     virtual int SelectDevice(const char *str) {
         if (!IsOpen()) {
-            std::string sel = (str != NULL && *str != 0) ? str : "default";
+            std::string sel = (str != NULL && *str != 0) ? str : "";
 
             if (dsound_device_string != sel) {
                 dsound_close();
