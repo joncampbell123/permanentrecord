@@ -230,7 +230,7 @@ AM_CONDITIONAL(HAVE_PTHREADS, test $choice = 1)
 # directsound?
 AC_CHECK_HEADERS([dsound.h], have_dsound=yes, , )
 if test x"$enable_alt_dsound" == x"yes" -a x"$have_dsound" != x"yes"; then
-	echo fillin
+    CXXFLAGS="-I"'$(abs_top_srcdir)'"/fillin/dsound $CXXFLAGS"
 fi
 if test x"$have_dsound" = x"yes"; then
     LDFLAGS="$LDFLAGS -ldsound"
