@@ -3,6 +3,7 @@
 #define __WAVSTRUC_H
 
 #include <stdint.h>
+#include <endian.h>
 
 /* Windows WAVE format specifications. All fields little Endian */
 #pragma pack(push,1)
