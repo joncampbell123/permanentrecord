@@ -234,8 +234,6 @@ public:
                 readpos = 0;
                 if (dsndcapbuf->GetCurrentPosition(&x/*capture*/,&readpos) != DS_OK)
                     return false;
-
-                fprintf(stderr,"Init read %u\n",(unsigned int)readpos);
             }
 
             isUserOpen = true;
