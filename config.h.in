@@ -6,11 +6,17 @@
 /* Define to 1 if clock_gettime() is available. */
 #undef C_CLOCK_GETTIME
 
+/* Define to 1 to enable DirectSound support */
+#undef C_DSOUND
+
 /* Targeting HX DOS extender */
 #undef C_HX_DOS
 
 /* Has ALSA library */
 #undef HAVE_ALSA
+
+/* Define to 1 if you have the <dsound.h> header file. */
+#undef HAVE_DSOUND_H
 
 /* Define to 1 if you have the <endian.h> header file. */
 #undef HAVE_ENDIAN_H

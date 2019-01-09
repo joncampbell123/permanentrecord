@@ -7069,6 +7069,26 @@ else
 fi
 
 
+# directsound?
+for ac_header in dsound.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "dsound.h" "ac_cv_header_dsound_h" "$ac_includes_default"
+if test "x$ac_cv_header_dsound_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_DSOUND_H 1
+_ACEOF
+ have_dsound=yes
+fi
+
+done
+
+if test x"$have_dsound" = x"yes"; then
+    LDFLAGS="$LDFLAGS -ldsound"
+
+$as_echo "#define C_DSOUND 1" >>confdefs.h
+
+fi
+
 # clock_gettime?
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for clock_gettime in -lrt" >&5
 $as_echo_n "checking for clock_gettime in -lrt... " >&6; }

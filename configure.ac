@@ -228,6 +228,13 @@ else
 fi
 AM_CONDITIONAL(HAVE_PTHREADS, test $choice = 1)
 
+# directsound?
+AC_CHECK_HEADERS([dsound.h], have_dsound=yes, , )
+if test x"$have_dsound" = x"yes"; then
+    LDFLAGS="$LDFLAGS -ldsound"
+    AC_DEFINE(C_DSOUND, 1, [ Define to 1 to enable DirectSound support ])
+fi
+
 # clock_gettime?
 AC_CHECK_LIB(rt, clock_gettime, have_clock_gettime=yes, , )
 if test x"$have_clock_gettime" = x"yes"; then
