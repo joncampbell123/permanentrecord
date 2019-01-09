@@ -195,12 +195,12 @@ public:
     virtual int Open(void) {
         if (!IsOpen()) {
             if (!pulse_open())
-                return false;
+                return -1;
 
             isUserOpen = true;
         }
 
-        return true;
+        return 0;
     }
     virtual int Close(void) {
         isUserOpen = false;
