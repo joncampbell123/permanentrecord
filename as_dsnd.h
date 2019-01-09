@@ -1,13 +1,12 @@
 
 #include "config.h"
 
-#if defined(HAVE_DSOUND)
-# define DSOUND_PCM_NEW_HW_PARAMS_API
+#if defined(HAVE_DSOUND_H)
 # include <dsound.h>
 # include "ausrc.h"
 #endif
 
-#if defined(HAVE_DSOUND)
+#if defined(HAVE_DSOUND_H)
 void dsound_atexit(void);
 void dsound_atexit_init(void);
 AudioSource* AudioSourceDSOUND_Alloc(void);

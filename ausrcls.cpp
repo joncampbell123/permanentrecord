@@ -31,7 +31,7 @@ AudioSource* AudioSourceALSA_Alloc(void);
 AudioSource* AudioSourcePULSE_Alloc(void);
 #endif
 
-#if defined(HAVE_DSOUND)
+#if defined(HAVE_DSOUND_H)
 AudioSource* AudioSourceDSOUND_Alloc(void);
 #endif
 
@@ -46,7 +46,7 @@ const AudioSourceListEntry audio_source_list[] = {
      "Linux Advanced Linux Sound Architecture",
      &AudioSourceALSA_Alloc},
 #endif
-#if defined(HAVE_DSOUND)
+#if defined(HAVE_DSOUND_H)
     {"DSOUND",
      "Microsoft DirectSound (DirectX)",
      &AudioSourceDSOUND_Alloc},
@@ -65,7 +65,7 @@ const audiosourcealloc_t default_source_order[] = {
 #if defined(HAVE_PULSE)/*PulseAudio has weird latency issues with my sound card, imposing a 32768 byte fragment size???*/
     &AudioSourcePULSE_Alloc,
 #endif
-#if defined(HAVE_DSOUND)
+#if defined(HAVE_DSOUND_H)
     &AudioSourceDSOUND_Alloc,
 #endif
     NULL
