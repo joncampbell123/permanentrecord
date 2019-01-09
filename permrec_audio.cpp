@@ -523,6 +523,11 @@ bool record_main(AudioSource* alsa,AudioFormat &fmt) {
 }
 
 int main(int argc,char **argv) {
+#if defined(WIN32) // HACK help me figure out what is going on
+	setbuf(stdout,NULL);
+	setbuf(stderr,NULL);
+#endif
+
     if (parse_argv(argc,argv))
         return 1;
 

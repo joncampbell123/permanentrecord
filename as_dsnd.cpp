@@ -27,9 +27,13 @@
 
 #if defined(HAVE_DSOUND_H)
 static bool dsound_atexit_set = false;
+static HMODULE dsound_dll = NULL;
 
 void dsound_atexit(void) {
-// TODO: Needed?
+	if (dsound_dll != NULL) {
+		FreeLibrary(dsound_dll);
+		dsound_dll = NULL;
+	}
 }
 
 void dsound_atexit_init(void) {
@@ -37,6 +41,26 @@ void dsound_atexit_init(void) {
         dsound_atexit_set = 1;
         atexit(dsound_atexit);
     }
+}
+
+static HRESULT (WINAPI *__DirectSoundEnumerate)(LPDSENUMCALLBACK lpDSEnumCallback,LPVOID lpContext) = NULL;
+
+bool dsound_dll_init(void) {
+	if (dsound_dll == NULL) {
+		if ((dsound_dll=LoadLibrary("DSOUND.DLL")) == NULL)
+			return false;
+
+		dsound_atexit_init();
+
+		__DirectSoundEnumerate =
+			(HRESULT (WINAPI*)(LPDSENUMCALLBACK,LPVOID))
+			GetProcAddress(dsound_dll,"DirectSoundEnumerateA");
+	}
+
+	if (__DirectSoundEnumerate == NULL)
+		return false;
+
+	return true;
 }
 
 class AudioSourceDSOUND : public AudioSource {
@@ -63,12 +87,29 @@ public:
 
         return -EBUSY;
     }
+    static BOOL CALLBACK cb_dsenum(LPGUID lpGuid,LPCSTR lpcstrDescription,LPCSTR lpcstrModule,LPVOID lpContext) {
+            assert(lpContext != NULL);
+            std::vector<AudioDevicePair> &names = *((std::vector<AudioDevicePair>*)lpContext);
+
+	    AudioDevicePair p;
+
+	    p.name = lpcstrModule != NULL ? lpcstrModule : "";
+	    p.desc = lpcstrDescription != NULL ? lpcstrDescription : "";
+
+	    names.push_back(p);
+
+	    return TRUE;
+    }
     virtual int EnumDevices(std::vector<AudioDevicePair> &names) {
-        dsound_atexit_init();
+	if (!dsound_dll_init())
+		return -EINVAL;
 
         names.clear();
 
-        return 0;
+	if (__DirectSoundEnumerate(cb_dsenum,(void*)(&names)) != DS_OK)
+		return -EINVAL;
+
+	return 0;
     }
     virtual bool IsOpen(void) { return isUserOpen; }
     virtual const char *GetSourceName(void) { return "DirectSound (DirectX)"; }

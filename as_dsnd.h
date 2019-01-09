@@ -2,6 +2,7 @@
 #include "config.h"
 
 #if defined(HAVE_DSOUND_H)
+# include <mmsystem.h>
 # include <dsound.h>
 # include "ausrc.h"
 #endif
