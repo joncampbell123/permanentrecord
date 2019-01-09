@@ -28,8 +28,13 @@
 #if defined(HAVE_DSOUND_H)
 static bool dsound_atexit_set = false;
 static HMODULE dsound_dll = NULL;
+static HMODULE ole32_dll = NULL;
 
 void dsound_atexit(void) {
+	if (ole32_dll != NULL) {
+		FreeLibrary(ole32_dll);
+		ole32_dll = NULL;
+	}
 	if (dsound_dll != NULL) {
 		FreeLibrary(dsound_dll);
 		dsound_dll = NULL;
@@ -44,6 +49,37 @@ void dsound_atexit_init(void) {
 }
 
 static HRESULT (WINAPI *__DirectSoundEnumerate)(LPDSENUMCALLBACK lpDSEnumCallback,LPVOID lpContext) = NULL;
+static int (WINAPI *__StringFromGUID2)(REFGUID rguid,LPOLESTR lpsz,int cchMax) = NULL;
+
+void OLEToCharConvertInPlace(char *sz,int cch) {
+	/* convert in place, cch chars of wchar_t to cch chars of char. cch should include the NUL character. */
+	/* cch is assumed to be the valid buffer size, this code will not go past the end of the buffer. */
+	/* this is used for calls that are primarily ASCII and do not need to worry about locale,
+	 * yet for whatever reason Microsoft insisted on using OLECHAR (wchar_t) */
+	wchar_t *sw = (wchar_t*)sz;
+	int i = 0;
+
+	while (i < cch) {
+		wchar_t c = sw[i];
+
+		if (c >= 0x80)
+			sz[i] = '?';
+		else
+			sz[i] = (char)c;
+
+		i++;
+	}
+}
+
+// This OLE32 functions deals in WCHAR, we need TCHAR
+int ans_StringFromGUID2(REFGUID rguid,char *sz,int cchMax) {
+	int r;
+
+	r = __StringFromGUID2(rguid,(LPOLESTR)sz,/*size from chars to wchar_t of buffer*/cchMax / sizeof(wchar_t));
+	/* r = chars including NULL terminator (bytes is r * sizeof(wchar_t) */
+	OLEToCharConvertInPlace(sz,r);
+	return r;
+}
 
 bool dsound_dll_init(void) {
 	if (dsound_dll == NULL) {
@@ -55,10 +91,21 @@ bool dsound_dll_init(void) {
 		__DirectSoundEnumerate =
 			(HRESULT (WINAPI*)(LPDSENUMCALLBACK,LPVOID))
 			GetProcAddress(dsound_dll,"DirectSoundEnumerateA");
+		if (__DirectSoundEnumerate == NULL)
+			return false;
 	}
+	if (ole32_dll == NULL) {
+		if ((ole32_dll=LoadLibrary("OLE32.DLL")) == NULL)
+			return false;
 
-	if (__DirectSoundEnumerate == NULL)
-		return false;
+		dsound_atexit_init();
+
+		__StringFromGUID2 =
+			(int (WINAPI*)(REFGUID,LPOLESTR,int))
+			GetProcAddress(ole32_dll,"StringFromGUID2");
+		if (__StringFromGUID2 == NULL)
+			return false;
+	}
 
 	return true;
 }
@@ -92,9 +139,17 @@ public:
             std::vector<AudioDevicePair> &names = *((std::vector<AudioDevicePair>*)lpContext);
 
 	    AudioDevicePair p;
+	    char tmp[256];
 
-	    p.name = lpcstrModule != NULL ? lpcstrModule : "";
+	    tmp[sizeof(tmp)-1] = 0;
+	    ans_StringFromGUID2(*lpGuid,tmp,sizeof(tmp)-1);
+
+	    p.name = tmp;
 	    p.desc = lpcstrDescription != NULL ? lpcstrDescription : "";
+	    if (lpcstrModule != NULL && *lpcstrModule != 0) {
+		    p.desc += " ";
+		    p.desc += lpcstrModule;
+	    }
 
 	    names.push_back(p);
 
