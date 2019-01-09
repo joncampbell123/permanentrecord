@@ -1,4 +1,6 @@
 /* endian.h for platforms that do not provide it */
+#ifndef __ENDIAN_FILLIN_H
+#define __ENDIAN_FILLIN_H
 
 #define __LITTLE_ENDIAN 1234
 #define __BIG_ENDIAN    4321
@@ -54,4 +56,6 @@ static inline uint32_t hax_bswap_32(uint32_t v) {
 # define be64toh(x) (x)
 # define le64toh(x) hax_bswap_64 (x)
 #endif
+
+#endif //__ENDIAN_FILLIN_H
 
