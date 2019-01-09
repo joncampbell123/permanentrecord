@@ -179,7 +179,14 @@ AC_CHECK_CXXFLAGS([ -Wno-extended-offsetof ])
 dnl library support
 
 dnl --- Do you have ALSA? Do you want it?
-PKG_CHECK_MODULES([ALSA],[alsa],[has_alsa=yes],[has_alsa=no])
+x=`pkg-config alsa --exists`; res=$?;
+if test $res = 0; then
+    has_alsa=yes
+    r=`pkg-config alsa --cflags`
+    CXXFLAGS="$CXXFLAGS $r"
+    r=`pkg-config alsa --libs`
+    LDFLAGS="$LDFLAGS $r"
+fi
 AC_ARG_ENABLE(alsa,AC_HELP_STRING([--enable-alsa],[Enable ALSA support (yes by default)]),enable_alsa=$enableval,enable_alsa=yes)
 if test x"$has_alsa" == x"yes" -a x"$enable_alsa" == x"yes"; then
     AC_DEFINE(HAVE_ALSA, 1, [Has ALSA library])
@@ -190,7 +197,14 @@ fi
 AM_CONDITIONAL(HAVE_ALSA, test $choice = 1)
 
 dnl --- Do you have PULSE? Do you want it?
-PKG_CHECK_MODULES([PULSE],[libpulse],[has_pulse=yes],[has_pulse=no])
+x=`pkg-config libpulse --exists`; res=$?;
+if test $res = 0; then
+    has_pulse=yes
+    r=`pkg-config libpulse --cflags`
+    CXXFLAGS="$CXXFLAGS $r"
+    r=`pkg-config libpulse --libs`
+    LDFLAGS="$LDFLAGS $r"
+fi
 AC_ARG_ENABLE(pulse,AC_HELP_STRING([--enable-pulse],[Enable PulseAudio support (yes by default)]),enable_pulse=$enableval,enable_pulse=yes)
 if test x"$has_pulse" == x"yes" -a x"$enable_pulse" == x"yes"; then
     AC_DEFINE(HAVE_PULSE, 1, [Has PULSE library])
