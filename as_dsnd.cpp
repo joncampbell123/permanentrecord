@@ -145,7 +145,7 @@ bool dsound_dll_init(void) {
 
 class AudioSourceDSOUND : public AudioSource {
 public:
-    AudioSourceDSOUND() : bytes_per_frame(0), samples_per_frame(0), isUserOpen(false), dsndcap(NULL), dsndcapbuf(NULL), readpos(0) {
+    AudioSourceDSOUND() : bytes_per_frame(0), isUserOpen(false), dsndcap(NULL), dsndcapbuf(NULL), readpos(0) {
         chosen_format.bits_per_sample = 0;
         chosen_format.sample_rate = 0;
         chosen_format.format_tag = 0;
@@ -312,7 +312,6 @@ private:
     std::string                 dsound_device_string;
     AudioFormat                 chosen_format;
     unsigned int                bytes_per_frame;
-    unsigned int                samples_per_frame;
     bool                        isUserOpen;
 private:
     bool format_is_valid(const AudioFormat &fmt) {
