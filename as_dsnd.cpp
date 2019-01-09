@@ -145,7 +145,7 @@ bool dsound_dll_init(void) {
 
 class AudioSourceDSOUND : public AudioSource {
 public:
-    AudioSourceDSOUND() : bytes_per_frame(0), isUserOpen(false), dsndcap(NULL), dsndcapbuf(NULL), readpos(0) {
+    AudioSourceDSOUND() : bytes_per_frame(0), isUserOpen(false), dsndcap(NULL), dsndcapbuf(NULL), readpos(0), buffer_size(0) {
         chosen_format.bits_per_sample = 0;
         chosen_format.sample_rate = 0;
         chosen_format.format_tag = 0;
@@ -303,7 +303,15 @@ public:
         return 0;
     }
     virtual int Read(void *buffer,unsigned int bytes) {
-	if (IsOpen()) {
+	if (IsOpen() && dsndcapbuf != NULL) {
+		DWORD ncap=0,nread=readpos;
+
+		if (dsndcapbuf->GetCurrentPosition(&ncap,&nread) != DS_OK)
+			return 0;
+
+		int howmuch = (int)nread - (int)readpos;
+		if (howmuch < 0) howmuch += (int)buffer_size;
+
 		return 0;
 	}
 
@@ -378,6 +386,8 @@ private:
         dsc.dwBufferBytes = fmt.sample_rate * ((fmt.bits_per_sample + 7u) / 8u) * fmt.channels;
         dsc.lpwfxFormat = (WAVEFORMATEX*)(&wfmt);
 
+	buffer_size = dsc.dwBufferBytes;
+
         if (dsndcap->CreateCaptureBuffer(&dsc,&dsndcapbuf,NULL) != DS_OK)
             return false;
 
@@ -432,12 +442,14 @@ private:
             dsndcap = NULL;
         }
 
+	buffer_size = 0;
         readpos = 0;
     }
 private:
     IDirectSoundCapture*			    dsndcap;
     IDirectSoundCaptureBuffer*			dsndcapbuf;
     DWORD					            readpos;
+    DWORD							buffer_size;
 };
 
 AudioSource* AudioSourceDSOUND_Alloc(void) {
