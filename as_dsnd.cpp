@@ -304,15 +304,82 @@ public:
     }
     virtual int Read(void *buffer,unsigned int bytes) {
 	if (IsOpen() && dsndcapbuf != NULL) {
-		DWORD ncap=0,nread=readpos;
+		unsigned char *dbuf = (unsigned char*)buffer;
+		int patience = 2;
+		int rd = 0;
 
-		if (dsndcapbuf->GetCurrentPosition(&ncap,&nread) != DS_OK)
-			return 0;
+		/* please keep bytes at a multiple of a frame */
+		bytes -= bytes % bytes_per_frame;
 
-		int howmuch = (int)nread - (int)readpos;
-		if (howmuch < 0) howmuch += (int)buffer_size;
+		/* sanity check */
+		if (readpos == buffer_size) readpos = 0;
 
-		return 0;
+		/* process */
+		while (bytes > 0 && patience-- > 0) {
+			DWORD ncap=0,nread=readpos;
+			DWORD ptrlen=0;
+			void *ptr=NULL;
+
+			if (dsndcapbuf->GetCurrentPosition(&ncap,&nread) != DS_OK)
+				break;
+
+			/* sanity check */
+			if (nread > buffer_size) nread = buffer_size;
+
+			/* NTS: Experience with DirectSound under older versions of Windows (Windows 98 for example)
+			 *      and ISA-type devices says that it is possible for the read position to sit at an
+			 *      offset NOT a multiple of a frame. For example, back in the day on a laptop with
+			 *      Windows 98 and a OPL3-SAx sound card, 16-bit stereo capture could return an offset
+			 *      that points at the R sample in a frame instead of the L sample. */
+			nread -= nread % bytes_per_frame;
+
+			/* how much to process? */
+			int howmuch = (int)nread - (int)readpos;
+			if (howmuch < 0) howmuch += (int)buffer_size;
+			if (howmuch <= 0) break;
+			if ((unsigned int)howmuch > bytes) howmuch = (int)bytes;
+
+			/* let's not deal with two buffers considering the circular buffer, keep this code simple */
+			DWORD cando = buffer_size - readpos;
+			if ((DWORD)howmuch > cando) howmuch = (int)cando;
+			if (howmuch == 0) break;
+
+			/* lock the buffer and go */
+			if (dsndcapbuf->Lock(readpos,(DWORD)howmuch,&ptr,&ptrlen,NULL,NULL,0) != DS_OK) {
+				fprintf(stderr,"Lock error readpos %u howmuch %u bufferlen %u\n",
+					(unsigned int)readpos,(unsigned int)howmuch,(unsigned int)buffer_size);
+				break;
+			}
+
+			/* sanity check. we didn't ask for wraparound so it shouldn't happen. */
+			if (ptrlen != (DWORD)howmuch)
+				fprintf(stderr,"Lock warning, less locked than requested %u < %u\n",
+					(unsigned int)ptrlen,(unsigned int)howmuch);
+			if (ptr == NULL)
+				fprintf(stderr,"Lock warning, ptr == NULL on return (readpos %u howmuch %u bufferlen %u)\n",
+					(unsigned int)readpos,(unsigned int)howmuch,(unsigned int)buffer_size);
+
+			if (ptrlen == (DWORD)howmuch && ptr != NULL) {
+				memcpy(dbuf,ptr,(size_t)howmuch);
+				bytes -= (unsigned int)howmuch;
+				readpos += (DWORD)howmuch;
+				dbuf += howmuch;
+				rd += howmuch;
+
+				if (readpos > buffer_size)
+					fprintf(stderr,"Lock warning, readpos overrun\n");
+				if (readpos >= buffer_size)
+					readpos = 0;
+			}
+
+			/* unlock */
+			if (dsndcapbuf->Unlock(ptr,ptrlen,NULL,0) != DS_OK) {
+				fprintf(stderr,"Unlock error\n");
+				break;
+			}
+		}
+
+		return rd;
 	}
 
         return -EINVAL;
