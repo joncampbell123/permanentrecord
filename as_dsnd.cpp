@@ -429,6 +429,7 @@ private:
                 wfmt.Format.cbSize = 0;
 
                 if (fmt.channels > 2 || fmt.bits_per_sample > 16) {
+                    wfmt.Format.wFormatTag = 0xFFFEu;/*WAVE_FORMAT_EXTENSIBLE*/;
                     wfmt.Format.cbSize = sizeof(windows_WAVEFORMATEXTENSIBLE) - sizeof(windows_WAVEFORMATEX);
                     wfmt.Samples.wValidBitsPerSample = fmt.bits_per_sample;
                     wfmt.dwChannelMask = (1ul << (unsigned long)fmt.channels) - 1ul;
