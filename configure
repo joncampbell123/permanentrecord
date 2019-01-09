@@ -6288,6 +6288,10 @@ fi
 done
 
 
+if test "x$ac_cv_header_endian_h" = xyes; then
+    CXXFLAGS="-I"'$(abs_top_srcdir)'"/filler/endian/endian.h $CXXFLAGS"
+fi
+
 for ac_header in stdlib.h sys/types.h
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
