@@ -217,15 +217,26 @@ public:
                 return false;
             }
 
-	    if (dsndcap == NULL || dsndcapbuf == NULL) {
-		dsound_close();
-		return false;
-	    }
+            if (dsndcap == NULL || dsndcapbuf == NULL) {
+                dsound_close();
+                return false;
+            }
 
-	    if (dsndcapbuf->Start(DSCBSTART_LOOPING) != DS_OK) {
-		dsound_close();
-		return false;
-	    }
+            if (dsndcapbuf->Start(DSCBSTART_LOOPING) != DS_OK) {
+                dsound_close();
+                return false;
+            }
+
+            /* wherever it is, that is the starting point */
+            {
+                DWORD x;
+
+                readpos = 0;
+                if (dsndcapbuf->GetCurrentPosition(&x/*capture*/,readpos) != DS_OK)
+                    return false;
+
+                fprintf(stderr,"Init read %u\n",(unsigned int)readpos);
+            }
 
             isUserOpen = true;
         }
@@ -407,16 +418,7 @@ private:
             if (dsndcap == NULL)
                 return false;
 
-            /* wherever it is, that is the starting point */
-            {
-                DWORD x;
-
-                readpos = 0;
-                if (dsndcap->GetCurrentPosition(&x/*capture*/,readpos) != DS_OK)
-                    return false;
-
-                fprintf(stderr,"Init read %u\n",(unsigned int)readpos);
-            }
+            readpos = 0;
         }
 
         return true;
