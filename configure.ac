@@ -139,13 +139,11 @@ CXXFLAGS=["`echo $CXXFLAGS' ' | sed -e 's/-O[^ ]* //g'`"]
 CFLAGS="$CFLAGS -O2"
 CXXFLAGS="$CXXFLAGS -O2"
 
-dnl Some stuff for the icon.
 case "$host" in
     *-*-cygwin* | *-*-mingw32*)
-    if test x$enable_hx == xyes; then
-        CXXFLAGS="$CXXFLAGS -DHX_DOS"
-        AC_DEFINE(C_HX_DOS,1,[Targeting HX DOS extender])
-    fi
+    # MinGW please do not make our EXE dependent on MinGW DLLs
+    CXXFLAGS="$CXXFLAGS -static -static-libgcc"
+    LDFLAGS="$LDFLAGS -static -static-libgcc"
     ;;
 esac
 

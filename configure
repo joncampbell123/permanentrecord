@@ -6426,12 +6426,9 @@ CXXFLAGS="$CXXFLAGS -O2"
 
 case "$host" in
     *-*-cygwin* | *-*-mingw32*)
-    if test x$enable_hx == xyes; then
-        CXXFLAGS="$CXXFLAGS -DHX_DOS"
-
-$as_echo "#define C_HX_DOS 1" >>confdefs.h
-
-    fi
+    # MinGW please do not make our EXE dependent on MinGW DLLs
+    CXXFLAGS="$CXXFLAGS -static -static-libgcc"
+    LDFLAGS="$LDFLAGS -static -static-libgcc"
     ;;
 esac
 

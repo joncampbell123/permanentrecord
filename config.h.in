@@ -9,9 +9,6 @@
 /* Define to 1 to enable DirectSound support */
 #undef C_DSOUND
 
-/* Targeting HX DOS extender */
-#undef C_HX_DOS
-
 /* Has ALSA library */
 #undef HAVE_ALSA
 
