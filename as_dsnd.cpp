@@ -166,10 +166,13 @@ public:
 	    AudioDevicePair p;
 	    char tmp[256];
 
-	    tmp[sizeof(tmp)-1] = 0;
-	    ans_StringFromGUID2(*lpGuid,tmp,sizeof(tmp)-1);
+	    // NTS: lpGuid == NULL for primary device
+	    if (lpGuid != NULL) {
+		    tmp[sizeof(tmp)-1] = 0;
+		    ans_StringFromGUID2(*lpGuid,tmp,sizeof(tmp)-1);
+		    p.name = tmp;
+	    }
 
-	    p.name = tmp;
 	    p.desc = lpcstrDescription != NULL ? lpcstrDescription : "";
 	    if (lpcstrModule != NULL && *lpcstrModule != 0) {
 		    p.desc += " ";
