@@ -7068,7 +7068,14 @@ fi
 
 
 # directsound?
-for ac_header in dsound.h
+if test x"$enable_alt_dsound" == x"yes" -a x"$have_dsound" != x"yes"; then
+    CXXFLAGS="-I"'$(abs_top_srcdir)'"/fillin/dsound $CXXFLAGS"
+    have_dsound=yes
+
+$as_echo "#define HAVE_DSOUND_H 1" >>confdefs.h
+
+else
+    for ac_header in dsound.h
 do :
   ac_fn_c_check_header_mongrel "$LINENO" "dsound.h" "ac_cv_header_dsound_h" "$ac_includes_default"
 if test "x$ac_cv_header_dsound_h" = xyes; then :
@@ -7080,8 +7087,6 @@ fi
 
 done
 
-if test x"$enable_alt_dsound" == x"yes" -a x"$have_dsound" != x"yes"; then
-    CXXFLAGS="-I"'$(abs_top_srcdir)'"/fillin/dsound $CXXFLAGS"
 fi
 if test x"$have_dsound" = x"yes"; then
     LDFLAGS="$LDFLAGS -ldsound"
