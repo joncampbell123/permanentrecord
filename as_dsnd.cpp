@@ -79,7 +79,7 @@ HRESULT ans_CLSIDFromString(char *sz,LPCLSID pclsid) {
 
 	i=0;
 	while (i < 127 && sz[i] != 0) {
-		if (sz[i] > 0x7F) return E_FAIL;
+		if ((unsigned char)sz[i] > 0x7Fu) return E_FAIL;
 		tmp[i] = (wchar_t)sz[i];
 		i++;
 	}
@@ -94,7 +94,7 @@ HRESULT ans_CLSIDFromString(char *sz,LPCLSID pclsid) {
 int ans_StringFromGUID2(REFGUID rguid,char *sz,int cchMax) {
 	int r;
 
-	r = __StringFromGUID2(rguid,(LPOLESTR)sz,/*size from chars to wchar_t of buffer*/cchMax / sizeof(wchar_t));
+	r = __StringFromGUID2(rguid,(LPOLESTR)sz,/*size from chars to wchar_t of buffer*/(int)((unsigned int)cchMax / sizeof(wchar_t)));
 	/* r = chars including NULL terminator (bytes is r * sizeof(wchar_t) */
 	OLEToCharConvertInPlace(sz,r);
 	return r;
