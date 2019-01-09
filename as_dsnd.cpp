@@ -48,6 +48,7 @@ void dsound_atexit_init(void) {
     }
 }
 
+static HRESULT (WINAPI *__DirectSoundCaptureCreate)(LPCGUID lpcGUID,LPDIRECTSOUNDCAPTURE8 * lplpDSC,LPUNKNOWN pUnkOuter) = NULL;
 static HRESULT (WINAPI *__DirectSoundCaptureEnumerate)(LPDSENUMCALLBACK lpDSEnumCallback,LPVOID lpContext) = NULL;
 static int (WINAPI *__StringFromGUID2)(REFGUID rguid,LPOLESTR lpsz,int cchMax) = NULL;
 static HRESULT (WINAPI *__CLSIDFromString)(LPOLESTR lpsz,LPCLSID pclsid) = NULL;
@@ -112,6 +113,12 @@ bool dsound_dll_init(void) {
 			GetProcAddress(dsound_dll,"DirectSoundCaptureEnumerateA");
 		if (__DirectSoundCaptureEnumerate == NULL)
 			return false;
+
+		__DirectSoundCaptureCreate =
+			(HRESULT (WINAPI*)(LPCGUID,LPDIRECTSOUNDCAPTURE8*,LPUNKNOWN))
+			GetProcAddress(dsound_dll,"DirectSoundCaptureCreate");
+		if (__DirectSoundCaptureCreate == NULL)
+			return false;
 	}
 	if (ole32_dll == NULL) {
 		if ((ole32_dll=LoadLibrary("OLE32.DLL")) == NULL)
@@ -137,7 +144,7 @@ bool dsound_dll_init(void) {
 
 class AudioSourceDSOUND : public AudioSource {
 public:
-    AudioSourceDSOUND() : bytes_per_frame(0), samples_per_frame(0), isUserOpen(false) {
+    AudioSourceDSOUND() : bytes_per_frame(0), samples_per_frame(0), isUserOpen(false), dsndcap(NULL) {
         chosen_format.bits_per_sample = 0;
         chosen_format.sample_rate = 0;
         chosen_format.format_tag = 0;
@@ -302,14 +309,26 @@ private:
         dsound_close();
     }
     bool dsound_open(void) { // does NOT start capture
-        int err;
+	if (!dsound_dll_init())
+		return -EINVAL;
 
-        dsound_atexit_init();
+	if (dsndcap == NULL) {
+		if (__DirectSoundCaptureCreate(NULL/*TODO*/,&dsndcap,NULL) != DS_OK)
+			return -EINVAL;
+		if (dsndcap == NULL)
+			return -EINVAL;
+	}
 
-        return false;
+        return true;
     }
     void dsound_close(void) {
+	if (dsndcap != NULL) {
+		dsndcap->Release();
+		dsndcap = NULL;
+	}
     }
+private:
+    IDirectSoundCapture*			dsndcap;
 };
 
 AudioSource* AudioSourceDSOUND_Alloc(void) {
