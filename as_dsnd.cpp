@@ -144,7 +144,7 @@ bool dsound_dll_init(void) {
 
 class AudioSourceDSOUND : public AudioSource {
 public:
-    AudioSourceDSOUND() : bytes_per_frame(0), samples_per_frame(0), isUserOpen(false), dsndcap(NULL) {
+    AudioSourceDSOUND() : bytes_per_frame(0), samples_per_frame(0), isUserOpen(false), dsndcap(NULL), dsndcapbuf(NULL) {
         chosen_format.bits_per_sample = 0;
         chosen_format.sample_rate = 0;
         chosen_format.format_tag = 0;
@@ -295,6 +295,10 @@ private:
                 return false;
             if (!(fmt.bits_per_sample == 8 || fmt.bits_per_sample == 16 || fmt.bits_per_sample == 24 || fmt.bits_per_sample == 32))
                 return false;
+	    if (fmt.format_tag == AFMT_PCMU && fmt.bits_per_sample != 8)
+		    return false;
+	    if (fmt.format_tag == AFMT_PCMS && fmt.bits_per_sample == 8)
+		    return false;
 
             return true;
         }
@@ -302,7 +306,47 @@ private:
         return false;
     }
     bool dsound_apply_format(AudioFormat &fmt) {
-        return false;
+	if (fmt.format_tag == 0)
+		return false;
+
+	if (dsndcap == NULL)
+		return false;
+
+	if (fmt.format_tag == 0)
+		return false;
+
+	DSCBUFFERDESC dsc;
+	WAVEFORMATEX wfmt;
+
+	switch (fmt.format_tag) {
+		case AFMT_PCMU:
+		case AFMT_PCMS:
+			wfmt.wFormatTag = WAVE_FORMAT_PCM;
+			wfmt.nChannels = fmt.channels;
+			wfmt.nSamplesPerSec = fmt.sample_rate;
+			wfmt.wBitsPerSample = fmt.bits_per_sample;
+			wfmt.nBlockAlign = (WORD)(((fmt.bits_per_sample + 7u) / 8u) * (unsigned int)fmt.channels);
+			wfmt.nAvgBytesPerSec = wfmt.nBlockAlign * wfmt.nSamplesPerSec;
+			wfmt.cbSize = 0;
+			break;
+		default:
+			return false;
+	}
+
+	if (dsndcapbuf != NULL) {
+		dsndcapbuf->Release();
+		dsndcapbuf = NULL;
+	}
+
+	memset(&dsc,0,sizeof(dsc));
+	dsc.dwSize = sizeof(DSBUFFERDESC1); // NTS: DirectX 7.0 or older compat. We don't care for WinXP FX
+	dsc.dwBufferBytes = fmt.sample_rate * ((fmt.bits_per_sample + 7u) / 8u) * fmt.channels;
+	dsc.lpwfxFormat = &wfmt;
+
+	if (dsndcap->CreateCaptureBuffer(&dsc,&dsndcapbuf,NULL) != DS_OK)
+		return false;
+
+        return true;
     }
     void dsound_force_close(void) {
         Close();
@@ -329,6 +373,10 @@ private:
         return true;
     }
     void dsound_close(void) {
+	if (dsndcapbuf != NULL) {
+		dsndcapbuf->Release();
+		dsndcapbuf = NULL;
+	}
 	if (dsndcap != NULL) {
 		dsndcap->Release();
 		dsndcap = NULL;
@@ -336,6 +384,7 @@ private:
     }
 private:
     IDirectSoundCapture*			dsndcap;
+    IDirectSoundCaptureBuffer*			dsndcapbuf;
 };
 
 AudioSource* AudioSourceDSOUND_Alloc(void) {
