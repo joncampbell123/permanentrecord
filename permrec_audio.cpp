@@ -526,15 +526,21 @@ int main(int argc,char **argv) {
     if (parse_argv(argc,argv))
         return 1;
 
+#if defined(WIN32)
+#else
     /* I wrote this code in a hurry, please do not run as root. */
     /* You can enable ALSA audio access to non-root processes by modifying the user's
      * supplemental group list to add "audio", assuming the device nodes are owned by "audio" */
     if (geteuid() == 0 || getuid() == 0)
         fprintf(stderr,"WARNING: Do not run this program as root if you can help it!\n");
+#endif
 
     signal(SIGINT,sigma);
+#if defined(WIN32)
+#else
     signal(SIGQUIT,sigma);
     signal(SIGTERM,sigma);
+#endif
 
     if (ui_command == "test") {
         AudioSource* alsa = GetAudioSource(ui_source.c_str());
