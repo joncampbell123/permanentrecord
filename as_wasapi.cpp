@@ -172,6 +172,8 @@ public:
                 return -1;
             }
 
+            bytes_per_frame = chosen_format.bytes_per_frame;
+
             immacl->Reset();
             if (immacl->Start() != S_OK) {
                 fprintf(stderr,"Failed to start\n");
