@@ -240,6 +240,13 @@ if test x"$have_dsound" = x"yes"; then
     AC_DEFINE(C_DSOUND, 1, [ Define to 1 to enable DirectSound support ])
 fi
 
+# wasapi?
+AC_CHECK_HEADERS([mmdeviceapi.h], have_mmdeviceapi=yes, , )
+if test x"$have_mmdeviceapi" = x"yes"; then
+    LDFLAGS="$LDFLAGS"
+    AC_DEFINE(C_WASAPI, 1, [ Define to 1 to enable Windows Session API support ])
+fi
+
 # clock_gettime?
 AC_CHECK_LIB(rt, clock_gettime, have_clock_gettime=yes, , )
 if test x"$have_clock_gettime" = x"yes"; then
