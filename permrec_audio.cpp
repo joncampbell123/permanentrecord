@@ -540,11 +540,13 @@ int main(int argc,char **argv) {
         fprintf(stderr,"WARNING: Do not run this program as root if you can help it!\n");
 #endif
 
+    /* NTS: For whatever reason, CTRL+C from the MinGW shell terminates this process immediately
+     *      without calling our signal handler. */
+
     signal(SIGINT,sigma);
-#if defined(WIN32)
-#else
-    signal(SIGQUIT,sigma);
     signal(SIGTERM,sigma);
+#ifdef SIGQUIT
+    signal(SIGQUIT,sigma);
 #endif
 
     if (ui_command == "test") {
