@@ -111,7 +111,7 @@ bool dsound_dll_init(void) {
          *   - DirectSound capture is available by default from Windows 10 all the way down to Windows 2000,
          *     and Windows ME all the way down to Windows 98.
          *
-         *   - Windows 95 OSR2 ships with DirectX 2.0a already installed. The DSOUND.DLL file includes with
+         *   - Windows 95 OSR2 ships with DirectX 2.0a already installed. The DSOUND.DLL file included with
          *     Windows 95 OSR2 is missing the DirectSoundCapture* symbols and it has only the playback API,
          *     therefore this code will not work.
          *
