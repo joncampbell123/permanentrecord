@@ -53,7 +53,7 @@ void wasapi_atexit_init(void) {
 
 class AudioSourceWASAPI : public AudioSource {
 public:
-    AudioSourceWASAPI() : bytes_per_frame(0), isUserOpen(false), readpos(0), buffer_size(0), immdevenum(NULL), immdev(NULL) {
+    AudioSourceWASAPI() : bytes_per_frame(0), isUserOpen(false), readpos(0), buffer_size(0), immdevenum(NULL), immdev(NULL), immacl(NULL), immacapcl(NULL) {
         chosen_format.bits_per_sample = 0;
         chosen_format.sample_rate = 0;
         chosen_format.format_tag = 0;
@@ -314,6 +314,14 @@ private:
         return true;
     }
     void wasapi_close(void) {
+        if (immacapcl != NULL) {
+            immacapcl->Release();
+            immacapcl = NULL;
+        }
+        if (immacl != NULL) {
+            immacl->Release();
+            immacl = NULL;
+        }
         if (immdev != NULL) {
             immdev->Release();
             immdev = NULL;
@@ -330,6 +338,8 @@ private:
     DWORD                               buffer_size;
     IMMDeviceEnumerator*                immdevenum;
     IMMDevice*                          immdev;
+    IAudioClient*                       immacl;
+    IAudioCaptureClient*                immacapcl;
 };
 
 AudioSource* AudioSourceWASAPI_Alloc(void) {

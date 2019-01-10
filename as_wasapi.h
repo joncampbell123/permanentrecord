@@ -3,6 +3,7 @@
 
 #if defined(HAVE_MMDEVICEAPI_H)
 # include "mmdeviceapi.h"
+# include "audioclient.h"
 # include "ausrc.h"
 #endif
 
