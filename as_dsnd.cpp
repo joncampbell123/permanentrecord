@@ -411,6 +411,22 @@ private:
         if (dsndcap == NULL)
             return false;
 
+        // we need to know what the capture device supports.
+        // most devices TODAY support up to 48KHz.
+        // some older systems, especially those running Windows 98,
+        // may be limited to 44.1KHz i.e. Sound Blaster 16 support
+        // in VirtualBox.
+        DSCCAPS caps;
+        memset(&caps,0,sizeof(caps));
+        caps.dwSize = sizeof(DSCCAPS);
+        if (dsndcap->GetCaps(&caps) != DS_OK)
+            return false;
+
+        if (caps.dwChannels != 0) {
+            if (fmt.channels > caps.dwChannels)
+                fmt.channels = caps.dwChannels;
+        }
+
         if (fmt.format_tag == 0)
             return false;
 
@@ -452,12 +468,31 @@ private:
 
         memset(&dsc,0,sizeof(dsc));
         dsc.dwSize = sizeof(DSBUFFERDESC1); // NTS: DirectX 7.0 or older compat. We don't care for WinXP FX
-        dsc.dwBufferBytes = fmt.sample_rate * ((fmt.bits_per_sample + 7u) / 8u) * fmt.channels;
+        dsc.dwBufferBytes = fmt.sample_rate * wfmt.Format.nBlockAlign;
         dsc.lpwfxFormat = (WAVEFORMATEX*)(&wfmt);
 
         buffer_size = dsc.dwBufferBytes;
 
-        if (dsndcap->CreateCaptureBuffer(&dsc,&dsndcapbuf,NULL) != DS_OK)
+        HRESULT hr;
+
+        unsigned int tryrate = 0;
+        static const unsigned int try_rates[] = {
+            96000,88200,64000,48000,44100,32000,24000,22050,16000,12000,11025,8000,0
+        };
+
+        hr = dsndcap->CreateCaptureBuffer(&dsc,&dsndcapbuf,NULL);
+        while (hr == DSERR_BADFORMAT && try_rates[tryrate] != 0) {
+            if (wfmt.Format.nSamplesPerSec > try_rates[tryrate]) {
+                wfmt.Format.nSamplesPerSec = try_rates[tryrate];
+                wfmt.Format.nAvgBytesPerSec = wfmt.Format.nBlockAlign * wfmt.Format.nSamplesPerSec;
+                dsc.dwBufferBytes = fmt.sample_rate * wfmt.Format.nBlockAlign;
+                hr = dsndcap->CreateCaptureBuffer(&dsc,&dsndcapbuf,NULL);
+            }
+
+            tryrate++;
+        }
+
+        if (hr != DS_OK)
             return false;
 
         {
