@@ -75,6 +75,65 @@ public:
 
         return -EBUSY;
     }
+    void immcol_enum(std::vector<AudioDevicePair> &names,IMMDeviceCollection *immcol) {
+        UINT devcount = 0,devi;
+
+        immcol->GetCount(&devcount);
+        for (devi=0;devi < devcount;devi++) {
+            IMMDevice *immdev = NULL;
+
+            if (immcol->Item(devi,&immdev) == S_OK) {
+                DWORD state = DEVICE_STATE_DISABLED;
+                LPWSTR wdid = NULL;
+
+                immdev->GetState(&state);
+                immdev->GetId(&wdid);
+
+                AudioDevicePair p;
+
+                if (wdid != NULL) {
+                    size_t wl = wcslen(wdid);
+                    OLEToCharConvertInPlace((char*)wdid,(int)wl+1/*NULL too*/);
+                    p.name = (char*)wdid;
+                    __CoTaskMemFree(wdid);
+                }
+
+                if (__PropVariantClear != NULL) {
+                    IPropertyStore *props = NULL;
+                    if (immdev->OpenPropertyStore(STGM_READ,&props) == S_OK) {
+                        PROPVARIANT pv;
+
+                        // FIXME: Ick, figure out all the prop variant crap.
+                        //        Until then, this works too.
+                        memset(&pv,0,sizeof(pv));
+                        if (props->GetValue(wasapi_PKEY_Device_FriendlyName,&pv) == S_OK) {
+                            wchar_t tmp[256];
+                            UINT tmp_sz = (sizeof(tmp) / sizeof(tmp[0])) - 1;
+
+                            tmp[0] = 0;
+                            if ((pv.vt & VT_TYPEMASK) == VT_LPWSTR && pv.pwszVal != NULL) {
+                                wcsncpy(tmp,pv.pwszVal,tmp_sz);
+                                tmp[tmp_sz] = 0;
+                            }
+
+                            OLEToCharConvertInPlace((char*)tmp,(int)wcslen(tmp)+1);
+                            p.desc = (char*)tmp;
+
+                            __PropVariantClear(&pv);
+                        }
+
+                        props->Release();
+                    }
+                }
+
+                if (state == DEVICE_STATE_UNPLUGGED)
+                    p.desc += " (unplugged)";
+
+                if (!p.name.empty())
+                    names.push_back(p);
+            }
+        }
+    }
     virtual int EnumDevices(std::vector<AudioDevicePair> &names) {
         if (!ole32_coinit())
             return -EINVAL;
@@ -88,64 +147,7 @@ public:
         IMMDeviceCollection *immcol = NULL;
 
         if (immdevenum->EnumAudioEndpoints(eCapture,DEVICE_STATE_ACTIVE|DEVICE_STATE_UNPLUGGED,&immcol) == S_OK) {
-            UINT devcount = 0,devi;
-
-            immcol->GetCount(&devcount);
-            for (devi=0;devi < devcount;devi++) {
-                IMMDevice *immdev = NULL;
-
-                if (immcol->Item(devi,&immdev) == S_OK) {
-                    DWORD state = DEVICE_STATE_DISABLED;
-                    LPWSTR wdid = NULL;
-
-                    immdev->GetState(&state);
-                    immdev->GetId(&wdid);
-
-                    AudioDevicePair p;
-
-                    if (wdid != NULL) {
-                        size_t wl = wcslen(wdid);
-                        OLEToCharConvertInPlace((char*)wdid,(int)wl+1/*NULL too*/);
-                        p.name = (char*)wdid;
-                        __CoTaskMemFree(wdid);
-                    }
-
-                    if (__PropVariantClear != NULL) {
-                        IPropertyStore *props = NULL;
-                        if (immdev->OpenPropertyStore(STGM_READ,&props) == S_OK) {
-                            PROPVARIANT pv;
-
-                            // FIXME: Ick, figure out all the prop variant crap.
-                            //        Until then, this works too.
-                            memset(&pv,0,sizeof(pv));
-                            if (props->GetValue(wasapi_PKEY_Device_FriendlyName,&pv) == S_OK) {
-                                wchar_t tmp[256];
-                                UINT tmp_sz = (sizeof(tmp) / sizeof(tmp[0])) - 1;
-
-                                tmp[0] = 0;
-                                if ((pv.vt & VT_TYPEMASK) == VT_LPWSTR && pv.pwszVal != NULL) {
-                                    wcsncpy(tmp,pv.pwszVal,tmp_sz);
-                                    tmp[tmp_sz] = 0;
-                                }
-
-                                OLEToCharConvertInPlace((char*)tmp,(int)wcslen(tmp)+1);
-                                p.desc = (char*)tmp;
-
-                                __PropVariantClear(&pv);
-                            }
-
-                            props->Release();
-                        }
-                    }
-
-                    if (state == DEVICE_STATE_UNPLUGGED)
-                        p.desc += " (unplugged)";
-
-                    if (!p.name.empty())
-                        names.push_back(p);
-                }
-            }
-
+            immcol_enum(names,immcol);
             immcol->Release();
         }
 
