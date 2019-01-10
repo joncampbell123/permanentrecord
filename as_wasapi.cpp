@@ -376,7 +376,7 @@ private:
         wext.Format.nChannels = fmt.channels;
         wext.Format.nSamplesPerSec = fmt.sample_rate;
         wext.Format.wBitsPerSample = fmt.bits_per_sample;
-        wext.Format.nBlockAlign = fmt.channels * ((fmt.bits_per_sample + 7u) / 8u);
+        wext.Format.nBlockAlign = (WORD)(fmt.channels * ((fmt.bits_per_sample + 7u) / 8u));
         wext.Format.nAvgBytesPerSec = wext.Format.nBlockAlign * wext.Format.nSamplesPerSec;
 
         // TODO: AUDCLNT_STREAMFLAGS_LOOPBACK if this is a eRender endpoint
