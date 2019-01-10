@@ -119,6 +119,13 @@ bool dsound_dll_init(void) {
          *
          *   - The DirectSoundCapture* functions did not appear until DirectX 5.0.
          *
+         *   - Windows 95 does not provide MSVCRT.DLL. You will need to obtain a version that works on
+         *     Windows 95 and either keep it alongside this program's EXE or copy it to
+         *     C:\WINDOWS\SYSTEM
+         *
+         *   - You can get this driver to work in Windows 95 if you include a version of MSVCRT.DLL that
+         *     works with Windows 95 and install DirectX 5.0.
+         *
          *   - If you install Windows 98 in VirtualBox with Sound Blaster 16 emulation, the SB16 DirectX
          *     drivers will cap the sample rate to 44100Hz and reject 48000Hz. This is why this support
          *     code is written to retry creating the buffer if the API rejects the format, to make use of
