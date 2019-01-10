@@ -54,7 +54,7 @@ void wasapi_atexit_init(void) {
 
 class AudioSourceWASAPI : public AudioSource {
 public:
-    AudioSourceWASAPI() : bytes_per_frame(0), isUserOpen(false), readpos(0), buffer_size(0), immdevenum(NULL), immdev(NULL), immacl(NULL), immacapcl(NULL) {
+    AudioSourceWASAPI() : bytes_per_frame(0), isUserOpen(false), readpos(0), buffer_size(0), immdevenum(NULL), immdev(NULL), immacl(NULL), immacapcl(NULL), pending_data(NULL), pending_data_read(NULL), pending_data_fence(NULL) {
         chosen_format.bits_per_sample = 0;
         chosen_format.sample_rate = 0;
         chosen_format.format_tag = 0;
@@ -487,6 +487,7 @@ private:
             immdevenum->Release();
             immdevenum = NULL;
         }
+        pending_data_free();
         buffer_size = 0;
         readpos = 0;
     }
@@ -497,6 +498,32 @@ private:
     IMMDevice*                          immdev;
     IAudioClient*                       immacl;
     IAudioCaptureClient*                immacapcl;
+// ugh, WASAPI imported my least favorite feature from PulseAudio
+    unsigned char*                      pending_data;
+    unsigned char*                      pending_data_read;
+    unsigned char*                      pending_data_fence;
+private:
+    void pending_data_free(void) {
+        if (pending_data != NULL) {
+            delete[] pending_data;
+            pending_data = NULL;
+        }
+        pending_data_read = NULL;
+        pending_data_fence = NULL;
+    }
+    bool pending_data_alloc(const size_t len) { /* this ASSUMES you've already consumed the existing data! */
+        pending_data_free();
+        if (len != 0) {
+            if (len > (8*1024*1024)) return false;
+            pending_data = new(std::nothrow) unsigned char[len];
+            if (pending_data == NULL) return false;
+            pending_data_read = pending_data;
+            pending_data_fence = pending_data + len;
+            return true;
+        }
+
+        return true;
+    }
 };
 
 AudioSource* AudioSourceWASAPI_Alloc(void) {
