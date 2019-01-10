@@ -123,7 +123,7 @@ public:
                                 UINT tmp_sz = (sizeof(tmp) / sizeof(tmp[0])) - 1;
 
                                 tmp[0] = 0;
-                                if ((pv.vt & VT_TYPEMASK) == VT_LPWSTR) {
+                                if ((pv.vt & VT_TYPEMASK) == VT_LPWSTR && pv.pwszVal != NULL) {
                                     wcsncpy(tmp,pv.pwszVal,tmp_sz);
                                     tmp[tmp_sz] = 0;
                                 }
@@ -143,8 +143,6 @@ public:
 
                     if (!p.name.empty())
                         names.push_back(p);
-
-                    immcol->Release();
                 }
             }
 
