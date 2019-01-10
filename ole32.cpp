@@ -45,8 +45,8 @@ void ole32_atexit(void) {
 
 void ole32_couninit(void) {
     if (ole32_has_coinit) {
-	    __CoUninitialize();
-	    ole32_has_coinit = false;
+        __CoUninitialize();
+        ole32_has_coinit = false;
     }
 }
 
@@ -75,37 +75,37 @@ bool ole32_dll_init(void) {
         if (__CLSIDFromString == NULL)
             return false;
 
-	__CoInitialize = 
-	    (HRESULT (WINAPI*)(LPVOID))
-	    GetProcAddress(ole32_dll,"CoInitialize");
-	if (__CoInitialize == NULL)
-		return false;
+    __CoInitialize = 
+        (HRESULT (WINAPI*)(LPVOID))
+        GetProcAddress(ole32_dll,"CoInitialize");
+    if (__CoInitialize == NULL)
+        return false;
 
-	__CoUninitialize = 
-	    (void (WINAPI*)())
-	    GetProcAddress(ole32_dll,"CoUninitialize");
-	if (__CoUninitialize == NULL)
-		return false;
+    __CoUninitialize = 
+        (void (WINAPI*)())
+        GetProcAddress(ole32_dll,"CoUninitialize");
+    if (__CoUninitialize == NULL)
+        return false;
     }
 
     return true;
 }
 
 bool ole32_coinit(void) {
-	if (!ole32_dll_init())
-		return false;
+    if (!ole32_dll_init())
+        return false;
 
-	if (!ole32_has_coinit) {
-		HRESULT hr;
+    if (!ole32_has_coinit) {
+        HRESULT hr;
 
-		hr = __CoInitialize(NULL);
-		if (hr == S_OK || hr == S_FALSE)
-			ole32_has_coinit = true;
-		else
-			return false;
-	}
+        hr = __CoInitialize(NULL);
+        if (hr == S_OK || hr == S_FALSE)
+            ole32_has_coinit = true;
+        else
+            return false;
+    }
 
-	return true;
+    return true;
 }
 
 void OLEToCharConvertInPlace(char *sz,int cch) {
