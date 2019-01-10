@@ -166,22 +166,22 @@ public:
     virtual int Open(void) {
         if (!IsOpen()) {
             if (!dsound_open())
-                return false;
+                return -1;
 
             if (!dsound_apply_format(chosen_format)) {
                 dsound_close();
-                return false;
+                return -1;
             }
 
             if (dsndcap == NULL || dsndcapbuf == NULL) {
                 dsound_close();
-                return false;
+                return -1;
             }
 
             bytes_per_frame = chosen_format.bytes_per_frame;
             if (dsndcapbuf->Start(DSCBSTART_LOOPING) != DS_OK) {
                 dsound_close();
-                return false;
+                return -1;
             }
 
             /* wherever it is, that is the starting point */
@@ -190,13 +190,13 @@ public:
 
                 readpos = 0;
                 if (dsndcapbuf->GetCurrentPosition(&x/*capture*/,&readpos) != DS_OK)
-                    return false;
+                    return -1;
             }
 
             isUserOpen = true;
         }
 
-        return true;
+        return 0;
     }
     virtual int Close(void) {
         isUserOpen = false;

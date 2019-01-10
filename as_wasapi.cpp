@@ -165,23 +165,23 @@ public:
     virtual int Open(void) {
         if (!IsOpen()) {
             if (!wasapi_open())
-                return false;
+                return -1;
 
             if (!wasapi_apply_format(chosen_format)) {
                 wasapi_close();
-                return false;
+                return -1;
             }
 
             immacl->Reset();
             if (immacl->Start() != S_OK) {
                 fprintf(stderr,"Failed to start\n");
-                return false;
+                return -1;
             }
 
             isUserOpen = true;
         }
 
-        return true;
+        return 0;
     }
     virtual int Close(void) {
         isUserOpen = false;
