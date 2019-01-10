@@ -338,8 +338,54 @@ public:
         return 0;
     }
     virtual int Read(void *buffer,unsigned int bytes) {
-        if (IsOpen()) {
-            return 0;
+        if (IsOpen() && immacapcl != NULL) {
+            unsigned char *d = (unsigned char*)buffer;
+            int rd = 0;
+
+            while (bytes > 0) {
+                if (pending_data == NULL) {
+                    BYTE *ptr = NULL;
+                    UINT32 numframes = 0;
+                    DWORD flags = 0;
+
+                    HRESULT hr = immacapcl->GetBuffer(&ptr,&numframes,&flags,NULL,NULL);
+                    if (hr == S_OK) {
+                        if (numframes > 0) {
+                            if (pending_data_alloc(numframes * bytes_per_frame)) {
+                                memcpy(pending_data,ptr,numframes * bytes_per_frame);
+                            }
+                        }
+
+                        if (immacapcl->ReleaseBuffer(numframes) != S_OK)
+                            fprintf(stderr,"WASAPI release buffer failed\n");
+                    }
+                    else if (hr == AUDCLNT_S_BUFFER_EMPTY) {
+                        break;
+                    }
+                    else {
+                        fprintf(stderr,"WASAPI read failed\n");
+                        break;
+                    }
+                }
+
+                if (pending_data != NULL && pending_data_read < pending_data_fence) {
+                    unsigned int proc = (unsigned int)(pending_data_fence - pending_data_read);
+                    if (proc > bytes) proc = bytes;
+                    assert(proc != 0);
+
+                    memcpy(d,pending_data_read,proc);
+                    pending_data_read += proc;
+                    rd += (int)proc;
+                    bytes -= proc;
+                    d += proc;
+
+                    assert(pending_data_read <= pending_data_fence);
+                    if (pending_data_read >= pending_data_fence)
+                        pending_data_free();
+                }
+            }
+
+            return rd;
         }
 
         return -EINVAL;
