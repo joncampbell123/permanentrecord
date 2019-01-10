@@ -438,7 +438,7 @@ private:
 
         if (caps.dwChannels != 0) {
             if (fmt.channels > caps.dwChannels)
-                fmt.channels = caps.dwChannels;
+                fmt.channels = (uint8_t)caps.dwChannels;
         }
 
         if (fmt.format_tag == 0)
