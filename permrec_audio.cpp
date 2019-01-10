@@ -541,10 +541,9 @@ int main(int argc,char **argv) {
 #endif
 
     signal(SIGINT,sigma);
-#if defined(WIN32)
-#else
-    signal(SIGQUIT,sigma);
     signal(SIGTERM,sigma);
+#ifdef SIGQUIT
+    signal(SIGQUIT,sigma);
 #endif
 
     if (ui_command == "test") {
