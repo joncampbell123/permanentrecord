@@ -380,13 +380,13 @@ private:
         wext.Format.nAvgBytesPerSec = wext.Format.nBlockAlign * wext.Format.nSamplesPerSec;
 
         // TODO: AUDCLNT_STREAMFLAGS_LOOPBACK if this is a eRender endpoint
-        if (immacl->Initialize(AUDCLNT_SHAREMODE_SHARED,0,10000000/*100ns units = 1 second */,0,(const WAVEFORMATEX*)(&wext),NULL) != S_OK) {
+        immacl->Initialize(AUDCLNT_SHAREMODE_SHARED,0,10000000/*100ns units = 1 second */,0,(const WAVEFORMATEX*)(&wext),NULL);
+
+        {
             WAVEFORMATEX *wfx = NULL;
 
             if (immacl->GetMixFormat(&wfx) == S_OK)
                 UpdateFormatFromWAVE(fmt,wfx);
-            else
-                fprintf(stderr,"Cannot get mix format after attempt init\n");
 
             __CoTaskMemFree(wfx);
         }
