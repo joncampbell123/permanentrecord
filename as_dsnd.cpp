@@ -117,6 +117,8 @@ bool dsound_dll_init(void) {
          *
          *   - The DirectSoundCapture* symbols do not exist in DirectX 3.0.
          *
+         *   - The DirectSoundCapture* functions did not appear until DirectX 5.0.
+         *
          *   - If you install Windows 98 in VirtualBox with Sound Blaster 16 emulation, the SB16 DirectX
          *     drivers will cap the sample rate to 44100Hz and reject 48000Hz. This is why this support
          *     code is written to retry creating the buffer if the API rejects the format, to make use of
