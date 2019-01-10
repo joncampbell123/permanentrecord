@@ -204,7 +204,89 @@ public:
         wasapi_close();
         return 0;
     }
+    bool UpdateFormatFromWAVE(struct AudioFormat &fmt,WAVEFORMATEX *wfx) {
+        fmt.format_tag = 0;
+
+        fmt.sample_rate = wfx->nSamplesPerSec;
+        fmt.channels = (uint8_t)wfx->nChannels;
+        fmt.updateFrameInfo();
+ 
+        if (wfx->wFormatTag == 0x0001/*WAVE_FORMAT_PCM*/) {
+            if (wfx->wBitsPerSample < 8 || wfx->wBitsPerSample > 32)
+                return false;
+            if (wfx->nChannels < 1 || wfx->nChannels > 8)
+                return false;
+            if (wfx->nSamplesPerSec < 1000 || wfx->nSamplesPerSec > 192000)
+                return false;
+
+            if (wfx->wBitsPerSample == 8)
+                fmt.format_tag = AFMT_PCMU;
+            else
+                fmt.format_tag = AFMT_PCMS;
+
+            fmt.bits_per_sample = (uint8_t)wfx->wBitsPerSample;
+            fmt.sample_rate = wfx->nSamplesPerSec;
+            fmt.channels = (uint8_t)wfx->nChannels;
+
+            fmt.updateFrameInfo();
+        }
+        else if (wfx->wFormatTag == 0xFFFE/*WAVE_FORMAT_EXTENSIBLE*/) {
+            WAVEFORMATEXTENSIBLE *wext = (WAVEFORMATEXTENSIBLE*)wfx;
+
+            if (!memcmp(&wext->SubFormat,&windows_KSDATAFORMAT_SUBTYPE_PCM,sizeof(GUID))) {
+                if (wfx->wBitsPerSample < 8 || wfx->wBitsPerSample > 32)
+                    return false;
+                if (wfx->nChannels < 1 || wfx->nChannels > 8)
+                    return false;
+                if (wfx->nSamplesPerSec < 1000 || wfx->nSamplesPerSec > 192000)
+                    return false;
+
+                if (wfx->wBitsPerSample == 8)
+                    fmt.format_tag = AFMT_PCMU;
+                else
+                    fmt.format_tag = AFMT_PCMS;
+
+                fmt.bits_per_sample = (uint8_t)wfx->wBitsPerSample;
+                fmt.sample_rate = wfx->nSamplesPerSec;
+                fmt.channels = (uint8_t)wfx->nChannels;
+
+                fmt.updateFrameInfo();
+            }
+            /* FIXME: I'm seeing the "get mix format" call return EXTENSIBLE with floating point format */
+            else {
+                return false;
+            }
+        }
+        else {
+            return false;
+        }
+
+        return true;
+    }
     virtual int GetFormat(struct AudioFormat &fmt) {
+        if (chosen_format.format_tag == 0) {
+            if (!IsOpen()) {
+                if (!wasapi_open())
+                    return -EINVAL;
+
+                if (immacl == NULL) {
+                    wasapi_close();
+                    return -EINVAL;
+                }
+
+                WAVEFORMATEX *wfx = NULL;
+
+                if (immacl->GetMixFormat(&wfx) != S_OK) {
+                    wasapi_close();
+                    return -EINVAL;
+                }
+
+                UpdateFormatFromWAVE(fmt,wfx);
+
+                __CoTaskMemFree(wfx);
+            }
+        }
+
         if (chosen_format.format_tag == 0)
             return -EINVAL;
 
