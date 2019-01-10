@@ -26,6 +26,7 @@ extern HRESULT (WINAPI *__CoCreateInstance)(REFCLSID rclsid,LPUNKNOWN pUnkOuter,
 extern int (WINAPI *__StringFromGUID2)(REFGUID rguid,LPOLESTR lpsz,int cchMax);
 extern HRESULT (WINAPI *__CLSIDFromString)(LPOLESTR lpsz,LPCLSID pclsid);
 extern HRESULT (WINAPI *__CoInitialize)(LPVOID pvReserved);
+extern void (WINAPI *__CoTaskMemFree)(LPVOID pv);
 extern void (WINAPI *__CoUninitialize)();
 
 void ole32_atexit(void);

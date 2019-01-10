@@ -76,6 +76,48 @@ public:
 
         names.clear();
 
+        if (!wasapi_open())
+            return -ENODEV;
+
+        assert(immdevenum != NULL);
+        IMMDeviceCollection *immcol = NULL;
+
+        if (immdevenum->EnumAudioEndpoints(eCapture,DEVICE_STATE_ACTIVE|DEVICE_STATE_UNPLUGGED,&immcol) == S_OK) {
+            UINT devcount = 0,devi;
+
+            immcol->GetCount(&devcount);
+            for (devi=0;devi < devcount;devi++) {
+                IMMDevice *immdev = NULL;
+
+                if (immcol->Item(devi,&immdev) == S_OK) {
+                    DWORD state = DEVICE_STATE_DISABLED;
+                    LPWSTR wdid = NULL;
+
+                    immdev->GetState(&state);
+                    immdev->GetId(&wdid);
+
+                    AudioDevicePair p;
+
+                    if (wdid != NULL) {
+                        size_t wl = wcslen(wdid);
+                        OLEToCharConvertInPlace((char*)wdid,(int)wl+1/*NULL too*/);
+                        p.name = (char*)wdid;
+                        __CoTaskMemFree(wdid);
+                    }
+
+                    if (state == DEVICE_STATE_UNPLUGGED)
+                        p.desc += " (unplugged)";
+
+                    if (!p.name.empty())
+                        names.push_back(p);
+
+                    immcol->Release();
+                }
+            }
+
+            immcol->Release();
+        }
+
         return 0;
     }
     virtual bool IsOpen(void) { return isUserOpen; }

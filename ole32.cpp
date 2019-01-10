@@ -35,6 +35,7 @@ HRESULT (WINAPI *__CoCreateInstance)(REFCLSID rclsid,LPUNKNOWN pUnkOuter,DWORD d
 int (WINAPI *__StringFromGUID2)(REFGUID rguid,LPOLESTR lpsz,int cchMax) = NULL;
 HRESULT (WINAPI *__CLSIDFromString)(LPOLESTR lpsz,LPCLSID pclsid) = NULL;
 HRESULT (WINAPI *__CoInitialize)(LPVOID pvReserved) = NULL;
+void (WINAPI *__CoTaskMemFree)(LPVOID pv) = NULL;
 void (WINAPI *__CoUninitialize)() = NULL;
 
 void ole32_atexit(void) {
@@ -92,6 +93,12 @@ bool ole32_dll_init(void) {
             (HRESULT (WINAPI*)(REFCLSID,LPUNKNOWN,DWORD,REFIID,LPVOID*))
             GetProcAddress(ole32_dll,"CoCreateInstance");
         if (__CoCreateInstance == NULL)
+            return false;
+
+        __CoTaskMemFree = 
+            (void (WINAPI *)(LPVOID))
+            GetProcAddress(ole32_dll,"CoTaskMemFree");
+        if (__CoTaskMemFree == NULL)
             return false;
     }
 
