@@ -115,9 +115,22 @@ public:
                         if (immdev->OpenPropertyStore(STGM_READ,&props) == S_OK) {
                             PROPVARIANT pv;
 
+                            // FIXME: Ick, figure out all the prop variant crap.
+                            //        Until then, this works too.
                             memset(&pv,0,sizeof(pv));
                             if (props->GetValue(wasapi_PKEY_Device_FriendlyName,&pv) == S_OK) {
-                                // TODO
+                                wchar_t tmp[256];
+                                UINT tmp_sz = (sizeof(tmp) / sizeof(tmp[0])) - 1;
+
+                                tmp[0] = 0;
+                                if ((pv.vt & VT_TYPEMASK) == VT_LPWSTR) {
+                                    wcsncpy(tmp,pv.pwszVal,tmp_sz);
+                                    tmp[tmp_sz] = 0;
+                                }
+
+                                OLEToCharConvertInPlace((char*)tmp,(int)wcslen(tmp)+1);
+                                p.desc = (char*)tmp;
+
                                 __PropVariantClear(&pv);
                             }
 
