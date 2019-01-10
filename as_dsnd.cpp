@@ -107,6 +107,20 @@ bool dsound_dll_init(void) {
         if ((dsound_dll=LoadLibrary("DSOUND.DLL")) == NULL)
             return false;
 
+        /* NOTES:
+         *   - DirectSound capture is available by default from Windows 10 all the way down to Windows 2000,
+         *     and Windows ME all the way down to Windows 98.
+         *
+         *   - Windows 95 OSR2 ships with DirectX 4.0 already installed. The DSOUND.DLL file includes with
+         *     Windows 95 OSR2 is missing the DirectSoundCapture* symbols and it has only the playback API,
+         *     therefore this code will not work.
+         *
+         *   - If you install Windows 98 in VirtualBox with Sound Blaster 16 emulation, the SB16 DirectX
+         *     drivers will cap the sample rate to 44100Hz and reject 48000Hz. This is why this support
+         *     code is written to retry creating the buffer if the API rejects the format, to make use of
+         *     this program less painful on Windows 98 systems with a 44.1KHz sample rate cap.
+         */
+
         dsound_atexit_init();
 
         __DirectSoundCaptureEnumerate =
