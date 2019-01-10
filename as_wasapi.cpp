@@ -85,7 +85,17 @@ public:
 
             if (immcol->Item(devi,&eimmdev) == S_OK) {
                 DWORD state = DEVICE_STATE_DISABLED;
+                EDataFlow flow = eCapture;
                 LPWSTR wdid = NULL;
+
+                {
+                    IMMEndpoint *eiend;
+
+                    if (eimmdev->QueryInterface(wasapi_IID_IMMEndpoint,(void**)(&eiend)) == S_OK) {
+                        eiend->GetDataFlow(&flow);
+                        eiend->Release();
+                    }
+                }
 
                 eimmdev->GetState(&state);
                 eimmdev->GetId(&wdid);
@@ -126,6 +136,11 @@ public:
                         props->Release();
                     }
                 }
+
+                if (flow == eCapture)
+                    p.desc += " (capture)";
+                else if (flow == eRender)
+                    p.desc += " (render)";
 
                 if (state == DEVICE_STATE_UNPLUGGED)
                     p.desc += " (unplugged)";
