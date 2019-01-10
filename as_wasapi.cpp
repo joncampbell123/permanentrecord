@@ -34,6 +34,7 @@ static const GUID wasapi_CLSID_MMDeviceEnumerator =    {0xBCDE0395, 0xE52F, 0x46
 static const GUID wasapi_IID_IMMDeviceEnumerator =     {0xA95664D2, 0x9614, 0x4F35, 0xA7, 0x46, 0xDE, 0x8D, 0xB6, 0x36, 0x17, 0xE6};
 static const GUID wasapi_IID_IAudioClient =            {0x1cb9ad4c, 0xdbfa, 0x4c32, 0xb1, 0x78, 0xc2, 0xf5, 0x68, 0xa7, 0x03, 0xb2};
 static const GUID wasapi_IID_IAudioCaptureClient =     {0xc8adbd64, 0xe71e, 0x48a0, 0xa4, 0xde, 0x18, 0x5c, 0x39, 0x5c, 0xd3, 0x17};
+static const GUID wasapi_IID_IMMEndpoint =             {0x1be09788, 0x6894, 0x4089, 0x85, 0x86, 0x9a, 0x2a, 0x6c, 0x26, 0x5a, 0xc5};
 
 #define wasapi_DEFINE_PROPERTYKEY(name, l, w1, w2, b1, b2, b3, b4, b5, b6, b7, b8, pid) \
     static const PROPERTYKEY name = { { l, w1, w2, { b1, b2,  b3,  b4,  b5,  b6,  b7,  b8 } }, pid }
@@ -180,13 +181,7 @@ public:
                 return -1;
             }
 
-            HRESULT hr = immacl->GetService(wasapi_IID_IAudioCaptureClient,(void**)(&immacapcl));
-
-            if (hr == AUDCLNT_E_WRONG_ENDPOINT_TYPE) {
-                /* this will happen if capturing from an output (loopback capture) */
-                fprintf(stderr,"Capturing from an endpoint\n");
-            }
-            else if (hr != S_OK) {
+            if (immacl->GetService(wasapi_IID_IAudioCaptureClient,(void**)(&immacapcl)) != S_OK) {
                 fprintf(stderr,"Failed to get capture client interface\n");
                 return -1;
             }
@@ -398,8 +393,21 @@ private:
         wext.Format.nBlockAlign = (WORD)(fmt.channels * ((fmt.bits_per_sample + 7u) / 8u));
         wext.Format.nAvgBytesPerSec = wext.Format.nBlockAlign * wext.Format.nSamplesPerSec;
 
-        // TODO: AUDCLNT_STREAMFLAGS_LOOPBACK if this is a eRender endpoint
-        immacl->Initialize(AUDCLNT_SHAREMODE_SHARED,0,10000000/*100ns units = 1 second */,0,(const WAVEFORMATEX*)(&wext),NULL);
+        DWORD flags = 0;
+
+        {
+            IMMEndpoint *ep = NULL;
+            if (immdev->QueryInterface(wasapi_IID_IMMEndpoint,(void**)(&ep)) == S_OK) {
+                EDataFlow flow;
+
+                if (ep->GetDataFlow(&flow) == S_OK) {
+                    fprintf(stderr,"Preparing capture from render endpoint\n");
+                    flags |= AUDCLNT_STREAMFLAGS_LOOPBACK;
+                }
+            }
+        }
+
+        immacl->Initialize(AUDCLNT_SHAREMODE_SHARED,flags,10000000/*100ns units = 1 second */,0,(const WAVEFORMATEX*)(&wext),NULL);
 
         {
             WAVEFORMATEX *wfx = NULL;
