@@ -53,7 +53,7 @@ void wasapi_atexit_init(void) {
 
 class AudioSourceWASAPI : public AudioSource {
 public:
-    AudioSourceWASAPI() : bytes_per_frame(0), isUserOpen(false), readpos(0), buffer_size(0), immdevenum(NULL) {
+    AudioSourceWASAPI() : bytes_per_frame(0), isUserOpen(false), readpos(0), buffer_size(0), immdevenum(NULL), immdev(NULL) {
         chosen_format.bits_per_sample = 0;
         chosen_format.sample_rate = 0;
         chosen_format.format_tag = 0;
@@ -80,14 +80,14 @@ public:
 
         immcol->GetCount(&devcount);
         for (devi=0;devi < devcount;devi++) {
-            IMMDevice *immdev = NULL;
+            IMMDevice *eimmdev = NULL;
 
-            if (immcol->Item(devi,&immdev) == S_OK) {
+            if (immcol->Item(devi,&eimmdev) == S_OK) {
                 DWORD state = DEVICE_STATE_DISABLED;
                 LPWSTR wdid = NULL;
 
-                immdev->GetState(&state);
-                immdev->GetId(&wdid);
+                eimmdev->GetState(&state);
+                eimmdev->GetId(&wdid);
 
                 AudioDevicePair p;
 
@@ -100,7 +100,7 @@ public:
 
                 if (__PropVariantClear != NULL) {
                     IPropertyStore *props = NULL;
-                    if (immdev->OpenPropertyStore(STGM_READ,&props) == S_OK) {
+                    if (eimmdev->OpenPropertyStore(STGM_READ,&props) == S_OK) {
                         PROPVARIANT pv;
 
                         // FIXME: Ick, figure out all the prop variant crap.
@@ -288,10 +288,36 @@ private:
             }
             assert(immdevenum != NULL);
         }
+        if (immdev == NULL) {
+            if (!wasapi_device_string.empty()) {
+                wchar_t wtmp[256];
+                unsigned int i;
+                const char *s;
+
+                i = 0;
+                s = wasapi_device_string.c_str();
+                while (*s != 0) {
+                    if (i >= 255) return false;
+                    wtmp[i++] = (wchar_t)(*s++);
+                }
+                wtmp[i] = 0;
+
+                if (immdevenum->GetDevice(wtmp,&immdev) != S_OK)
+                    return false;
+            }
+            else {
+                if (immdevenum->GetDefaultAudioEndpoint(eCapture,eMultimedia,&immdev) != S_OK)
+                    return false;
+            }
+        }
 
         return true;
     }
     void wasapi_close(void) {
+        if (immdev != NULL) {
+            immdev->Release();
+            immdev = NULL;
+        }
         if (immdevenum != NULL) {
             immdevenum->Release();
             immdevenum = NULL;
@@ -303,6 +329,7 @@ private:
     DWORD                               readpos;
     DWORD                               buffer_size;
     IMMDeviceEnumerator*                immdevenum;
+    IMMDevice*                          immdev;
 };
 
 AudioSource* AudioSourceWASAPI_Alloc(void) {
