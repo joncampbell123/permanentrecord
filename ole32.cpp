@@ -75,17 +75,17 @@ bool ole32_dll_init(void) {
         if (__CLSIDFromString == NULL)
             return false;
 
-    __CoInitialize = 
-        (HRESULT (WINAPI*)(LPVOID))
-        GetProcAddress(ole32_dll,"CoInitialize");
-    if (__CoInitialize == NULL)
-        return false;
+        __CoInitialize =
+            (HRESULT (WINAPI*)(LPVOID))
+            GetProcAddress(ole32_dll,"CoInitialize");
+        if (__CoInitialize == NULL)
+            return false;
 
-    __CoUninitialize = 
-        (void (WINAPI*)())
-        GetProcAddress(ole32_dll,"CoUninitialize");
-    if (__CoUninitialize == NULL)
-        return false;
+        __CoUninitialize =
+            (void (WINAPI*)())
+            GetProcAddress(ole32_dll,"CoUninitialize");
+        if (__CoUninitialize == NULL)
+            return false;
     }
 
     return true;
