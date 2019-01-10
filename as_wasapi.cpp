@@ -178,6 +178,17 @@ public:
                 return -1;
             }
 
+            HRESULT hr = immacl->GetService(wasapi_IID_IAudioCaptureClient,(void**)(&immacapcl));
+
+            if (hr == AUDCLNT_E_WRONG_ENDPOINT_TYPE) {
+                /* this will happen if capturing from an output (loopback capture) */
+                fprintf(stderr,"Capturing from an endpoint\n");
+            }
+            else if (hr != S_OK) {
+                fprintf(stderr,"Failed to get capture client interface\n");
+                return -1;
+            }
+
             isUserOpen = true;
         }
 
