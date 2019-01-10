@@ -151,6 +151,11 @@ public:
             immcol->Release();
         }
 
+        if (immdevenum->EnumAudioEndpoints(eRender,DEVICE_STATE_ACTIVE|DEVICE_STATE_UNPLUGGED,&immcol) == S_OK) {
+            immcol_enum(names,immcol);
+            immcol->Release();
+        }
+
         return 0;
     }
     virtual bool IsOpen(void) { return isUserOpen; }
