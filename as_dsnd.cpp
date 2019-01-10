@@ -222,7 +222,7 @@ public:
                 return false;
             }
 
-        bytes_per_frame = chosen_format.bytes_per_frame;
+            bytes_per_frame = chosen_format.bytes_per_frame;
             if (dsndcapbuf->Start(DSCBSTART_LOOPING) != DS_OK) {
                 dsound_close();
                 return false;
@@ -296,91 +296,91 @@ public:
         return 0;
     }
     virtual int GetAvailable(void) {
-    if (IsOpen()) {
-        return 0;
-    }
+        if (IsOpen()) {
+            return 0;
+        }
 
         return 0;
     }
     virtual int Read(void *buffer,unsigned int bytes) {
-    if (IsOpen() && dsndcapbuf != NULL) {
-        unsigned char *dbuf = (unsigned char*)buffer;
-        int patience = 2;
-        int rd = 0;
+        if (IsOpen() && dsndcapbuf != NULL) {
+            unsigned char *dbuf = (unsigned char*)buffer;
+            int patience = 2;
+            int rd = 0;
 
-        /* please keep bytes at a multiple of a frame */
-        bytes -= bytes % bytes_per_frame;
-
-        /* sanity check */
-        if (readpos == buffer_size) readpos = 0;
-
-        /* process */
-        while (bytes > 0 && patience-- > 0) {
-            DWORD ncap=0,nread=readpos;
-            DWORD ptrlen=0;
-            void *ptr=NULL;
-
-            if (dsndcapbuf->GetCurrentPosition(&ncap,&nread) != DS_OK)
-                break;
+            /* please keep bytes at a multiple of a frame */
+            bytes -= bytes % bytes_per_frame;
 
             /* sanity check */
-            if (nread > buffer_size) nread = buffer_size;
+            if (readpos == buffer_size) readpos = 0;
 
-            /* NTS: Experience with DirectSound under older versions of Windows (Windows 98 for example)
-             *      and ISA-type devices says that it is possible for the read position to sit at an
-             *      offset NOT a multiple of a frame. For example, back in the day on a laptop with
-             *      Windows 98 and a OPL3-SAx sound card, 16-bit stereo capture could return an offset
-             *      that points at the R sample in a frame instead of the L sample. */
-            nread -= nread % bytes_per_frame;
+            /* process */
+            while (bytes > 0 && patience-- > 0) {
+                DWORD ncap=0,nread=readpos;
+                DWORD ptrlen=0;
+                void *ptr=NULL;
 
-            /* how much to process? */
-            int howmuch = (int)nread - (int)readpos;
-            if (howmuch < 0) howmuch += (int)buffer_size;
-            if (howmuch <= 0) break;
-            if ((unsigned int)howmuch > bytes) howmuch = (int)bytes;
+                if (dsndcapbuf->GetCurrentPosition(&ncap,&nread) != DS_OK)
+                    break;
 
-            /* let's not deal with two buffers considering the circular buffer, keep this code simple */
-            DWORD cando = buffer_size - readpos;
-            if ((DWORD)howmuch > cando) howmuch = (int)cando;
-            if (howmuch == 0) break;
+                /* sanity check */
+                if (nread > buffer_size) nread = buffer_size;
 
-            /* lock the buffer and go */
-            if (dsndcapbuf->Lock(readpos,(DWORD)howmuch,&ptr,&ptrlen,NULL,NULL,0) != DS_OK) {
-                fprintf(stderr,"Lock error readpos %u howmuch %u bufferlen %u\n",
-                    (unsigned int)readpos,(unsigned int)howmuch,(unsigned int)buffer_size);
-                break;
+                /* NTS: Experience with DirectSound under older versions of Windows (Windows 98 for example)
+                 *      and ISA-type devices says that it is possible for the read position to sit at an
+                 *      offset NOT a multiple of a frame. For example, back in the day on a laptop with
+                 *      Windows 98 and a OPL3-SAx sound card, 16-bit stereo capture could return an offset
+                 *      that points at the R sample in a frame instead of the L sample. */
+                nread -= nread % bytes_per_frame;
+
+                /* how much to process? */
+                int howmuch = (int)nread - (int)readpos;
+                if (howmuch < 0) howmuch += (int)buffer_size;
+                if (howmuch <= 0) break;
+                if ((unsigned int)howmuch > bytes) howmuch = (int)bytes;
+
+                /* let's not deal with two buffers considering the circular buffer, keep this code simple */
+                DWORD cando = buffer_size - readpos;
+                if ((DWORD)howmuch > cando) howmuch = (int)cando;
+                if (howmuch == 0) break;
+
+                /* lock the buffer and go */
+                if (dsndcapbuf->Lock(readpos,(DWORD)howmuch,&ptr,&ptrlen,NULL,NULL,0) != DS_OK) {
+                    fprintf(stderr,"Lock error readpos %u howmuch %u bufferlen %u\n",
+                            (unsigned int)readpos,(unsigned int)howmuch,(unsigned int)buffer_size);
+                    break;
+                }
+
+                /* sanity check. we didn't ask for wraparound so it shouldn't happen. */
+                if (ptrlen != (DWORD)howmuch)
+                    fprintf(stderr,"Lock warning, less locked than requested %u < %u\n",
+                            (unsigned int)ptrlen,(unsigned int)howmuch);
+                if (ptr == NULL)
+                    fprintf(stderr,"Lock warning, ptr == NULL on return (readpos %u howmuch %u bufferlen %u)\n",
+                            (unsigned int)readpos,(unsigned int)howmuch,(unsigned int)buffer_size);
+
+                if (ptrlen == (DWORD)howmuch && ptr != NULL) {
+                    memcpy(dbuf,ptr,(size_t)howmuch);
+                    bytes -= (unsigned int)howmuch;
+                    readpos += (DWORD)howmuch;
+                    dbuf += howmuch;
+                    rd += howmuch;
+
+                    if (readpos > buffer_size)
+                        fprintf(stderr,"Lock warning, readpos overrun\n");
+                    if (readpos >= buffer_size)
+                        readpos = 0;
+                }
+
+                /* unlock */
+                if (dsndcapbuf->Unlock(ptr,ptrlen,NULL,0) != DS_OK) {
+                    fprintf(stderr,"Unlock error\n");
+                    break;
+                }
             }
 
-            /* sanity check. we didn't ask for wraparound so it shouldn't happen. */
-            if (ptrlen != (DWORD)howmuch)
-                fprintf(stderr,"Lock warning, less locked than requested %u < %u\n",
-                    (unsigned int)ptrlen,(unsigned int)howmuch);
-            if (ptr == NULL)
-                fprintf(stderr,"Lock warning, ptr == NULL on return (readpos %u howmuch %u bufferlen %u)\n",
-                    (unsigned int)readpos,(unsigned int)howmuch,(unsigned int)buffer_size);
-
-            if (ptrlen == (DWORD)howmuch && ptr != NULL) {
-                memcpy(dbuf,ptr,(size_t)howmuch);
-                bytes -= (unsigned int)howmuch;
-                readpos += (DWORD)howmuch;
-                dbuf += howmuch;
-                rd += howmuch;
-
-                if (readpos > buffer_size)
-                    fprintf(stderr,"Lock warning, readpos overrun\n");
-                if (readpos >= buffer_size)
-                    readpos = 0;
-            }
-
-            /* unlock */
-            if (dsndcapbuf->Unlock(ptr,ptrlen,NULL,0) != DS_OK) {
-                fprintf(stderr,"Unlock error\n");
-                break;
-            }
+            return rd;
         }
-
-        return rd;
-    }
 
         return -EINVAL;
     }
@@ -436,10 +436,10 @@ private:
                     wfmt.SubFormat = windows_KSDATAFORMAT_SUBTYPE_PCM;
                 }
 
-        if (fmt.bits_per_sample == 8)
-            fmt.format_tag = AFMT_PCMU;
-        else
-            fmt.format_tag = AFMT_PCMS;
+                if (fmt.bits_per_sample == 8)
+                    fmt.format_tag = AFMT_PCMU;
+                else
+                    fmt.format_tag = AFMT_PCMS;
                 break;
             default:
                 return false;
@@ -455,7 +455,7 @@ private:
         dsc.dwBufferBytes = fmt.sample_rate * ((fmt.bits_per_sample + 7u) / 8u) * fmt.channels;
         dsc.lpwfxFormat = (WAVEFORMATEX*)(&wfmt);
 
-    buffer_size = dsc.dwBufferBytes;
+        buffer_size = dsc.dwBufferBytes;
 
         if (dsndcap->CreateCaptureBuffer(&dsc,&dsndcapbuf,NULL) != DS_OK)
             return false;
@@ -511,14 +511,14 @@ private:
             dsndcap = NULL;
         }
 
-    buffer_size = 0;
+        buffer_size = 0;
         readpos = 0;
     }
 private:
     IDirectSoundCapture*                dsndcap;
     IDirectSoundCaptureBuffer*          dsndcapbuf;
     DWORD                               readpos;
-    DWORD                           buffer_size;
+    DWORD                               buffer_size;
 };
 
 AudioSource* AudioSourceDSOUND_Alloc(void) {
