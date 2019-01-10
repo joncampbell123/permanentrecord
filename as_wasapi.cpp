@@ -35,6 +35,11 @@ static const GUID wasapi_IID_IMMDeviceEnumerator =     {0xA95664D2, 0x9614, 0x4F
 static const GUID wasapi_IID_IAudioClient =            {0x1cb9ad4c, 0xdbfa, 0x4c32, 0xb1, 0x78, 0xc2, 0xf5, 0x68, 0xa7, 0x03, 0xb2};
 static const GUID wasapi_IID_IAudioCaptureClient =     {0xc8adbd64, 0xe71e, 0x48a0, 0xa4, 0xde, 0x18, 0x5c, 0x39, 0x5c, 0xd3, 0x17};
 
+#define wasapi_DEFINE_PROPERTYKEY(name, l, w1, w2, b1, b2, b3, b4, b5, b6, b7, b8, pid) \
+    static const PROPERTYKEY name = { { l, w1, w2, { b1, b2,  b3,  b4,  b5,  b6,  b7,  b8 } }, pid }
+
+wasapi_DEFINE_PROPERTYKEY(wasapi_PKEY_Device_FriendlyName, 0xa45c254e, 0xdf1c, 0x4efd, 0x80, 0x20, 0x67, 0xd1, 0x46, 0xa8, 0x50, 0xe0, 14); // DEVPROP_TYPE_STRING
+
 void wasapi_atexit(void) {
     // TODO: Needed?
 }
@@ -103,6 +108,21 @@ public:
                         OLEToCharConvertInPlace((char*)wdid,(int)wl+1/*NULL too*/);
                         p.name = (char*)wdid;
                         __CoTaskMemFree(wdid);
+                    }
+
+                    if (__PropVariantClear != NULL) {
+                        IPropertyStore *props = NULL;
+                        if (immdev->OpenPropertyStore(STGM_READ,&props) == S_OK) {
+                            PROPVARIANT pv;
+
+                            memset(&pv,0,sizeof(pv));
+                            if (props->GetValue(wasapi_PKEY_Device_FriendlyName,&pv) == S_OK) {
+                                // TODO
+                                __PropVariantClear(&pv);
+                            }
+
+                            props->Release();
+                        }
                     }
 
                     if (state == DEVICE_STATE_UNPLUGGED)

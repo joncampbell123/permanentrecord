@@ -22,6 +22,7 @@
 extern bool ole32_atexit_set;
 extern HMODULE ole32_dll;
 
+extern HRESULT (WINAPI *__PropVariantClear)(PROPVARIANT *pvar);
 extern HRESULT (WINAPI *__CoCreateInstance)(REFCLSID rclsid,LPUNKNOWN pUnkOuter,DWORD dwClsContext,REFIID riid,LPVOID *ppv);
 extern int (WINAPI *__StringFromGUID2)(REFGUID rguid,LPOLESTR lpsz,int cchMax);
 extern HRESULT (WINAPI *__CLSIDFromString)(LPOLESTR lpsz,LPCLSID pclsid);
