@@ -52,8 +52,6 @@ bool ole32_dll_init(void) {
         if ((ole32_dll=LoadLibrary("OLE32.DLL")) == NULL)
             return false;
 
-        dsound_atexit_init();
-
         __StringFromGUID2 =
             (int (WINAPI*)(REFGUID,LPOLESTR,int))
             GetProcAddress(ole32_dll,"StringFromGUID2");
