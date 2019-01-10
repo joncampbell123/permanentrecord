@@ -31,6 +31,7 @@ bool ole32_has_coinit = false;
 bool ole32_atexit_set = false;
 HMODULE ole32_dll = NULL;
 
+HRESULT (WINAPI *__CoCreateInstance)(REFCLSID rclsid,LPUNKNOWN pUnkOuter,DWORD dwClsContext,REFIID riid,LPVOID *ppv) = NULL;
 int (WINAPI *__StringFromGUID2)(REFGUID rguid,LPOLESTR lpsz,int cchMax) = NULL;
 HRESULT (WINAPI *__CLSIDFromString)(LPOLESTR lpsz,LPCLSID pclsid) = NULL;
 HRESULT (WINAPI *__CoInitialize)(LPVOID pvReserved) = NULL;
@@ -85,6 +86,12 @@ bool ole32_dll_init(void) {
             (void (WINAPI*)())
             GetProcAddress(ole32_dll,"CoUninitialize");
         if (__CoUninitialize == NULL)
+            return false;
+
+        __CoCreateInstance =
+            (HRESULT (WINAPI*)(REFCLSID,LPUNKNOWN,DWORD,REFIID,LPVOID*))
+            GetProcAddress(ole32_dll,"CoCreateInstance");
+        if (__CoCreateInstance == NULL)
             return false;
     }
 
