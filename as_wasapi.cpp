@@ -30,6 +30,11 @@
 #if defined(HAVE_MMDEVICEAPI_H)
 static bool wasapi_atexit_set = false;
 
+static const GUID wasapi_CLSID_MMDeviceEnumerator =    {0xBCDE0395, 0xE52F, 0x467C, 0x8E, 0x3D, 0xC4, 0x57, 0x92, 0x91, 0x69, 0x2E};
+static const GUID wasapi_IID_IMMDeviceEnumerator =     {0xA95664D2, 0x9614, 0x4F35, 0xA7, 0x46, 0xDE, 0x8D, 0xB6, 0x36, 0x17, 0xE6};
+static const GUID wasapi_IID_IAudioClient =            {0x1cb9ad4c, 0xdbfa, 0x4c32, 0xb1, 0x78, 0xc2, 0xf5, 0x68, 0xa7, 0x03, 0xb2};
+static const GUID wasapi_IID_IAudioCaptureClient =     {0xc8adbd64, 0xe71e, 0x48a0, 0xa4, 0xde, 0x18, 0x5c, 0x39, 0x5c, 0xd3, 0x17};
+
 void wasapi_atexit(void) {
     // TODO: Needed?
 }
@@ -43,7 +48,7 @@ void wasapi_atexit_init(void) {
 
 class AudioSourceWASAPI : public AudioSource {
 public:
-    AudioSourceWASAPI() : bytes_per_frame(0), isUserOpen(false), readpos(0), buffer_size(0) {
+    AudioSourceWASAPI() : bytes_per_frame(0), isUserOpen(false), readpos(0), buffer_size(0), immdevenum(NULL) {
         chosen_format.bits_per_sample = 0;
         chosen_format.sample_rate = 0;
         chosen_format.format_tag = 0;
@@ -193,15 +198,31 @@ private:
         if (!ole32_coinit())
             return false;
 
-        return false;
+        if (immdevenum == NULL) {
+            assert(__CoCreateInstance != NULL);
+
+            if (__CoCreateInstance(
+                wasapi_CLSID_MMDeviceEnumerator, NULL, CLSCTX_ALL,
+                wasapi_IID_IMMDeviceEnumerator, (void**)(&immdevenum)) != S_OK) {
+                return false;
+            }
+            assert(immdevenum != NULL);
+        }
+
+        return true;
     }
     void wasapi_close(void) {
+        if (immdevenum != NULL) {
+            immdevenum->Release();
+            immdevenum = NULL;
+        }
         buffer_size = 0;
         readpos = 0;
     }
 private:
     DWORD                               readpos;
     DWORD                               buffer_size;
+    IMMDeviceEnumerator*                immdevenum;
 };
 
 AudioSource* AudioSourceWASAPI_Alloc(void) {
