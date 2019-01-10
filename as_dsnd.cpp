@@ -23,19 +23,15 @@
 #include "dbfs.h"
 #include "autocut.h"
 #include "wavstruc.h"
+#include "ole32.h"
 
 #include "as_dsnd.h"
 
 #if defined(HAVE_DSOUND_H)
 static bool dsound_atexit_set = false;
 static HMODULE dsound_dll = NULL;
-static HMODULE ole32_dll = NULL;
 
 void dsound_atexit(void) {
-    if (ole32_dll != NULL) {
-        FreeLibrary(ole32_dll);
-        ole32_dll = NULL;
-    }
     if (dsound_dll != NULL) {
         FreeLibrary(dsound_dll);
         dsound_dll = NULL;
@@ -51,58 +47,11 @@ void dsound_atexit_init(void) {
 
 static HRESULT (WINAPI *__DirectSoundCaptureCreate)(LPCGUID lpcGUID,LPDIRECTSOUNDCAPTURE8 * lplpDSC,LPUNKNOWN pUnkOuter) = NULL;
 static HRESULT (WINAPI *__DirectSoundCaptureEnumerate)(LPDSENUMCALLBACK lpDSEnumCallback,LPVOID lpContext) = NULL;
-static int (WINAPI *__StringFromGUID2)(REFGUID rguid,LPOLESTR lpsz,int cchMax) = NULL;
-static HRESULT (WINAPI *__CLSIDFromString)(LPOLESTR lpsz,LPCLSID pclsid) = NULL;
-
-static void OLEToCharConvertInPlace(char *sz,int cch) {
-    /* convert in place, cch chars of wchar_t to cch chars of char. cch should include the NUL character. */
-    /* cch is assumed to be the valid buffer size, this code will not go past the end of the buffer. */
-    /* this is used for calls that are primarily ASCII and do not need to worry about locale,
-     * yet for whatever reason Microsoft insisted on using OLECHAR (wchar_t) */
-    wchar_t *sw = (wchar_t*)sz;
-    int i = 0;
-
-    while (i < cch) {
-        wchar_t c = sw[i];
-
-        if (c >= 0x80)
-            sz[i] = '?';
-        else
-            sz[i] = (char)c;
-
-        i++;
-    }
-}
-
-// This OLE32 function deals in WCHAR, we need TCHAR
-static HRESULT ans_CLSIDFromString(const char *sz,LPCLSID pclsid) {
-    wchar_t tmp[128]; // should be large enough for GUID strings
-    unsigned int i;
-
-    i=0;
-    while (i < 127 && sz[i] != 0) {
-        if ((unsigned char)sz[i] > 0x7Fu) return E_FAIL;
-        tmp[i] = (wchar_t)sz[i];
-        i++;
-    }
-    tmp[i] = 0;
-    if (i >= 127)
-        return E_FAIL;
-
-    return __CLSIDFromString((LPOLESTR)tmp,pclsid);
-}
-
-// This OLE32 function deals in WCHAR, we need TCHAR
-static int ans_StringFromGUID2(REFGUID rguid,char *sz,int cchMax) {
-    int r;
-
-    r = __StringFromGUID2(rguid,(LPOLESTR)sz,/*size from chars to wchar_t of buffer*/(int)((unsigned int)cchMax / sizeof(wchar_t)));
-    /* r = chars including NULL terminator (bytes is r * sizeof(wchar_t) */
-    OLEToCharConvertInPlace(sz,r);
-    return r;
-}
 
 bool dsound_dll_init(void) {
+    if (!ole32_dll_init())
+        return false;
+
     if (dsound_dll == NULL) {
         if ((dsound_dll=LoadLibrary("DSOUND.DLL")) == NULL)
             return false;
@@ -144,24 +93,6 @@ bool dsound_dll_init(void) {
             (HRESULT (WINAPI*)(LPCGUID,LPDIRECTSOUNDCAPTURE8*,LPUNKNOWN))
             GetProcAddress(dsound_dll,"DirectSoundCaptureCreate");
         if (__DirectSoundCaptureCreate == NULL)
-            return false;
-    }
-    if (ole32_dll == NULL) {
-        if ((ole32_dll=LoadLibrary("OLE32.DLL")) == NULL)
-            return false;
-
-        dsound_atexit_init();
-
-        __StringFromGUID2 =
-            (int (WINAPI*)(REFGUID,LPOLESTR,int))
-            GetProcAddress(ole32_dll,"StringFromGUID2");
-        if (__StringFromGUID2 == NULL)
-            return false;
-
-        __CLSIDFromString =
-            (HRESULT (WINAPI *)(LPOLESTR,LPCLSID))
-            GetProcAddress(ole32_dll,"CLSIDFromString");
-        if (__CLSIDFromString == NULL)
             return false;
     }
 
