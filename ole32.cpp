@@ -32,6 +32,7 @@ bool ole32_atexit_set = false;
 HMODULE ole32_dll = NULL;
 
 HRESULT (WINAPI *__PropVariantClear)(PROPVARIANT *pvar) = NULL;
+HRESULT (WINAPI *__PropVariantToString)(REFPROPVARIANT propvar,PWSTR psz,UINT cch) = NULL;
 HRESULT (WINAPI *__CoCreateInstance)(REFCLSID rclsid,LPUNKNOWN pUnkOuter,DWORD dwClsContext,REFIID riid,LPVOID *ppv) = NULL;
 int (WINAPI *__StringFromGUID2)(REFGUID rguid,LPOLESTR lpsz,int cchMax) = NULL;
 HRESULT (WINAPI *__CLSIDFromString)(LPOLESTR lpsz,LPCLSID pclsid) = NULL;
@@ -106,6 +107,12 @@ bool ole32_dll_init(void) {
             (HRESULT (WINAPI *)(PROPVARIANT*))
             GetProcAddress(ole32_dll,"PropVariantClear");
 //      if (__PropVariantClear == NULL)
+//          return false;
+
+        __PropVariantToString =
+            (HRESULT (WINAPI*)(REFPROPVARIANT,PWSTR,UINT))
+            GetProcAddress(ole32_dll,"PropVariantToString");
+//      if (__PropVariantToString == NULL)
 //          return false;
     }
 
