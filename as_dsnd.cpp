@@ -32,14 +32,14 @@ static HMODULE dsound_dll = NULL;
 static HMODULE ole32_dll = NULL;
 
 void dsound_atexit(void) {
-	if (ole32_dll != NULL) {
-		FreeLibrary(ole32_dll);
-		ole32_dll = NULL;
-	}
-	if (dsound_dll != NULL) {
-		FreeLibrary(dsound_dll);
-		dsound_dll = NULL;
-	}
+    if (ole32_dll != NULL) {
+        FreeLibrary(ole32_dll);
+        ole32_dll = NULL;
+    }
+    if (dsound_dll != NULL) {
+        FreeLibrary(dsound_dll);
+        dsound_dll = NULL;
+    }
 }
 
 void dsound_atexit_init(void) {
@@ -55,92 +55,92 @@ static int (WINAPI *__StringFromGUID2)(REFGUID rguid,LPOLESTR lpsz,int cchMax) =
 static HRESULT (WINAPI *__CLSIDFromString)(LPOLESTR lpsz,LPCLSID pclsid) = NULL;
 
 static void OLEToCharConvertInPlace(char *sz,int cch) {
-	/* convert in place, cch chars of wchar_t to cch chars of char. cch should include the NUL character. */
-	/* cch is assumed to be the valid buffer size, this code will not go past the end of the buffer. */
-	/* this is used for calls that are primarily ASCII and do not need to worry about locale,
-	 * yet for whatever reason Microsoft insisted on using OLECHAR (wchar_t) */
-	wchar_t *sw = (wchar_t*)sz;
-	int i = 0;
+    /* convert in place, cch chars of wchar_t to cch chars of char. cch should include the NUL character. */
+    /* cch is assumed to be the valid buffer size, this code will not go past the end of the buffer. */
+    /* this is used for calls that are primarily ASCII and do not need to worry about locale,
+     * yet for whatever reason Microsoft insisted on using OLECHAR (wchar_t) */
+    wchar_t *sw = (wchar_t*)sz;
+    int i = 0;
 
-	while (i < cch) {
-		wchar_t c = sw[i];
+    while (i < cch) {
+        wchar_t c = sw[i];
 
-		if (c >= 0x80)
-			sz[i] = '?';
-		else
-			sz[i] = (char)c;
+        if (c >= 0x80)
+            sz[i] = '?';
+        else
+            sz[i] = (char)c;
 
-		i++;
-	}
+        i++;
+    }
 }
 
 // This OLE32 function deals in WCHAR, we need TCHAR
 static HRESULT ans_CLSIDFromString(const char *sz,LPCLSID pclsid) {
-	wchar_t tmp[128]; // should be large enough for GUID strings
-	unsigned int i;
+    wchar_t tmp[128]; // should be large enough for GUID strings
+    unsigned int i;
 
-	i=0;
-	while (i < 127 && sz[i] != 0) {
-		if ((unsigned char)sz[i] > 0x7Fu) return E_FAIL;
-		tmp[i] = (wchar_t)sz[i];
-		i++;
-	}
-	tmp[i] = 0;
-	if (i >= 127)
-		return E_FAIL;
+    i=0;
+    while (i < 127 && sz[i] != 0) {
+        if ((unsigned char)sz[i] > 0x7Fu) return E_FAIL;
+        tmp[i] = (wchar_t)sz[i];
+        i++;
+    }
+    tmp[i] = 0;
+    if (i >= 127)
+        return E_FAIL;
 
-	return __CLSIDFromString((LPOLESTR)tmp,pclsid);
+    return __CLSIDFromString((LPOLESTR)tmp,pclsid);
 }
 
 // This OLE32 function deals in WCHAR, we need TCHAR
 static int ans_StringFromGUID2(REFGUID rguid,char *sz,int cchMax) {
-	int r;
+    int r;
 
-	r = __StringFromGUID2(rguid,(LPOLESTR)sz,/*size from chars to wchar_t of buffer*/(int)((unsigned int)cchMax / sizeof(wchar_t)));
-	/* r = chars including NULL terminator (bytes is r * sizeof(wchar_t) */
-	OLEToCharConvertInPlace(sz,r);
-	return r;
+    r = __StringFromGUID2(rguid,(LPOLESTR)sz,/*size from chars to wchar_t of buffer*/(int)((unsigned int)cchMax / sizeof(wchar_t)));
+    /* r = chars including NULL terminator (bytes is r * sizeof(wchar_t) */
+    OLEToCharConvertInPlace(sz,r);
+    return r;
 }
 
 bool dsound_dll_init(void) {
-	if (dsound_dll == NULL) {
-		if ((dsound_dll=LoadLibrary("DSOUND.DLL")) == NULL)
-			return false;
+    if (dsound_dll == NULL) {
+        if ((dsound_dll=LoadLibrary("DSOUND.DLL")) == NULL)
+            return false;
 
-		dsound_atexit_init();
+        dsound_atexit_init();
 
-		__DirectSoundCaptureEnumerate =
-			(HRESULT (WINAPI*)(LPDSENUMCALLBACK,LPVOID))
-			GetProcAddress(dsound_dll,"DirectSoundCaptureEnumerateA");
-		if (__DirectSoundCaptureEnumerate == NULL)
-			return false;
+        __DirectSoundCaptureEnumerate =
+            (HRESULT (WINAPI*)(LPDSENUMCALLBACK,LPVOID))
+            GetProcAddress(dsound_dll,"DirectSoundCaptureEnumerateA");
+        if (__DirectSoundCaptureEnumerate == NULL)
+            return false;
 
-		__DirectSoundCaptureCreate =
-			(HRESULT (WINAPI*)(LPCGUID,LPDIRECTSOUNDCAPTURE8*,LPUNKNOWN))
-			GetProcAddress(dsound_dll,"DirectSoundCaptureCreate");
-		if (__DirectSoundCaptureCreate == NULL)
-			return false;
-	}
-	if (ole32_dll == NULL) {
-		if ((ole32_dll=LoadLibrary("OLE32.DLL")) == NULL)
-			return false;
+        __DirectSoundCaptureCreate =
+            (HRESULT (WINAPI*)(LPCGUID,LPDIRECTSOUNDCAPTURE8*,LPUNKNOWN))
+            GetProcAddress(dsound_dll,"DirectSoundCaptureCreate");
+        if (__DirectSoundCaptureCreate == NULL)
+            return false;
+    }
+    if (ole32_dll == NULL) {
+        if ((ole32_dll=LoadLibrary("OLE32.DLL")) == NULL)
+            return false;
 
-		dsound_atexit_init();
+        dsound_atexit_init();
 
-		__StringFromGUID2 =
-			(int (WINAPI*)(REFGUID,LPOLESTR,int))
-			GetProcAddress(ole32_dll,"StringFromGUID2");
-		if (__StringFromGUID2 == NULL)
-			return false;
+        __StringFromGUID2 =
+            (int (WINAPI*)(REFGUID,LPOLESTR,int))
+            GetProcAddress(ole32_dll,"StringFromGUID2");
+        if (__StringFromGUID2 == NULL)
+            return false;
 
-		__CLSIDFromString =
-			(HRESULT (WINAPI *)(LPOLESTR,LPCLSID))
-			GetProcAddress(ole32_dll,"CLSIDFromString");
-		if (__CLSIDFromString == NULL)
-			return false;
-	}
+        __CLSIDFromString =
+            (HRESULT (WINAPI *)(LPOLESTR,LPCLSID))
+            GetProcAddress(ole32_dll,"CLSIDFromString");
+        if (__CLSIDFromString == NULL)
+            return false;
+    }
 
-	return true;
+    return true;
 }
 
 class AudioSourceDSOUND : public AudioSource {
@@ -222,7 +222,7 @@ public:
                 return false;
             }
 
-	    bytes_per_frame = chosen_format.bytes_per_frame;
+        bytes_per_frame = chosen_format.bytes_per_frame;
             if (dsndcapbuf->Start(DSCBSTART_LOOPING) != DS_OK) {
                 dsound_close();
                 return false;
@@ -296,91 +296,91 @@ public:
         return 0;
     }
     virtual int GetAvailable(void) {
-	if (IsOpen()) {
-		return 0;
-	}
+    if (IsOpen()) {
+        return 0;
+    }
 
         return 0;
     }
     virtual int Read(void *buffer,unsigned int bytes) {
-	if (IsOpen() && dsndcapbuf != NULL) {
-		unsigned char *dbuf = (unsigned char*)buffer;
-		int patience = 2;
-		int rd = 0;
+    if (IsOpen() && dsndcapbuf != NULL) {
+        unsigned char *dbuf = (unsigned char*)buffer;
+        int patience = 2;
+        int rd = 0;
 
-		/* please keep bytes at a multiple of a frame */
-		bytes -= bytes % bytes_per_frame;
+        /* please keep bytes at a multiple of a frame */
+        bytes -= bytes % bytes_per_frame;
 
-		/* sanity check */
-		if (readpos == buffer_size) readpos = 0;
+        /* sanity check */
+        if (readpos == buffer_size) readpos = 0;
 
-		/* process */
-		while (bytes > 0 && patience-- > 0) {
-			DWORD ncap=0,nread=readpos;
-			DWORD ptrlen=0;
-			void *ptr=NULL;
+        /* process */
+        while (bytes > 0 && patience-- > 0) {
+            DWORD ncap=0,nread=readpos;
+            DWORD ptrlen=0;
+            void *ptr=NULL;
 
-			if (dsndcapbuf->GetCurrentPosition(&ncap,&nread) != DS_OK)
-				break;
+            if (dsndcapbuf->GetCurrentPosition(&ncap,&nread) != DS_OK)
+                break;
 
-			/* sanity check */
-			if (nread > buffer_size) nread = buffer_size;
+            /* sanity check */
+            if (nread > buffer_size) nread = buffer_size;
 
-			/* NTS: Experience with DirectSound under older versions of Windows (Windows 98 for example)
-			 *      and ISA-type devices says that it is possible for the read position to sit at an
-			 *      offset NOT a multiple of a frame. For example, back in the day on a laptop with
-			 *      Windows 98 and a OPL3-SAx sound card, 16-bit stereo capture could return an offset
-			 *      that points at the R sample in a frame instead of the L sample. */
-			nread -= nread % bytes_per_frame;
+            /* NTS: Experience with DirectSound under older versions of Windows (Windows 98 for example)
+             *      and ISA-type devices says that it is possible for the read position to sit at an
+             *      offset NOT a multiple of a frame. For example, back in the day on a laptop with
+             *      Windows 98 and a OPL3-SAx sound card, 16-bit stereo capture could return an offset
+             *      that points at the R sample in a frame instead of the L sample. */
+            nread -= nread % bytes_per_frame;
 
-			/* how much to process? */
-			int howmuch = (int)nread - (int)readpos;
-			if (howmuch < 0) howmuch += (int)buffer_size;
-			if (howmuch <= 0) break;
-			if ((unsigned int)howmuch > bytes) howmuch = (int)bytes;
+            /* how much to process? */
+            int howmuch = (int)nread - (int)readpos;
+            if (howmuch < 0) howmuch += (int)buffer_size;
+            if (howmuch <= 0) break;
+            if ((unsigned int)howmuch > bytes) howmuch = (int)bytes;
 
-			/* let's not deal with two buffers considering the circular buffer, keep this code simple */
-			DWORD cando = buffer_size - readpos;
-			if ((DWORD)howmuch > cando) howmuch = (int)cando;
-			if (howmuch == 0) break;
+            /* let's not deal with two buffers considering the circular buffer, keep this code simple */
+            DWORD cando = buffer_size - readpos;
+            if ((DWORD)howmuch > cando) howmuch = (int)cando;
+            if (howmuch == 0) break;
 
-			/* lock the buffer and go */
-			if (dsndcapbuf->Lock(readpos,(DWORD)howmuch,&ptr,&ptrlen,NULL,NULL,0) != DS_OK) {
-				fprintf(stderr,"Lock error readpos %u howmuch %u bufferlen %u\n",
-					(unsigned int)readpos,(unsigned int)howmuch,(unsigned int)buffer_size);
-				break;
-			}
+            /* lock the buffer and go */
+            if (dsndcapbuf->Lock(readpos,(DWORD)howmuch,&ptr,&ptrlen,NULL,NULL,0) != DS_OK) {
+                fprintf(stderr,"Lock error readpos %u howmuch %u bufferlen %u\n",
+                    (unsigned int)readpos,(unsigned int)howmuch,(unsigned int)buffer_size);
+                break;
+            }
 
-			/* sanity check. we didn't ask for wraparound so it shouldn't happen. */
-			if (ptrlen != (DWORD)howmuch)
-				fprintf(stderr,"Lock warning, less locked than requested %u < %u\n",
-					(unsigned int)ptrlen,(unsigned int)howmuch);
-			if (ptr == NULL)
-				fprintf(stderr,"Lock warning, ptr == NULL on return (readpos %u howmuch %u bufferlen %u)\n",
-					(unsigned int)readpos,(unsigned int)howmuch,(unsigned int)buffer_size);
+            /* sanity check. we didn't ask for wraparound so it shouldn't happen. */
+            if (ptrlen != (DWORD)howmuch)
+                fprintf(stderr,"Lock warning, less locked than requested %u < %u\n",
+                    (unsigned int)ptrlen,(unsigned int)howmuch);
+            if (ptr == NULL)
+                fprintf(stderr,"Lock warning, ptr == NULL on return (readpos %u howmuch %u bufferlen %u)\n",
+                    (unsigned int)readpos,(unsigned int)howmuch,(unsigned int)buffer_size);
 
-			if (ptrlen == (DWORD)howmuch && ptr != NULL) {
-				memcpy(dbuf,ptr,(size_t)howmuch);
-				bytes -= (unsigned int)howmuch;
-				readpos += (DWORD)howmuch;
-				dbuf += howmuch;
-				rd += howmuch;
+            if (ptrlen == (DWORD)howmuch && ptr != NULL) {
+                memcpy(dbuf,ptr,(size_t)howmuch);
+                bytes -= (unsigned int)howmuch;
+                readpos += (DWORD)howmuch;
+                dbuf += howmuch;
+                rd += howmuch;
 
-				if (readpos > buffer_size)
-					fprintf(stderr,"Lock warning, readpos overrun\n");
-				if (readpos >= buffer_size)
-					readpos = 0;
-			}
+                if (readpos > buffer_size)
+                    fprintf(stderr,"Lock warning, readpos overrun\n");
+                if (readpos >= buffer_size)
+                    readpos = 0;
+            }
 
-			/* unlock */
-			if (dsndcapbuf->Unlock(ptr,ptrlen,NULL,0) != DS_OK) {
-				fprintf(stderr,"Unlock error\n");
-				break;
-			}
-		}
+            /* unlock */
+            if (dsndcapbuf->Unlock(ptr,ptrlen,NULL,0) != DS_OK) {
+                fprintf(stderr,"Unlock error\n");
+                break;
+            }
+        }
 
-		return rd;
-	}
+        return rd;
+    }
 
         return -EINVAL;
     }
@@ -436,10 +436,10 @@ private:
                     wfmt.SubFormat = windows_KSDATAFORMAT_SUBTYPE_PCM;
                 }
 
-		if (fmt.bits_per_sample == 8)
-			fmt.format_tag = AFMT_PCMU;
-		else
-			fmt.format_tag = AFMT_PCMS;
+        if (fmt.bits_per_sample == 8)
+            fmt.format_tag = AFMT_PCMU;
+        else
+            fmt.format_tag = AFMT_PCMS;
                 break;
             default:
                 return false;
@@ -455,7 +455,7 @@ private:
         dsc.dwBufferBytes = fmt.sample_rate * ((fmt.bits_per_sample + 7u) / 8u) * fmt.channels;
         dsc.lpwfxFormat = (WAVEFORMATEX*)(&wfmt);
 
-	buffer_size = dsc.dwBufferBytes;
+    buffer_size = dsc.dwBufferBytes;
 
         if (dsndcap->CreateCaptureBuffer(&dsc,&dsndcapbuf,NULL) != DS_OK)
             return false;
@@ -511,14 +511,14 @@ private:
             dsndcap = NULL;
         }
 
-	buffer_size = 0;
+    buffer_size = 0;
         readpos = 0;
     }
 private:
-    IDirectSoundCapture*			    dsndcap;
-    IDirectSoundCaptureBuffer*			dsndcapbuf;
-    DWORD					            readpos;
-    DWORD							buffer_size;
+    IDirectSoundCapture*                dsndcap;
+    IDirectSoundCaptureBuffer*          dsndcapbuf;
+    DWORD                               readpos;
+    DWORD                           buffer_size;
 };
 
 AudioSource* AudioSourceDSOUND_Alloc(void) {
