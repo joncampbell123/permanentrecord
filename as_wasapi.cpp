@@ -172,6 +172,12 @@ public:
                 return false;
             }
 
+            immacl->Reset();
+            if (immacl->Start() != S_OK) {
+                fprintf(stderr,"Failed to start\n");
+                return false;
+            }
+
             isUserOpen = true;
         }
 
@@ -446,6 +452,7 @@ private:
             immacapcl = NULL;
         }
         if (immacl != NULL) {
+            immacl->Stop();
             immacl->Release();
             immacl = NULL;
         }
