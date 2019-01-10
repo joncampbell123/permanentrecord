@@ -31,7 +31,9 @@ bool ole32_has_coinit = false;
 bool ole32_atexit_set = false;
 HMODULE ole32_dll = NULL;
 
+#if defined(HAVE_MMDEVICEAPI_H)
 HRESULT (WINAPI *__PropVariantClear)(PROPVARIANT *pvar) = NULL;
+#endif
 HRESULT (WINAPI *__CoCreateInstance)(REFCLSID rclsid,LPUNKNOWN pUnkOuter,DWORD dwClsContext,REFIID riid,LPVOID *ppv) = NULL;
 int (WINAPI *__StringFromGUID2)(REFGUID rguid,LPOLESTR lpsz,int cchMax) = NULL;
 HRESULT (WINAPI *__CLSIDFromString)(LPOLESTR lpsz,LPCLSID pclsid) = NULL;
@@ -102,11 +104,13 @@ bool ole32_dll_init(void) {
         if (__CoTaskMemFree == NULL)
             return false;
 
+#if defined(HAVE_MMDEVICEAPI_H)
         __PropVariantClear =
             (HRESULT (WINAPI *)(PROPVARIANT*))
             GetProcAddress(ole32_dll,"PropVariantClear");
 //      if (__PropVariantClear == NULL)
 //          return false;
+#endif
     }
 
     return true;

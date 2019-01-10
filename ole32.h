@@ -22,8 +22,9 @@
 extern bool ole32_atexit_set;
 extern HMODULE ole32_dll;
 
+#if defined(HAVE_MMDEVICEAPI_H)
 extern HRESULT (WINAPI *__PropVariantClear)(PROPVARIANT *pvar);
-extern HRESULT (WINAPI *__PropVariantToString)(REFPROPVARIANT propvar,PWSTR psz,UINT cch);
+#endif
 extern HRESULT (WINAPI *__CoCreateInstance)(REFCLSID rclsid,LPUNKNOWN pUnkOuter,DWORD dwClsContext,REFIID riid,LPVOID *ppv);
 extern int (WINAPI *__StringFromGUID2)(REFGUID rguid,LPOLESTR lpsz,int cchMax);
 extern HRESULT (WINAPI *__CLSIDFromString)(LPOLESTR lpsz,LPCLSID pclsid);
