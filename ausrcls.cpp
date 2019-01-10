@@ -22,6 +22,7 @@
 #include "as_alsa.h"
 #include "as_pulse.h"
 #include "as_dsnd.h"
+#include "as_wasapi.h"
 
 #if defined(HAVE_ALSA)
 AudioSource* AudioSourceALSA_Alloc(void);
@@ -33,6 +34,10 @@ AudioSource* AudioSourcePULSE_Alloc(void);
 
 #if defined(HAVE_DSOUND_H)
 AudioSource* AudioSourceDSOUND_Alloc(void);
+#endif
+
+#if defined(HAVE_MMDEVICEAPI_H)
+AudioSource* AudioSourceWASAPI_Alloc(void);
 #endif
 
 const AudioSourceListEntry audio_source_list[] = {
@@ -51,6 +56,11 @@ const AudioSourceListEntry audio_source_list[] = {
      "Microsoft DirectSound (DirectX)",
      &AudioSourceDSOUND_Alloc},
 #endif
+#if defined(HAVE_MMDEVICEAPI_H)
+    {"WASAPI",
+     "Microsoft Windows Session API (WASAPI)",
+     &AudioSourceWASAPI_Alloc},
+#endif
     {NULL,
      NULL,
      NULL}
@@ -65,6 +75,9 @@ const audiosourcealloc_t default_source_order[] = {
 #endif
 #if defined(HAVE_DSOUND_H)
     &AudioSourceDSOUND_Alloc,
+#endif
+#if defined(HAVE_MMDEVICEAPI_H)
+    &AudioSourceWASAPI_Alloc,
 #endif
     NULL
 };
