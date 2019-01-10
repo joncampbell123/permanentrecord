@@ -310,6 +310,10 @@ private:
                     return false;
             }
         }
+        if (immacl == NULL) {
+            if (immdev->Activate(wasapi_IID_IAudioClient, CLSCTX_ALL, NULL, (void**)(&immacl)) != S_OK)
+                return false;
+        }
 
         return true;
     }
