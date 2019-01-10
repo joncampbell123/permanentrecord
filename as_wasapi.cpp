@@ -401,8 +401,10 @@ private:
                 EDataFlow flow;
 
                 if (ep->GetDataFlow(&flow) == S_OK) {
-                    fprintf(stderr,"Preparing capture from render endpoint\n");
-                    flags |= AUDCLNT_STREAMFLAGS_LOOPBACK;
+                    if (flow == eRender) {
+                        fprintf(stderr,"Preparing capture from render endpoint\n");
+                        flags |= AUDCLNT_STREAMFLAGS_LOOPBACK;
+                    }
                 }
             }
         }
