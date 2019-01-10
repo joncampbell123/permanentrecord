@@ -205,10 +205,14 @@ public:
         return 0;
     }
     bool UpdateFormatFromWAVE(struct AudioFormat &fmt,WAVEFORMATEX *wfx) {
-        fmt.format_tag = 0;
-
         fmt.sample_rate = wfx->nSamplesPerSec;
         fmt.channels = (uint8_t)wfx->nChannels;
+
+        if (fmt.format_tag == 0) {
+            fmt.format_tag = AFMT_PCMS;
+            fmt.bits_per_sample = 16;
+        }
+
         fmt.updateFrameInfo();
  
         if (wfx->wFormatTag == 0x0001/*WAVE_FORMAT_PCM*/) {
@@ -350,7 +354,44 @@ private:
         if (fmt.format_tag == 0)
             return false;
 
-        return false;
+        if (!wasapi_open())
+            return false;
+        if (immacl == NULL)
+            return false;
+
+        WAVEFORMATEXTENSIBLE wext;
+
+        memset(&wext,0,sizeof(wext));
+
+        if (fmt.bits_per_sample > 16 || fmt.channels > 2) {
+            wext.Format.wFormatTag = 0xFFFE;/*WAVE_FORMAT_EXTENSIBLE*/
+            memcpy(&wext.SubFormat,&windows_KSDATAFORMAT_SUBTYPE_PCM,sizeof(GUID));
+            wext.Format.cbSize = sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX);
+            wext.dwChannelMask = (1ul << fmt.channels) - 1ul;
+            wext.Samples.wValidBitsPerSample = fmt.bits_per_sample;
+        }
+        else {
+            wext.Format.wFormatTag = 0x0001;/*WAVE_FORMAT_PCM*/
+        }
+        wext.Format.nChannels = fmt.channels;
+        wext.Format.nSamplesPerSec = fmt.sample_rate;
+        wext.Format.wBitsPerSample = fmt.bits_per_sample;
+        wext.Format.nBlockAlign = fmt.channels * ((fmt.bits_per_sample + 7u) / 8u);
+        wext.Format.nAvgBytesPerSec = wext.Format.nBlockAlign * wext.Format.nSamplesPerSec;
+
+        // TODO: AUDCLNT_STREAMFLAGS_LOOPBACK if this is a eRender endpoint
+        if (immacl->Initialize(AUDCLNT_SHAREMODE_SHARED,0,10000000/*100ns units = 1 second */,0,(const WAVEFORMATEX*)(&wext),NULL) != S_OK) {
+            WAVEFORMATEX *wfx = NULL;
+
+            if (immacl->GetMixFormat(&wfx) == S_OK)
+                UpdateFormatFromWAVE(fmt,wfx);
+            else
+                fprintf(stderr,"Cannot get mix format after attempt init\n");
+
+            __CoTaskMemFree(wfx);
+        }
+
+        return true;
     }
     void wasapi_force_close(void) {
         Close();
