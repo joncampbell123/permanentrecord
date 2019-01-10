@@ -31,5 +31,7 @@ bool ole32_dll_init(void);
 void OLEToCharConvertInPlace(char *sz,int cch);
 HRESULT ans_CLSIDFromString(const char *sz,LPCLSID pclsid);
 int ans_StringFromGUID2(REFGUID rguid,char *sz,int cchMax);
+void ole32_couninit(void);
+bool ole32_coinit(void);
 #endif
 

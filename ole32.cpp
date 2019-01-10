@@ -27,11 +27,14 @@
 # include "wavstruc.h"
 # include "ole32.h"
 
+bool ole32_has_coinit = false;
 bool ole32_atexit_set = false;
 HMODULE ole32_dll = NULL;
 
 int (WINAPI *__StringFromGUID2)(REFGUID rguid,LPOLESTR lpsz,int cchMax) = NULL;
 HRESULT (WINAPI *__CLSIDFromString)(LPOLESTR lpsz,LPCLSID pclsid) = NULL;
+HRESULT (WINAPI *__CoInitialize)(LPVOID pvReserved) = NULL;
+void (WINAPI *__CoUninitialize)() = NULL;
 
 void ole32_atexit(void) {
     if (ole32_dll != NULL) {
@@ -40,7 +43,15 @@ void ole32_atexit(void) {
     }
 }
 
+void ole32_couninit(void) {
+    if (ole32_has_coinit) {
+	    __CoUninitialize();
+	    ole32_has_coinit = false;
+    }
+}
+
 void ole32_atexit_init(void) {
+    ole32_couninit();
     if (!ole32_atexit_set) {
         ole32_atexit_set = 1;
         atexit(ole32_atexit);
@@ -59,13 +70,42 @@ bool ole32_dll_init(void) {
             return false;
 
         __CLSIDFromString =
-            (HRESULT (WINAPI *)(LPOLESTR,LPCLSID))
+            (HRESULT (WINAPI*)(LPOLESTR,LPCLSID))
             GetProcAddress(ole32_dll,"CLSIDFromString");
         if (__CLSIDFromString == NULL)
             return false;
+
+	__CoInitialize = 
+	    (HRESULT (WINAPI*)(LPVOID))
+	    GetProcAddress(ole32_dll,"CoInitialize");
+	if (__CoInitialize == NULL)
+		return false;
+
+	__CoUninitialize = 
+	    (void (WINAPI*)())
+	    GetProcAddress(ole32_dll,"CoUninitialize");
+	if (__CoUninitialize == NULL)
+		return false;
     }
 
     return true;
+}
+
+bool ole32_coinit(void) {
+	if (!ole32_dll_init())
+		return false;
+
+	if (!ole32_has_coinit) {
+		HRESULT hr;
+
+		hr = __CoInitialize(NULL);
+		if (hr == S_OK || hr == S_FALSE)
+			ole32_has_coinit = true;
+		else
+			return false;
+	}
+
+	return true;
 }
 
 void OLEToCharConvertInPlace(char *sz,int cch) {

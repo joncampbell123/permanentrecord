@@ -25,6 +25,7 @@
 #include "wavstruc.h"
 #include "wavwrite.h"
 #include "recpath.h"
+#include "ole32.h"
 
 #include "as_alsa.h"
 #include "as_pulse.h"
@@ -523,6 +524,10 @@ bool record_main(AudioSource* alsa,AudioFormat &fmt) {
 }
 
 int main(int argc,char **argv) {
+#if defined(WIN32)
+	ole32_coinit();
+#endif
+
 #if defined(WIN32) // HACK help me figure out what is going on
 	setbuf(stdout,NULL);
 	setbuf(stderr,NULL);
