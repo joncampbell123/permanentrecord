@@ -641,8 +641,68 @@ int main(int argc,char **argv) {
 HINSTANCE myInstance;
 HWND hwndMain;
 
+void populate_sources(void) {
+	HWND dlgitem = GetDlgItem(hwndMain,IDC_SOURCE);
+
+	SendMessage(dlgitem,CB_RESETCONTENT,0,0);
+
+        size_t i,idx=0;
+
+	SendMessage(dlgitem,CB_ADDSTRING,0,(LPARAM)"(default)");
+        for (i=0;audio_source_list[i].name != NULL;i++) {
+		DWORD ret = (DWORD)SendMessage(dlgitem,CB_ADDSTRING,0,(LPARAM)audio_source_list[i].name);
+
+		if (!ui_source.empty() && ui_source == audio_source_list[i].name)
+			idx = ret;
+        }
+
+	SendMessage(dlgitem,CB_SETCURSEL,(WPARAM)idx,0);
+}
+
+void populate_devices(void) {
+	HWND dlgitem = GetDlgItem(hwndMain,IDC_DEVICE);
+
+	SendMessage(dlgitem,CB_RESETCONTENT,0,0);
+
+	size_t idx=0;
+
+	SendMessage(dlgitem,CB_ADDSTRING,0,(LPARAM)"(default)");
+
+        AudioSource* alsa = GetAudioSource(ui_source.c_str());
+	if (alsa != NULL) {
+		std::vector<AudioDevicePair> l;
+
+		if (alsa->EnumDevices(l) >= 0) {
+			for (auto i=l.begin();i != l.end();i++) {
+				std::string fnl = (*i).desc;
+
+				if (!((*i).name.empty())) {
+					fnl += " - ";
+					fnl += (*i).name;
+				}
+
+				DWORD ret = (DWORD)SendMessage(dlgitem,CB_ADDSTRING,0,(LPARAM)fnl.c_str());
+
+				if (!ui_device.empty() && ui_device == (*i).name)
+					idx = ret;
+			}
+		}
+	}
+
+	SendMessage(dlgitem,CB_SETCURSEL,(WPARAM)idx,0);
+}
+
 BOOL CALLBACK DlgMainProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam) {
+	(void)lParam;
+
 	if (uMsg == WM_INITDIALOG) {
+		hwndMain = hwndDlg;
+
+		SetDlgItemText(hwndDlg,IDC_STATUS,"Ready");
+
+		populate_sources();
+		populate_devices();
+
 		return TRUE;
 	}
 	else if (uMsg == WM_COMMAND) {
