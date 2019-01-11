@@ -638,8 +638,70 @@ int main(int argc,char **argv) {
 #ifdef TARGET_GUI_WINDOWS
 # include "winres/resource.h"
 
+AudioSource* active_source = NULL;
 HINSTANCE myInstance;
 HWND hwndMain;
+
+void EnableDlgItem(HWND hwnd,int id,BOOL en) {
+	HWND h = GetDlgItem(hwnd,id);
+	if (h != NULL) EnableWindow(h,en);
+}
+
+void win_stop_recording(void);
+
+bool win_is_recording(void) {
+	return (active_source != NULL);
+}
+
+bool win_start_recording(void) {
+	if (active_source == NULL) {
+		EnableDlgItem(hwndMain,IDC_RECORD,FALSE);
+		SetDlgItemText(hwndMain,IDC_RECORD,"Starting...");
+
+		active_source = GetAudioSource(ui_source.c_str());
+		if (active_source == NULL) {
+			win_stop_recording();
+			MessageBox(hwndMain,"No such source","",MB_OK);
+			return false;
+		}
+
+		AudioFormat fmt;
+
+		memset(&fmt,0,sizeof(fmt));
+
+		fmt.sample_rate = (unsigned int)ui_want_rate;
+		fmt.bits_per_sample = (uint8_t)ui_want_bits;
+		fmt.channels = (uint8_t)ui_want_channels;
+
+		if (fmt.bits_per_sample == 8)
+			fmt.format_tag = AFMT_PCMU;
+		else
+			fmt.format_tag = AFMT_PCMS;
+
+		/* also opens */
+		if (!ui_apply_options(active_source,fmt)) {
+			win_stop_recording();
+			MessageBox(hwndMain,"Failed to start audio capture","",MB_OK);
+			return false;
+		}
+
+		EnableDlgItem(hwndMain,IDC_RECORD,TRUE);
+		SetDlgItemText(hwndMain,IDC_RECORD,"Stop");
+	}
+
+	return true;
+}
+
+void win_stop_recording(void) {
+	if (active_source != NULL) {
+		active_source->Close();
+		delete active_source;
+		active_source = NULL;
+
+		EnableDlgItem(hwndMain,IDC_RECORD,TRUE);
+		SetDlgItemText(hwndMain,IDC_RECORD,"Record");
+	}
+}
 
 void populate_sources(void) {
 	HWND dlgitem = GetDlgItem(hwndMain,IDC_SOURCE);
@@ -780,6 +842,12 @@ BOOL CALLBACK DlgMainProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam) {
 	else if (uMsg == WM_COMMAND) {
 		if (LOWORD(wParam) == IDCANCEL) {
 			DestroyWindow(hwndDlg);
+		}
+		else if (LOWORD(wParam) == IDC_RECORD) {
+			if (!win_is_recording())
+				win_start_recording();
+			else
+				win_stop_recording();
 		}
 		else if (LOWORD(wParam) == IDC_SOURCE) {
 			if (HIWORD(wParam) == CBN_SELCHANGE) {
