@@ -137,14 +137,17 @@ public:
             p.name = tmp;
         }
 
-        p.desc = lpcstrDescription != NULL ? lpcstrDescription : "";
-        if (lpcstrModule != NULL && *lpcstrModule != 0) {
-            p.desc += " [";
-            p.desc += lpcstrModule;
-            p.desc += "]";
-        }
+	// lpGuid == NULL and "Primary Device" should not be listed
+	if (!p.name.empty()) {
+		p.desc = lpcstrDescription != NULL ? lpcstrDescription : "";
+		if (lpcstrModule != NULL && *lpcstrModule != 0) {
+			p.desc += " [";
+			p.desc += lpcstrModule;
+			p.desc += "]";
+		}
 
-        names.push_back(p);
+		names.push_back(p);
+	}
 
         return TRUE;
     }
