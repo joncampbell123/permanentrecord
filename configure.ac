@@ -154,8 +154,11 @@ case "$host" in
     CXXFLAGS="$CXXFLAGS -static -static-libgcc"
     LDFLAGS="$LDFLAGS -static -static-libgcc"
     enable_alt_dsound=yes
+    gui_win32=yes
     ;;
 esac
+
+AM_CONDITIONAL(DO_GUI_WIN32, test "x$gui_win32" = xyes)
 
 dnl I would like to know of any concerns given by the C++ compiler.
 dnl Clang/LLVM already does this to some degree, let's get GCC to do it too.

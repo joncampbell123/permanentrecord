@@ -14,6 +14,15 @@ if HAVE_COREAUDIO_COREAUDIO_H
 permrec_audio_SOURCES += as_applecore.mm
 endif
 
+if DO_GUI_WIN32
+bin_PROGRAMS += \
+	permrec_audio_wingui
+
+permrec_audio_wingui_SOURCES = $(permrec_audio_SOURCES) permrec_audio_wingui.cpp
+permrec_audio_wingui_CXXFLAGS = $(permrec_audio_CXXFLAGS)
+permrec_audio_wingui_LDFLAGS = $(permrec_audio_LDFLAGS) -lgdi32 -luser32 -lkernel32
+endif
+
 if HAVE_ALSA
 endif
 
