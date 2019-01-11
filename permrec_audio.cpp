@@ -649,7 +649,8 @@ DWORD WINAPI WinCapThreadProc(LPVOID param) {
 	(void)param;
 
 	assert(active_source != NULL);
-	record_main(active_source,active_source_fmt);
+	if (!record_main(active_source,active_source_fmt))
+		return 1;
 
 	return 0;
 }
@@ -660,6 +661,17 @@ void EnableDlgItem(HWND hwnd,int id,BOOL en) {
 }
 
 void win_stop_recording(void);
+
+bool win_thread_stopped(void) {
+	if (WinCapThread != INVALID_HANDLE_VALUE) {
+		if (WaitForSingleObject(WinCapThread,0) == WAIT_OBJECT_0) {
+			WinCapThread = INVALID_HANDLE_VALUE;//of course this reaps the thread too
+			return true;
+		}
+	}
+
+	return false;
+}
 
 bool win_is_recording(void) {
 	return (active_source != NULL);
@@ -859,6 +871,8 @@ BOOL CALLBACK DlgMainProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam) {
 	if (uMsg == WM_INITDIALOG) {
 		hwndMain = hwndDlg;
 
+		SetTimer(hwndDlg,1,100,NULL);
+
 		{
 			LRESULT i;
 
@@ -901,6 +915,14 @@ BOOL CALLBACK DlgMainProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam) {
 		populate_devices();
 
 		return TRUE;
+	}
+	else if (uMsg == WM_TIMER) {
+		if (win_is_recording()) {
+			if (win_thread_stopped()) {
+				fprintf(stderr,"Audio capture thread stopped\n");
+				win_stop_recording();
+			}
+		}
 	}
 	else if (uMsg == WM_COMMAND) {
 		if (LOWORD(wParam) == IDCANCEL) {
