@@ -635,3 +635,56 @@ int main(int argc,char **argv) {
 }
 #endif //TARGET_GUI
 
+#ifdef TARGET_GUI_WINDOWS
+# include "winres/resource.h"
+
+HINSTANCE myInstance;
+HWND hwndMain;
+
+BOOL CALLBACK DlgMainProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam) {
+	if (uMsg == WM_INITDIALOG) {
+		return TRUE;
+	}
+	else if (uMsg == WM_COMMAND) {
+		if (wParam == IDCANCEL) {
+			DestroyWindow(hwndDlg);
+		}
+
+		return TRUE;
+	}
+	else if (uMsg == WM_DESTROY) {
+		PostQuitMessage(0);
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
+int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine,int nCmdShow) {
+	MSG msg;
+
+	(void)hPrevInstance;
+	(void)lpCmdLine;
+	(void)nCmdShow;
+
+	myInstance = hInstance;
+
+	hwndMain = CreateDialogParam(myInstance,MAKEINTRESOURCE(IDD_MAIN),NULL,DlgMainProc,0);
+	if (hwndMain == NULL) return 1;
+
+	ShowWindow(hwndMain,nCmdShow);
+	UpdateWindow(hwndMain);
+
+	while (GetMessage(&msg,NULL,0,0)) {
+		if (IsDialogMessage(hwndMain,&msg)) {
+		}
+		else {
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
+	}
+
+	return 0;
+}
+#endif
+
