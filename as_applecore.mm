@@ -311,7 +311,7 @@ private:
         else
             fprintf(stderr,"WARNING: bufs queued underrun\n");
 
-        fprintf(stderr,"aq_cb %u\n",_this->audio_bufs_queued);
+        _this->audio_bufs.push(inBuffer);
 
         pthread_mutex_unlock(&_this->audio_bufs_mutex);
     }
