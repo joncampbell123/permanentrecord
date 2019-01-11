@@ -90,7 +90,10 @@ AC_CHECK_HEADERS([CoreAudio/CoreAudio.h])
 
 if test "x$ac_cv_header_endian_h" != xyes; then
     CXXFLAGS="-I"'$(abs_top_srcdir)'"/fillin/endian $CXXFLAGS"
+    OBJCXXFLAGS="-I"'$(abs_top_srcdir)'"/fillin/endian $OBJCXXFLAGS"
 fi
+
+AM_CONDITIONAL(HAVE_COREAUDIO_COREAUDIO_H, test "x$ac_cv_header_CoreAudio_CoreAudio_h" = xyes )
 
 dnl some semi complex check for sys/socket so it works on darwin as well
 AC_CHECK_HEADERS([stdlib.h sys/types.h])

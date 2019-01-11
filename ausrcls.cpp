@@ -23,6 +23,7 @@
 #include "as_pulse.h"
 #include "as_dsnd.h"
 #include "as_wasapi.h"
+#include "as_applecore.h"
 
 #if defined(HAVE_ALSA)
 AudioSource* AudioSourceALSA_Alloc(void);
@@ -38,6 +39,10 @@ AudioSource* AudioSourceDSOUND_Alloc(void);
 
 #if defined(HAVE_MMDEVICEAPI_H)
 AudioSource* AudioSourceWASAPI_Alloc(void);
+#endif
+
+#if defined(HAVE_COREAUDIO_COREAUDIO_H)
+AudioSource* AudioSourceAPPLECORE_Alloc(void);
 #endif
 
 const AudioSourceListEntry audio_source_list[] = {
@@ -61,6 +66,11 @@ const AudioSourceListEntry audio_source_list[] = {
      "Microsoft Windows Session API (WASAPI)",
      &AudioSourceWASAPI_Alloc},
 #endif
+#if defined(HAVE_COREAUDIO_COREAUDIO_H)
+    {"CORE",
+     "Mac OS X Core Audio",
+     &AudioSourceAPPLECORE_Alloc},
+#endif
     {NULL,
      NULL,
      NULL}
@@ -78,6 +88,9 @@ const audiosourcealloc_t default_source_order[] = {
 #endif
 #if defined(HAVE_MMDEVICEAPI_H)
     &AudioSourceWASAPI_Alloc,
+#endif
+#if defined(HAVE_COREAUDIO_COREAUDIO_H)
+    &AudioSourceAPPLECORE_Alloc,
 #endif
     NULL
 };

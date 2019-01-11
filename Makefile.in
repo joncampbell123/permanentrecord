@@ -91,6 +91,7 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 bin_PROGRAMS = permrec_audio$(EXEEXT)
+@HAVE_COREAUDIO_COREAUDIO_H_TRUE@am__append_1 = as_applecore.mm
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
@@ -106,6 +107,13 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
+am__permrec_audio_SOURCES_DIST = permrec_audio.cpp common.cpp \
+	monclock.cpp aufmt.cpp ausrc.cpp ausrcls.cpp aufmtui.cpp \
+	dbfs.cpp autocut.cpp as_alsa.cpp as_pulse.cpp wavwrite.cpp \
+	recpath.cpp as_dsnd.cpp ole32.cpp as_wasapi.cpp \
+	as_applecore.mm
+@HAVE_COREAUDIO_COREAUDIO_H_TRUE@am__objects_1 =  \
+@HAVE_COREAUDIO_COREAUDIO_H_TRUE@	as_applecore.$(OBJEXT)
 am_permrec_audio_OBJECTS = permrec_audio-permrec_audio.$(OBJEXT) \
 	permrec_audio-common.$(OBJEXT) \
 	permrec_audio-monclock.$(OBJEXT) permrec_audio-aufmt.$(OBJEXT) \
@@ -117,10 +125,10 @@ am_permrec_audio_OBJECTS = permrec_audio-permrec_audio.$(OBJEXT) \
 	permrec_audio-wavwrite.$(OBJEXT) \
 	permrec_audio-recpath.$(OBJEXT) \
 	permrec_audio-as_dsnd.$(OBJEXT) permrec_audio-ole32.$(OBJEXT) \
-	permrec_audio-as_wasapi.$(OBJEXT)
+	permrec_audio-as_wasapi.$(OBJEXT) $(am__objects_1)
 permrec_audio_OBJECTS = $(am_permrec_audio_OBJECTS)
 permrec_audio_LDADD = $(LDADD)
-permrec_audio_LINK = $(CXXLD) $(permrec_audio_CXXFLAGS) $(CXXFLAGS) \
+permrec_audio_LINK = $(OBJCXXLD) $(AM_OBJCXXFLAGS) $(OBJCXXFLAGS) \
 	$(permrec_audio_LDFLAGS) $(LDFLAGS) -o $@
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -137,7 +145,8 @@ am__v_at_1 =
 DEFAULT_INCLUDES = -I.@am__isrc@
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__maybe_remake_depfiles = depfiles
-am__depfiles_remade = ./$(DEPDIR)/permrec_audio-as_alsa.Po \
+am__depfiles_remade = ./$(DEPDIR)/as_applecore.Po \
+	./$(DEPDIR)/permrec_audio-as_alsa.Po \
 	./$(DEPDIR)/permrec_audio-as_dsnd.Po \
 	./$(DEPDIR)/permrec_audio-as_pulse.Po \
 	./$(DEPDIR)/permrec_audio-as_wasapi.Po \
@@ -171,8 +180,33 @@ AM_V_CXXLD = $(am__v_CXXLD_@AM_V@)
 am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
+OBJCXXCOMPILE = $(OBJCXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
+	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_OBJCXXFLAGS) $(OBJCXXFLAGS)
+AM_V_OBJCXX = $(am__v_OBJCXX_@AM_V@)
+am__v_OBJCXX_ = $(am__v_OBJCXX_@AM_DEFAULT_V@)
+am__v_OBJCXX_0 = @echo "  OBJCXX  " $@;
+am__v_OBJCXX_1 = 
+OBJCXXLD = $(OBJCXX)
+OBJCXXLINK = $(OBJCXXLD) $(AM_OBJCXXFLAGS) $(OBJCXXFLAGS) \
+	$(AM_LDFLAGS) $(LDFLAGS) -o $@
+AM_V_OBJCXXLD = $(am__v_OBJCXXLD_@AM_V@)
+am__v_OBJCXXLD_ = $(am__v_OBJCXXLD_@AM_DEFAULT_V@)
+am__v_OBJCXXLD_0 = @echo "  OBJCXXLD" $@;
+am__v_OBJCXXLD_1 = 
+COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
+	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
+AM_V_CC = $(am__v_CC_@AM_V@)
+am__v_CC_ = $(am__v_CC_@AM_DEFAULT_V@)
+am__v_CC_0 = @echo "  CC      " $@;
+am__v_CC_1 = 
+CCLD = $(CC)
+LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
+AM_V_CCLD = $(am__v_CCLD_@AM_V@)
+am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
+am__v_CCLD_0 = @echo "  CCLD    " $@;
+am__v_CCLD_1 = 
 SOURCES = $(permrec_audio_SOURCES)
-DIST_SOURCES = $(permrec_audio_SOURCES)
+DIST_SOURCES = $(am__permrec_audio_SOURCES_DIST)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -324,14 +358,17 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 EXTRA_DIST = autogen.sh
-permrec_audio_SOURCES = permrec_audio.cpp common.cpp monclock.cpp aufmt.cpp ausrc.cpp ausrcls.cpp aufmtui.cpp dbfs.cpp autocut.cpp as_alsa.cpp as_pulse.cpp wavwrite.cpp recpath.cpp as_dsnd.cpp ole32.cpp as_wasapi.cpp
+permrec_audio_SOURCES = permrec_audio.cpp common.cpp monclock.cpp \
+	aufmt.cpp ausrc.cpp ausrcls.cpp aufmtui.cpp dbfs.cpp \
+	autocut.cpp as_alsa.cpp as_pulse.cpp wavwrite.cpp recpath.cpp \
+	as_dsnd.cpp ole32.cpp as_wasapi.cpp $(am__append_1)
 permrec_audio_CXXFLAGS = $(AM_CXXFLAGS) $(AM_CFLAGS) $(ALSA_CFLAGS) $(PULSE_CFLAGS)
 permrec_audio_LDFLAGS = $(AM_LDFLAGS) $(ALSA_LIBS) $(PULSE_LIBS)
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
 
 .SUFFIXES:
-.SUFFIXES: .cpp .o .obj
+.SUFFIXES: .cpp .mm .o .obj
 am--refresh: Makefile
 	@:
 $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
@@ -425,7 +462,7 @@ clean-binPROGRAMS:
 
 permrec_audio$(EXEEXT): $(permrec_audio_OBJECTS) $(permrec_audio_DEPENDENCIES) $(EXTRA_permrec_audio_DEPENDENCIES) 
 	@rm -f permrec_audio$(EXEEXT)
-	$(AM_V_CXXLD)$(permrec_audio_LINK) $(permrec_audio_OBJECTS) $(permrec_audio_LDADD) $(LIBS)
+	$(AM_V_OBJCXXLD)$(permrec_audio_LINK) $(permrec_audio_OBJECTS) $(permrec_audio_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -433,6 +470,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/as_applecore.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/permrec_audio-as_alsa.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/permrec_audio-as_dsnd.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/permrec_audio-as_pulse.Po@am__quote@ # am--include-marker
@@ -695,6 +733,22 @@ permrec_audio-as_wasapi.obj: as_wasapi.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='as_wasapi.cpp' object='permrec_audio-as_wasapi.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(permrec_audio_CXXFLAGS) $(CXXFLAGS) -c -o permrec_audio-as_wasapi.obj `if test -f 'as_wasapi.cpp'; then $(CYGPATH_W) 'as_wasapi.cpp'; else $(CYGPATH_W) '$(srcdir)/as_wasapi.cpp'; fi`
+
+.mm.o:
+@am__fastdepOBJCXX_TRUE@	$(AM_V_OBJCXX)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
+@am__fastdepOBJCXX_TRUE@	$(OBJCXXCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
+@am__fastdepOBJCXX_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
+@AMDEP_TRUE@@am__fastdepOBJCXX_FALSE@	$(AM_V_OBJCXX)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepOBJCXX_FALSE@	DEPDIR=$(DEPDIR) $(OBJCXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepOBJCXX_FALSE@	$(AM_V_OBJCXX@am__nodep@)$(OBJCXXCOMPILE) -c -o $@ $<
+
+.mm.obj:
+@am__fastdepOBJCXX_TRUE@	$(AM_V_OBJCXX)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.obj$$||'`;\
+@am__fastdepOBJCXX_TRUE@	$(OBJCXXCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ `$(CYGPATH_W) '$<'` &&\
+@am__fastdepOBJCXX_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
+@AMDEP_TRUE@@am__fastdepOBJCXX_FALSE@	$(AM_V_OBJCXX)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepOBJCXX_FALSE@	DEPDIR=$(DEPDIR) $(OBJCXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepOBJCXX_FALSE@	$(AM_V_OBJCXX@am__nodep@)$(OBJCXXCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
 
 ID: $(am__tagged_files)
 	$(am__define_uniq_tagged_files); mkid -fID $$unique
@@ -964,7 +1018,8 @@ clean-am: clean-binPROGRAMS clean-generic mostlyclean-am
 
 distclean: distclean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
-		-rm -f ./$(DEPDIR)/permrec_audio-as_alsa.Po
+		-rm -f ./$(DEPDIR)/as_applecore.Po
+	-rm -f ./$(DEPDIR)/permrec_audio-as_alsa.Po
 	-rm -f ./$(DEPDIR)/permrec_audio-as_dsnd.Po
 	-rm -f ./$(DEPDIR)/permrec_audio-as_pulse.Po
 	-rm -f ./$(DEPDIR)/permrec_audio-as_wasapi.Po
@@ -1027,7 +1082,8 @@ installcheck-am:
 maintainer-clean: maintainer-clean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
 	-rm -rf $(top_srcdir)/autom4te.cache
-		-rm -f ./$(DEPDIR)/permrec_audio-as_alsa.Po
+		-rm -f ./$(DEPDIR)/as_applecore.Po
+	-rm -f ./$(DEPDIR)/permrec_audio-as_alsa.Po
 	-rm -f ./$(DEPDIR)/permrec_audio-as_dsnd.Po
 	-rm -f ./$(DEPDIR)/permrec_audio-as_pulse.Po
 	-rm -f ./$(DEPDIR)/permrec_audio-as_wasapi.Po

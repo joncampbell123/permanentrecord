@@ -630,6 +630,8 @@ HAVE_PULSE_FALSE
 HAVE_PULSE_TRUE
 HAVE_ALSA_FALSE
 HAVE_ALSA_TRUE
+HAVE_COREAUDIO_COREAUDIO_H_FALSE
+HAVE_COREAUDIO_COREAUDIO_H_TRUE
 EGREP
 GREP
 RANLIB
@@ -6291,7 +6293,17 @@ done
 
 if test "x$ac_cv_header_endian_h" != xyes; then
     CXXFLAGS="-I"'$(abs_top_srcdir)'"/fillin/endian $CXXFLAGS"
+    OBJCXXFLAGS="-I"'$(abs_top_srcdir)'"/fillin/endian $OBJCXXFLAGS"
 fi
+
+ if test "x$ac_cv_header_CoreAudio_CoreAudio_h" = xyes ; then
+  HAVE_COREAUDIO_COREAUDIO_H_TRUE=
+  HAVE_COREAUDIO_COREAUDIO_H_FALSE='#'
+else
+  HAVE_COREAUDIO_COREAUDIO_H_TRUE='#'
+  HAVE_COREAUDIO_COREAUDIO_H_FALSE=
+fi
+
 
 for ac_header in stdlib.h sys/types.h
 do :
@@ -7332,6 +7344,10 @@ if test -z "${am__fastdepOBJCXX_TRUE}" && test -z "${am__fastdepOBJCXX_FALSE}"; 
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 
+if test -z "${HAVE_COREAUDIO_COREAUDIO_H_TRUE}" && test -z "${HAVE_COREAUDIO_COREAUDIO_H_FALSE}"; then
+  as_fn_error $? "conditional \"HAVE_COREAUDIO_COREAUDIO_H\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
 if test -z "${HAVE_ALSA_TRUE}" && test -z "${HAVE_ALSA_FALSE}"; then
   as_fn_error $? "conditional \"HAVE_ALSA\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5

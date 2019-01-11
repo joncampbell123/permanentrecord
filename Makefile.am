@@ -10,6 +10,10 @@ permrec_audio_SOURCES = permrec_audio.cpp common.cpp monclock.cpp aufmt.cpp ausr
 permrec_audio_CXXFLAGS = $(AM_CXXFLAGS) $(AM_CFLAGS) $(ALSA_CFLAGS) $(PULSE_CFLAGS)
 permrec_audio_LDFLAGS = $(AM_LDFLAGS) $(ALSA_LIBS) $(PULSE_LIBS)
 
+if HAVE_COREAUDIO_COREAUDIO_H
+permrec_audio_SOURCES += as_applecore.mm
+endif
+
 if HAVE_ALSA
 endif
 
