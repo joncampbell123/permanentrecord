@@ -638,9 +638,21 @@ int main(int argc,char **argv) {
 #ifdef TARGET_GUI_WINDOWS
 # include "winres/resource.h"
 
+DWORD WinCapThreadID = 0;
+HANDLE WinCapThread = INVALID_HANDLE_VALUE;
 AudioSource* active_source = NULL;
+AudioFormat active_source_fmt;
 HINSTANCE myInstance;
 HWND hwndMain;
+
+DWORD WINAPI WinCapThreadProc(LPVOID param) {
+	(void)param;
+
+	assert(active_source != NULL);
+	record_main(active_source,active_source_fmt);
+
+	return 0;
+}
 
 void EnableDlgItem(HWND hwnd,int id,BOOL en) {
 	HWND h = GetDlgItem(hwnd,id);
@@ -655,6 +667,9 @@ bool win_is_recording(void) {
 
 bool win_start_recording(void) {
 	if (active_source == NULL) {
+		assert(WinCapThread == INVALID_HANDLE_VALUE);
+		signal_to_die = 0;
+
 		EnableDlgItem(hwndMain,IDC_RECORD,FALSE);
 		SetDlgItemText(hwndMain,IDC_RECORD,"Starting...");
 
@@ -685,6 +700,15 @@ bool win_start_recording(void) {
 			return false;
 		}
 
+		active_source_fmt = fmt;
+
+		WinCapThread = CreateThread(NULL,0,WinCapThreadProc,NULL,0,&WinCapThreadID);
+		if (WinCapThread == NULL) {
+			win_stop_recording();
+			MessageBox(hwndMain,"Failed to start audio capture thread","",MB_OK);
+			return false;
+		}
+
 		EnableDlgItem(hwndMain,IDC_RECORD,TRUE);
 		SetDlgItemText(hwndMain,IDC_RECORD,"Stop");
 	}
@@ -694,6 +718,22 @@ bool win_start_recording(void) {
 
 void win_stop_recording(void) {
 	if (active_source != NULL) {
+		if (WinCapThread != INVALID_HANDLE_VALUE) {
+			signal_to_die++;
+
+			DWORD ret;
+
+			do {
+				ret = WaitForSingleObject(WinCapThread,1000);
+				if (ret != WAIT_TIMEOUT) break;
+			} while(1);
+
+			if (ret != WAIT_OBJECT_0)
+				fprintf(stderr,"WARNING: Thread did not stop properly\n");
+
+			WinCapThread = INVALID_HANDLE_VALUE;
+		}
+
 		active_source->Close();
 		delete active_source;
 		active_source = NULL;
