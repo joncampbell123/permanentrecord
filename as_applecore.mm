@@ -268,14 +268,71 @@ public:
     }
     virtual int Read(void *buffer,unsigned int bytes) {
         if (IsOpen()) {
+            unsigned char *d = (unsigned char*)buffer;
+            int rd = 0;
+
+            bytes -= bytes % bytes_per_frame;
+
             refill_buffers();
 
-            return 0;
+            while (bytes > 0) {
+                if (ab_reading == NULL) {
+                    AudioQueueBufferRef buf = NULL;
+
+                    pthread_mutex_lock(&audio_bufs_mutex);
+                    if (!audio_bufs.empty()) {
+                        buf = audio_bufs.front();
+                        audio_bufs.pop();                
+                    }
+                    pthread_mutex_unlock(&audio_bufs_mutex);
+
+                    if (buf == NULL) break;
+
+                    ab_reading = buf;
+                    ab_readpos = 0;
+                }
+
+                assert(ab_reading != NULL);
+
+                if (ab_reading->mAudioDataByteSize % bytes_per_frame) {
+                    fprintf(stderr,"WARNING: returned data not a multiple of nBlockAlign\n");
+                    ab_reading->mAudioDataByteSize -= ab_reading->mAudioDataByteSize % bytes_per_frame;
+                }
+
+                if (ab_readpos >= ab_reading->mAudioDataByteSize) {
+                    ab_readpos = 0;
+                    AudioQueueFreeBuffer(audio_queue_obj,ab_reading);
+                    ab_reading = NULL;
+                    continue;
+                }
+
+                assert(ab_readpos < ab_reading->mAudioDataByteSize);
+
+                unsigned int howmuch = ab_reading->mAudioDataByteSize - ab_readpos;
+                if (howmuch > bytes) howmuch = bytes;
+
+                if (howmuch > 0) {
+                    memcpy(d,(unsigned char*)(ab_reading->mAudioData) + ab_readpos,howmuch);
+                    ab_readpos += howmuch;
+                    bytes -= howmuch;
+                    rd += howmuch;
+                    d += howmuch;
+
+                    assert(ab_readpos <= ab_reading->mAudioDataByteSize);
+                }
+                else {
+                    break;
+                }
+            }
+
+            return rd;
         }
 
         return -EINVAL;
     }
 private:
+    unsigned int                ab_readpos;
+    AudioQueueBufferRef         ab_reading;
     std::string                 applecore_device_string;
     AudioFormat                 chosen_format;
     unsigned int                bytes_per_frame;
@@ -302,6 +359,11 @@ private:
     static void aq_cb(void *inUserData,AudioQueueRef inAQ,AudioQueueBufferRef inBuffer,const AudioTimeStamp *inStartTime,UInt32 inNumberPacketDescriptions,const AudioStreamPacketDescription *inPacketDescs) {
         assert(inUserData != NULL);
 
+        (void)inAQ;
+        (void)inStartTime;
+        (void)inPacketDescs;
+        (void)inNumberPacketDescriptions;
+
         AudioSourceAPPLECORE *_this = (AudioSourceAPPLECORE*)inUserData;
 
         pthread_mutex_lock(&_this->audio_bufs_mutex);
@@ -318,6 +380,7 @@ private:
     bool applecore_open(void) { // does NOT start capture
         if (audio_queue_obj == NULL) {
             audio_bufs_queued = 0;
+            ab_reading = NULL;
 
             /* unfortunately a format is REQUIRED to open an audio queue */
             if (chosen_format.format_tag == 0)
@@ -373,6 +436,7 @@ private:
         }
 
         /* "Disposing of an audio queue also disposes of it's buffers" */
+        ab_reading = NULL;
         audio_bufs_queued = 0;
         while (!audio_bufs.empty())
             audio_bufs.pop();
