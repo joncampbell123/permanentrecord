@@ -26,7 +26,7 @@ BEGIN
     CONTROL         "",IDC_VU1,"msctls_progress32",WS_BORDER,7,27,176,9
     CONTROL         "",IDC_VU2,"msctls_progress32",WS_BORDER,185,27,176,9
     LTEXT           "Status...",IDC_STATUS,7,46,300,8
-    PUSHBUTTON      "Record",IDC_RECORD,311,43,51,14
+    PUSHBUTTON      "Record",IDC_RECORD,310,43,51,14
 END
 
 
