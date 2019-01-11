@@ -734,6 +734,42 @@ BOOL CALLBACK DlgMainProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam) {
 	if (uMsg == WM_INITDIALOG) {
 		hwndMain = hwndDlg;
 
+		{
+			LRESULT i;
+
+			    SendDlgItemMessage(hwndDlg,IDC_SRC_BITS,CB_ADDSTRING,0,(LPARAM)("8-bit"));
+			i = SendDlgItemMessage(hwndDlg,IDC_SRC_BITS,CB_ADDSTRING,0,(LPARAM)("16-bit"));
+//			    SendDlgItemMessage(hwndDlg,IDC_SRC_BITS,CB_ADDSTRING,0,(LPARAM)("24-bit")); // allow when this code better supports it
+		            SendDlgItemMessage(hwndDlg,IDC_SRC_BITS,CB_ADDSTRING,0,(LPARAM)("32-bit"));
+
+			SendDlgItemMessage(hwndDlg,IDC_SRC_BITS,CB_SETCURSEL,(WPARAM)i,0);
+		}
+
+		{
+			LRESULT i;
+
+			    SendDlgItemMessage(hwndDlg,IDC_SRC_CHANNELS,CB_ADDSTRING,0,(LPARAM)("Mono"));
+			i = SendDlgItemMessage(hwndDlg,IDC_SRC_CHANNELS,CB_ADDSTRING,0,(LPARAM)("Stereo"));
+			// enable 3, 4, 5, 6, 7, and 8 channel capture later
+
+			SendDlgItemMessage(hwndDlg,IDC_SRC_CHANNELS,CB_SETCURSEL,(WPARAM)i,0);
+		}
+
+		{
+			LRESULT i;
+
+			    SendDlgItemMessage(hwndDlg,IDC_SRC_RATE,CB_ADDSTRING,0,(LPARAM)("8000Hz"));
+			    SendDlgItemMessage(hwndDlg,IDC_SRC_RATE,CB_ADDSTRING,0,(LPARAM)("11025Hz"));
+			    SendDlgItemMessage(hwndDlg,IDC_SRC_RATE,CB_ADDSTRING,0,(LPARAM)("16000Hz"));
+			    SendDlgItemMessage(hwndDlg,IDC_SRC_RATE,CB_ADDSTRING,0,(LPARAM)("22050Hz"));
+			    SendDlgItemMessage(hwndDlg,IDC_SRC_RATE,CB_ADDSTRING,0,(LPARAM)("32000Hz"));
+			    SendDlgItemMessage(hwndDlg,IDC_SRC_RATE,CB_ADDSTRING,0,(LPARAM)("44100Hz"));
+			i = SendDlgItemMessage(hwndDlg,IDC_SRC_RATE,CB_ADDSTRING,0,(LPARAM)("48000Hz"));
+			    SendDlgItemMessage(hwndDlg,IDC_SRC_RATE,CB_ADDSTRING,0,(LPARAM)("96000Hz"));
+
+			SendDlgItemMessage(hwndDlg,IDC_SRC_RATE,CB_SETCURSEL,(WPARAM)i,0);
+		}
+
 		SetDlgItemText(hwndDlg,IDC_STATUS,"Ready");
 
 		populate_sources();
