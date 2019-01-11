@@ -324,6 +324,9 @@ private:
     }
     bool StreamDescToFormat(AudioFormat &f,AudioStreamBasicDescription &d) {
         if (d.mFormatID == kAudioFormatLinearPCM) {
+            if (d.mFormatFlags & kAudioFormatFlagIsFloat)
+                return false;
+
             if (d.mFormatFlags & kAudioFormatFlagIsSignedInteger)
                 f.format_tag = AFMT_PCMS;
             else
