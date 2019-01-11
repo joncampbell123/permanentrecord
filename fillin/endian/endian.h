@@ -2,14 +2,17 @@
 #ifndef __ENDIAN_FILLIN_H
 #define __ENDIAN_FILLIN_H
 
-#define __LITTLE_ENDIAN 1234
-#define __BIG_ENDIAN    4321
-#define __PDP_ENDIAN    3412
+#if defined(__APPLE__)
+# include <machine/endian.h>
+#else
+# define __LITTLE_ENDIAN 1234
+# define __BIG_ENDIAN    4321
+# define __PDP_ENDIAN    3412
+#endif
 
 #if defined(WIN32)
 # define __BYTE_ORDER   __LITTLE_ENDIAN
 #elif defined(__APPLE__)
-# include <machine/endian.h>
 # include <libkern/OSByteOrder.h>
 #else
 # error I do not know
