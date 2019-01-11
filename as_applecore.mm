@@ -304,12 +304,16 @@ private:
 
         AudioSourceAPPLECORE *_this = (AudioSourceAPPLECORE*)inUserData;
 
+        pthread_mutex_lock(&_this->audio_bufs_mutex);
+
         if (_this->audio_bufs_queued > 0)
             _this->audio_bufs_queued--;
         else
             fprintf(stderr,"WARNING: bufs queued underrun\n");
 
         fprintf(stderr,"aq_cb %u\n",_this->audio_bufs_queued);
+
+        pthread_mutex_unlock(&_this->audio_bufs_mutex);
     }
     bool applecore_open(void) { // does NOT start capture
         if (audio_queue_obj == NULL) {
@@ -415,6 +419,7 @@ private:
         UInt32 bufsz = bytes_per_frame * (chosen_format.sample_rate / 30);
         if (bufsz == 0) return true;
 
+        pthread_mutex_lock(&audio_bufs_mutex);
         while ((audio_bufs_queued + audio_bufs.size()) < 90) {
             AudioQueueBufferRef br;
 
@@ -431,6 +436,7 @@ private:
 
             audio_bufs_queued++;
         }
+        pthread_mutex_unlock(&audio_bufs_mutex);
 
         return true;
     }
