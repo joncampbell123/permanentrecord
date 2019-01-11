@@ -282,7 +282,7 @@ public:
                     pthread_mutex_lock(&audio_bufs_mutex);
                     if (!audio_bufs.empty()) {
                         buf = audio_bufs.front();
-                        audio_bufs.pop();                
+                        audio_bufs.pop();
                     }
                     pthread_mutex_unlock(&audio_bufs_mutex);
 
