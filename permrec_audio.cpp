@@ -828,6 +828,11 @@ BOOL CALLBACK DlgMainProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam) {
 int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine,int nCmdShow) {
 	MSG msg;
 
+#if defined(WIN32) // HACK help me figure out what is going on
+	setbuf(stdout,NULL);
+	setbuf(stderr,NULL);
+#endif
+
 	(void)hPrevInstance;
 	(void)lpCmdLine;
 	(void)nCmdShow;
