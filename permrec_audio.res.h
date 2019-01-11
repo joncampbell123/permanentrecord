@@ -1,6 +1,6 @@
-//{{NO_DEPENDENCIES}}
+﻿//{{NO_DEPENDENCIES}}
 // Microsoft Visual C++ generated include file.
-// Used by junk1.rc
+// Used by permrec_audio.rc
 //
 #define IDC_MYICON                      2
 #define IDD_JUNK1_DIALOG                102
