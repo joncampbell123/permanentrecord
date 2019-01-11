@@ -51,13 +51,13 @@ void applecore_atexit_init(void) {
 class AudioSourceAPPLECORE : public AudioSource {
 public:
     AudioSourceAPPLECORE() : bytes_per_frame(0), isUserOpen(false), audio_queue_obj(NULL) {
-        pthread_mutex_init(&my_mutex,NULL);    
+        pthread_mutex_init(&audio_bufs_mutex,NULL);
         chosen_format.bits_per_sample = 0;
         chosen_format.sample_rate = 0;
         chosen_format.format_tag = 0;
         chosen_format.channels = 0;
     }
-    virtual ~AudioSourceAPPLECORE() { applecore_force_close(); pthread_mutex_destroy(&my_mutex); }
+    virtual ~AudioSourceAPPLECORE() { applecore_force_close(); pthread_mutex_destroy(&audio_bufs_mutex); }
 public:
     virtual int SelectDevice(const char *str) {
         if (!IsOpen()) {
@@ -439,7 +439,7 @@ private:
     AudioStreamBasicDescription     audio_stream_desc;
     std::queue<AudioQueueBufferRef> audio_bufs; // audio buffers ready
     unsigned int                    audio_bufs_queued;
-    pthread_mutex_t                 my_mutex;
+    pthread_mutex_t                 audio_bufs_mutex;
 };
 
 AudioSource* AudioSourceAPPLECORE_Alloc(void) {
