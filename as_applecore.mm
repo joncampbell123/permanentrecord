@@ -31,6 +31,8 @@
 # include <AudioToolbox/AudioServices.h>
 # include <AudioToolbox/AudioToolbox.h>
 
+# include <queue>
+
 static bool applecore_atexit_set = false;
 
 void applecore_atexit(void) {
@@ -181,6 +183,13 @@ public:
                 return -1;
 
             assert(audio_queue_obj != NULL);
+
+            if (!refill_buffers()) {
+                fprintf(stderr,"Unable to refill buffers\n");
+                applecore_close();
+                return false;
+            }
+
             if (AudioQueueStart(audio_queue_obj,NULL) != noErr) {
                 fprintf(stderr,"Unable to start queue\n");
                 applecore_close();
@@ -256,6 +265,8 @@ public:
     }
     virtual int Read(void *buffer,unsigned int bytes) {
         if (IsOpen()) {
+            refill_buffers();
+
             return 0;
         }
 
@@ -286,10 +297,21 @@ private:
         applecore_close();
     }
     static void aq_cb(void *inUserData,AudioQueueRef inAQ,AudioQueueBufferRef inBuffer,const AudioTimeStamp *inStartTime,UInt32 inNumberPacketDescriptions,const AudioStreamPacketDescription *inPacketDescs) {
-        fprintf(stderr,"aq_cb\n");
+        assert(inUserData != NULL);
+
+        AudioSourceAPPLECORE *_this = (AudioSourceAPPLECORE*)inUserData;
+
+        if (_this->audio_bufs_queued > 0)
+            _this->audio_bufs_queued--;
+        else
+            fprintf(stderr,"WARNING: bufs queued underrun\n");
+
+        fprintf(stderr,"aq_cb %u\n",_this->audio_bufs_queued);
     }
     bool applecore_open(void) { // does NOT start capture
         if (audio_queue_obj == NULL) {
+            audio_bufs_queued = 0;
+
             /* unfortunately a format is REQUIRED to open an audio queue */
             if (chosen_format.format_tag == 0)
                 return false;
@@ -342,6 +364,11 @@ private:
             AudioQueueDispose(audio_queue_obj, true);
             audio_queue_obj = NULL;
         }
+
+        /* "Disposing of an audio queue also disposes of it's buffers" */
+        audio_bufs_queued = 0;
+        while (!audio_bufs.empty())
+            audio_bufs.pop();
     }
     bool StreamDescToFormat(AudioFormat &f,AudioStreamBasicDescription &d) {
         if (d.mFormatID == kAudioFormatLinearPCM) {
@@ -378,9 +405,37 @@ private:
 
         return false;
     }
+    bool refill_buffers(void) {
+        if (audio_queue_obj == NULL)
+            return false;
+
+        UInt32 bufsz = bytes_per_frame * (chosen_format.sample_rate / 30);
+        if (bufsz == 0) return true;
+
+        while ((audio_bufs_queued + audio_bufs.size()) < 90) {
+            AudioQueueBufferRef br;
+
+            if (AudioQueueAllocateBuffer(audio_queue_obj, bufsz, &br) != noErr) {
+                fprintf(stderr,"Failed to allocate buffer\n");
+                break;
+            }
+
+            if (AudioQueueEnqueueBuffer(audio_queue_obj, br, 0, NULL) != noErr) {
+                AudioQueueFreeBuffer(audio_queue_obj, br);
+                fprintf(stderr,"Failed to enqueue buffer\n");
+                break;
+            }
+
+            audio_bufs_queued++;
+        }
+
+        return true;
+    }
 private:
     AudioQueueRef                   audio_queue_obj;
-    AudioStreamBasicDescription     audio_stream_desc; 
+    AudioStreamBasicDescription     audio_stream_desc;
+    std::queue<AudioQueueBufferRef> audio_bufs; // audio buffers ready
+    unsigned int                    audio_bufs_queued;
 };
 
 AudioSource* AudioSourceAPPLECORE_Alloc(void) {
