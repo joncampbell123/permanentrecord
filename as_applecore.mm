@@ -212,7 +212,11 @@ public:
         return 0;
     }
     virtual int GetFormat(struct AudioFormat &fmt) {
-        return -EINVAL;
+        if (fmt.format_tag == 0)
+            return -EINVAL;
+
+        fmt = chosen_format;
+        return 0;
     }
     virtual int QueryFormat(struct AudioFormat &fmt) {
         if (IsOpen())
@@ -290,6 +294,22 @@ private:
 
             if ((err=AudioQueueNewInput(&audio_stream_desc,aq_cb,(void*)this,NULL,NULL,0,&audio_queue_obj)) != noErr) {
                 fprintf(stderr,"AudioQueueNewInput err %d\n",(int)err);
+                applecore_close();
+                return false;
+            }
+
+            UInt32 dataSize = sizeof(audio_stream_desc);
+
+            // confirm format
+            if ((err=AudioQueueGetProperty(audio_queue_obj, kAudioQueueProperty_StreamDescription, &audio_stream_desc, &dataSize)) != noErr) {
+                fprintf(stderr,"Failed to retrieve format from queue\n");
+                applecore_close();
+                return false;
+            }
+
+            if (!StreamDescToFormat(chosen_format,audio_stream_desc)) {
+                fprintf(stderr,"Chosen format not representable\n");
+                applecore_close();
                 return false;
             }
         }
@@ -301,6 +321,22 @@ private:
             AudioQueueDispose(audio_queue_obj, true);
             audio_queue_obj = NULL;
         }
+    }
+    bool StreamDescToFormat(AudioFormat &f,AudioStreamBasicDescription &d) {
+        if (d.mFormatID == kAudioFormatLinearPCM) {
+            if (d.mFormatFlags & kAudioFormatFlagIsSignedInteger)
+                f.format_tag = AFMT_PCMS;
+            else
+                f.format_tag = AFMT_PCMU;
+
+            f.bits_per_sample = (uint8_t)d.mBitsPerChannel;
+            f.channels = (uint8_t)d.mChannelsPerFrame;
+            f.sample_rate = (unsigned int)d.mSampleRate; // is double (float) in Mac OS X
+            f.updateFrameInfo();
+            return true;
+        }
+
+        return false;
     }
     bool FormatToStreamDesc(AudioStreamBasicDescription &d,AudioFormat &f) {
         if (f.format_tag == AFMT_PCMU || f.format_tag == AFMT_PCMS) {
