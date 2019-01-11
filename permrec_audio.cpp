@@ -706,8 +706,34 @@ BOOL CALLBACK DlgMainProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam) {
 		return TRUE;
 	}
 	else if (uMsg == WM_COMMAND) {
-		if (wParam == IDCANCEL) {
+		if (LOWORD(wParam) == IDCANCEL) {
 			DestroyWindow(hwndDlg);
+		}
+		else if (LOWORD(wParam) == IDC_SOURCE) {
+			if (HIWORD(wParam) == CBN_SELCHANGE) {
+				// user changed source
+				LRESULT idx = SendDlgItemMessage(hwndDlg,IDC_SOURCE,CB_GETCURSEL,0,0);
+				if (idx != CB_ERR) {
+					LRESULT len = SendDlgItemMessage(hwndDlg,IDC_SOURCE,CB_GETLBTEXTLEN,(WPARAM)idx,0);
+					std::string str;
+
+					if (len != CB_ERR && len > 0) {//LEN does not include the NUL character
+						char *tmp = new char[len + 2];
+						tmp[0]=0;
+						tmp[len+1] = 'x';//overflow check
+						SendDlgItemMessage(hwndDlg,IDC_SOURCE,CB_GETLBTEXT,(WPARAM)idx,(LPARAM)((LPCSTR)tmp));
+						assert(tmp[len+1] == 'x');//overflow check
+						tmp[len] = 0;
+						str = tmp;
+						delete[] tmp;
+					}
+
+					if (ui_source != str) {
+						ui_source = str;
+						populate_devices();
+					}
+				}
+			}
 		}
 
 		return TRUE;
