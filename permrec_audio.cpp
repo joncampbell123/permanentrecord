@@ -30,7 +30,9 @@
 #include "as_alsa.h"
 #include "as_pulse.h"
 
+#ifndef TARGET_GUI
 static std::string          ui_command;
+#endif
 static std::string          ui_source;
 static std::string          ui_device;
 static int                  ui_want_fmt = 0;
@@ -38,6 +40,7 @@ static long                 ui_want_rate = 0;
 static int                  ui_want_channels = 0;
 static int                  ui_want_bits = 0;
 
+#ifndef TARGET_GUI
 static void help(void) {
     fprintf(stderr," -h --help      Help text\n");
     fprintf(stderr," -ch <channels>\n");
@@ -130,6 +133,7 @@ static int parse_argv(int argc,char **argv) {
 
     return 0;
 }
+#endif
 
 void ui_apply_format(AudioFormat &fmt) {
     if (ui_want_fmt > 0)
@@ -523,6 +527,7 @@ bool record_main(AudioSource* alsa,AudioFormat &fmt) {
     return true;
 }
 
+#ifndef TARGET_GUI
 int main(int argc,char **argv) {
 #if defined(WIN32)
 	ole32_coinit();
@@ -550,9 +555,9 @@ int main(int argc,char **argv) {
 
     signal(SIGINT,sigma);
     signal(SIGTERM,sigma);
-#ifdef SIGQUIT
+# ifdef SIGQUIT
     signal(SIGQUIT,sigma);
-#endif
+# endif
 
     if (ui_command == "test") {
         AudioSource* alsa = GetAudioSource(ui_source.c_str());
@@ -628,4 +633,5 @@ int main(int argc,char **argv) {
 
     return 0;
 }
+#endif //TARGET_GUI
 
