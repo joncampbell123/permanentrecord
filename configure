@@ -6296,6 +6296,10 @@ if test "x$ac_cv_header_endian_h" != xyes; then
     OBJCXXFLAGS="-I"'$(abs_top_srcdir)'"/fillin/endian $OBJCXXFLAGS"
 fi
 
+if test "x$ac_cv_header_CoreAudio_CoreAudio_h" = xyes; then
+    LDFLAGS="-framework CoreAudio -framework CoreFoundation $LDFLAGS";
+fi
+
  if test "x$ac_cv_header_CoreAudio_CoreAudio_h" = xyes ; then
   HAVE_COREAUDIO_COREAUDIO_H_TRUE=
   HAVE_COREAUDIO_COREAUDIO_H_FALSE='#'

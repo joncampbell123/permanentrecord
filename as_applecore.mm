@@ -28,6 +28,9 @@
 #include "as_applecore.h"
 
 #if defined(HAVE_COREAUDIO_COREAUDIO_H)
+# include <AudioToolbox/AudioServices.h>
+# include <AudioToolbox/AudioToolbox.h>
+
 static bool applecore_atexit_set = false;
 
 void applecore_atexit(void) {
@@ -68,6 +71,85 @@ public:
     virtual int EnumDevices(std::vector<AudioDevicePair> &names) {
         names.clear();
 
+        // Dear Apple: If I have to dig up random code from StackOverflow and use
+        //             very obscure parameters to function calls that are very vague
+        //             and undocumented, then that should be a wakeup call that your
+        //             API and documentation sucks and should be improved.
+        //
+        //             Come on, even Microsoft MSDN documentation is way ahead of
+        //             yours (and Microsoft used to have problems documenting their
+        //             Windows APIs in a meaningful way)
+        AudioObjectPropertyAddress propertyAddress = {
+            kAudioHardwarePropertyDevices,
+            kAudioObjectPropertyScopeGlobal,
+            kAudioObjectPropertyElementMaster
+        };
+
+        UInt32 dataSize = 0;
+        OSStatus status;
+
+        status = AudioObjectGetPropertyDataSize(kAudioObjectSystemObject, &propertyAddress, 0, NULL, &dataSize);
+        if (status != kAudioHardwareNoError) return -ENODEV;
+
+        UInt32 deviceCount = dataSize / sizeof(AudioDeviceID);
+
+        fprintf(stderr,"AppleCore: %u devices\n",(unsigned int)deviceCount);
+
+        if (deviceCount == 0) return 0;
+
+        AudioDeviceID* audioDevices = new AudioDeviceID[deviceCount];
+
+        if (AudioObjectGetPropertyData(kAudioObjectSystemObject, &propertyAddress,
+            0, NULL, &dataSize, audioDevices) == kAudioHardwareNoError) {
+            propertyAddress.mScope = kAudioDevicePropertyScopeInput;
+            for (unsigned int ai=0;ai < deviceCount;ai++) {
+                /* an AudioDeviceID is an AudioObjectID which is a UInt32 */
+                const AudioDeviceID adid = audioDevices[ai];
+
+                CFStringRef deviceUID = NULL;
+                dataSize = sizeof(deviceUID);
+                propertyAddress.mSelector = kAudioDevicePropertyDeviceUID;
+                AudioObjectGetPropertyData(adid, &propertyAddress, 0, NULL, &dataSize, &deviceUID);
+ 
+                CFStringRef deviceName = NULL;
+                dataSize = sizeof(deviceName);
+                propertyAddress.mSelector = kAudioDevicePropertyDeviceNameCFString;
+                AudioObjectGetPropertyData(adid, &propertyAddress, 0, NULL, &dataSize, &deviceName);
+ 
+                CFStringRef deviceManufacturer = NULL;
+                dataSize = sizeof(deviceManufacturer);
+                propertyAddress.mSelector = kAudioDevicePropertyDeviceManufacturerCFString;
+                AudioObjectGetPropertyData(adid, &propertyAddress, 0, NULL, &dataSize, &deviceManufacturer);
+
+                AudioDevicePair p;
+
+                if (deviceUID != NULL) {
+                    p.name = CFStringGetCStringPtr(deviceUID,kCFStringEncodingUTF8);
+                }
+
+                if (deviceName != NULL) {
+                    p.desc = CFStringGetCStringPtr(deviceName,kCFStringEncodingUTF8);
+                }
+
+                if (deviceManufacturer != NULL) {
+                    p.desc += " [";
+                    p.desc += CFStringGetCStringPtr(deviceManufacturer,kCFStringEncodingUTF8);
+                    p.desc += "]";
+                }
+
+                if (!p.name.empty())
+                    names.push_back(p);
+
+                CFRelease(deviceUID);
+                CFRelease(deviceName);
+                CFRelease(deviceManufacturer);
+            }
+        }
+        else {
+            fprintf(stderr,"AppleCore: Unable to get kAudioObjectSystemObject property data\n");
+        }
+
+        delete[] audioDevices;
         return 0;
     }
     virtual bool IsOpen(void) { return isUserOpen; }
