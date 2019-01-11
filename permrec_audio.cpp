@@ -40,6 +40,15 @@ static long                 ui_want_rate = 0;
 static int                  ui_want_channels = 0;
 static int                  ui_want_bits = 0;
 
+#ifdef TARGET_GUI_WINDOWS
+DWORD WinCapThreadID = 0;
+HANDLE WinCapThread = INVALID_HANDLE_VALUE;
+AudioSource* active_source = NULL;
+AudioFormat active_source_fmt;
+HINSTANCE myInstance;
+HWND hwndMain;
+#endif
+
 #ifndef TARGET_GUI
 static void help(void) {
     fprintf(stderr," -h --help      Help text\n");
@@ -637,13 +646,6 @@ int main(int argc,char **argv) {
 
 #ifdef TARGET_GUI_WINDOWS
 # include "winres/resource.h"
-
-DWORD WinCapThreadID = 0;
-HANDLE WinCapThread = INVALID_HANDLE_VALUE;
-AudioSource* active_source = NULL;
-AudioFormat active_source_fmt;
-HINSTANCE myInstance;
-HWND hwndMain;
 
 DWORD WINAPI WinCapThreadProc(LPVOID param) {
 	(void)param;
