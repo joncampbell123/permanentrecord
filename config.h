@@ -16,6 +16,9 @@
 /* Has ALSA library */
 /* #undef HAVE_ALSA */
 
+/* Define to 1 if you have the <CoreAudio/CoreAudio.h> header file. */
+#define HAVE_COREAUDIO_COREAUDIO_H 1
+
 /* Define to 1 if you have the <dsound.h> header file. */
 /* #undef HAVE_DSOUND_H */
 

@@ -6276,6 +6276,18 @@ fi
 
 done
 
+for ac_header in CoreAudio/CoreAudio.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "CoreAudio/CoreAudio.h" "ac_cv_header_CoreAudio_CoreAudio_h" "$ac_includes_default"
+if test "x$ac_cv_header_CoreAudio_CoreAudio_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_COREAUDIO_COREAUDIO_H 1
+_ACEOF
+
+fi
+
+done
+
 
 if test "x$ac_cv_header_endian_h" != xyes; then
     CXXFLAGS="-I"'$(abs_top_srcdir)'"/fillin/endian $CXXFLAGS"
