@@ -338,6 +338,7 @@ private:
     }
     void applecore_close(void) {
         if (audio_queue_obj != NULL) {
+            AudioQueueStop(audio_queue_obj, true);
             AudioQueueDispose(audio_queue_obj, true);
             audio_queue_obj = NULL;
         }
