@@ -85,6 +85,7 @@ AC_CHECK_SIZEOF(unsigned long long)
 AC_CHECK_SIZEOF(int *)
 
 AC_CHECK_HEADERS([endian.h])
+AC_CHECK_HEADERS([machine/endian.h])
 
 if test "x$ac_cv_header_endian_h" != xyes; then
     CXXFLAGS="-I"'$(abs_top_srcdir)'"/fillin/endian $CXXFLAGS"

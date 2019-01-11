@@ -8,6 +8,9 @@
 
 #if defined(WIN32)
 # define __BYTE_ORDER   __LITTLE_ENDIAN
+#elif defined(__APPLE__)
+# include <machine/endian.h>
+# include <libkern/OSByteOrder.h>
 #else
 # error I do not know
 #endif

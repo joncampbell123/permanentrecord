@@ -8,16 +8,16 @@
 /* #undef C_CLOCK_GETTIME */
 
 /* Define to 1 to enable DirectSound support */
-#define C_DSOUND 1
+/* #undef C_DSOUND */
 
 /* Define to 1 to enable Windows Session API support */
-#define C_WASAPI 1
+/* #undef C_WASAPI */
 
 /* Has ALSA library */
 /* #undef HAVE_ALSA */
 
 /* Define to 1 if you have the <dsound.h> header file. */
-#define HAVE_DSOUND_H 1
+/* #undef HAVE_DSOUND_H */
 
 /* Define to 1 if you have the <endian.h> header file. */
 /* #undef HAVE_ENDIAN_H */
@@ -25,14 +25,17 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
 
+/* Define to 1 if you have the <machine/endian.h> header file. */
+#define HAVE_MACHINE_ENDIAN_H 1
+
 /* Define to 1 if you have the <memory.h> header file. */
 #define HAVE_MEMORY_H 1
 
 /* Define to 1 if you have the <mmdeviceapi.h> header file. */
-#define HAVE_MMDEVICEAPI_H 1
+/* #undef HAVE_MMDEVICEAPI_H */
 
 /* Define to 1 if you have the <netinet/in.h> header file. */
-/* #undef HAVE_NETINET_IN_H */
+#define HAVE_NETINET_IN_H 1
 
 /* Has pthreads library */
 #define HAVE_PTHREADS 1
@@ -41,7 +44,7 @@
 /* #undef HAVE_PULSE */
 
 /* Define to 1 if you have the <pwd.h> header file. */
-/* #undef HAVE_PWD_H */
+#define HAVE_PWD_H 1
 
 /* Define to 1 if you have the <stdint.h> header file. */
 #define HAVE_STDINT_H 1
@@ -56,7 +59,7 @@
 #define HAVE_STRING_H 1
 
 /* Define to 1 if you have the <sys/socket.h> header file. */
-/* #undef HAVE_SYS_SOCKET_H */
+#define HAVE_SYS_SOCKET_H 1
 
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #define HAVE_SYS_STAT_H 1
@@ -89,7 +92,7 @@
 #define PACKAGE_VERSION "0.0.1"
 
 /* The size of `int *', as computed by sizeof. */
-#define SIZEOF_INT_P 4
+#define SIZEOF_INT_P 8
 
 /* The size of `unsigned char', as computed by sizeof. */
 #define SIZEOF_UNSIGNED_CHAR 1
@@ -98,7 +101,7 @@
 #define SIZEOF_UNSIGNED_INT 4
 
 /* The size of `unsigned long', as computed by sizeof. */
-#define SIZEOF_UNSIGNED_LONG 4
+#define SIZEOF_UNSIGNED_LONG 8
 
 /* The size of `unsigned long long', as computed by sizeof. */
 #define SIZEOF_UNSIGNED_LONG_LONG 8
@@ -133,7 +136,7 @@
 #endif
 
 /* Number of bits in a file offset, on hosts where this is settable. */
-#define _FILE_OFFSET_BITS 64
+/* #undef _FILE_OFFSET_BITS */
 
 /* Define for large files, on AIX-style hosts. */
 /* #undef _LARGE_FILES */
