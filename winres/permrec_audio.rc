@@ -4,12 +4,9 @@
 /////////////////////////////////////////////////////////////////////////////
 // English (United States) resources
 
-#if defined(WINDRES) || defined(APSTUDIO_INVOKED)
-# include "windows.h"
-#endif
-
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -17,15 +14,15 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 IDD_MAIN DIALOGEX 0, 0, 368, 64
-STYLE DS_MODALFRAME | DS_FIXEDSYS | WS_MINIMIZEBOX | WS_CAPTION | WS_SYSMENU | DS_CENTER
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | DS_CENTER | WS_MINIMIZEBOX | WS_CAPTION | WS_SYSMENU
 EXSTYLE WS_EX_WINDOWEDGE | WS_EX_APPWINDOW
 CAPTION "Permanent Record"
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     LTEXT           "Source:",IDC_STATIC,7,9,29,8
-    COMBOBOX        IDC_SOURCE,37,7,94,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    RTEXT           "Device:",IDC_STATIC,132,9,30,8
-    COMBOBOX        IDC_DEVICE,166,7,195,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_SOURCE,37,7,55,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Device:",IDC_STATIC,94,9,29,8
+    COMBOBOX        IDC_DEVICE,128,7,233,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     CONTROL         "",IDC_VU1,"msctls_progress32",WS_BORDER,7,27,176,9
     CONTROL         "",IDC_VU2,"msctls_progress32",WS_BORDER,185,27,176,9
     LTEXT           "Status...",IDC_STATUS,7,46,300,8
