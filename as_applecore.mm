@@ -180,6 +180,13 @@ public:
             if (!applecore_open())
                 return -1;
 
+            assert(audio_queue_obj != NULL);
+            if (AudioQueueStart(audio_queue_obj,NULL) != noErr) {
+                fprintf(stderr,"Unable to start queue\n");
+                applecore_close();
+                return false;
+            }
+
             isUserOpen = true;
         }
 
