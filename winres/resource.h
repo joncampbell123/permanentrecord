@@ -32,3 +32,9 @@
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif
+
+//VS2017 you fucking moron stop removing this from the RC file
+#if defined(WINDRES) || defined(APSTUDIO_INVOKED)
+# include "windows.h"
+#endif
+
