@@ -1,3 +1,7 @@
 autom4te.cache
 autom4te.cache/*
 
+*.in
+aclocal.m4
+configure
+
