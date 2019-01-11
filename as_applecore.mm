@@ -312,6 +312,19 @@ private:
                 applecore_close();
                 return false;
             }
+
+            // make sure to talk to the device wanted
+            if (!applecore_device_string.empty()) {
+                CFStringRef dv = CFStringCreateWithCString(NULL,applecore_device_string.c_str(),kCFStringEncodingUTF8);
+
+                if (AudioQueueSetProperty(audio_queue_obj, kAudioQueueProperty_CurrentDevice, &dv, sizeof(dv)) != noErr) {
+                    fprintf(stderr,"Failed to select device\n");
+                    CFRelease(dv);
+                    return false;
+                }
+
+                CFRelease(dv);
+            }
         }
 
         return true;
