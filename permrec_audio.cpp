@@ -703,6 +703,29 @@ void win_stop_recording(void) {
 	}
 }
 
+void take_user_fmt_settings(void) {
+	assert(!win_is_recording());
+
+	char tmp[512];
+
+	tmp[0]=0;
+	GetDlgItemText(hwndMain,IDC_SRC_BITS,tmp,sizeof(tmp));
+	ui_want_bits = atoi(tmp);
+
+	tmp[0]=0;
+	GetDlgItemText(hwndMain,IDC_SRC_CHANNELS,tmp,sizeof(tmp));
+	if (!strcmp(tmp,"Mono"))
+		ui_want_channels = 1;
+	else if (!strcmp(tmp,"Stereo"))
+		ui_want_channels = 2;
+	else
+		ui_want_channels = atoi(tmp);
+
+	tmp[0]=0;
+	GetDlgItemText(hwndMain,IDC_SRC_RATE,tmp,sizeof(tmp));
+	ui_want_rate = atoi(tmp);
+}
+
 void populate_sources(void) {
 	HWND dlgitem = GetDlgItem(hwndMain,IDC_SOURCE);
 
@@ -844,10 +867,13 @@ BOOL CALLBACK DlgMainProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam) {
 			DestroyWindow(hwndDlg);
 		}
 		else if (LOWORD(wParam) == IDC_RECORD) {
-			if (!win_is_recording())
+			if (!win_is_recording()) {
+				take_user_fmt_settings();
 				win_start_recording();
-			else
+			}
+			else {
 				win_stop_recording();
+			}
 		}
 		else if (LOWORD(wParam) == IDC_SOURCE) {
 			if (HIWORD(wParam) == CBN_SELCHANGE) {
