@@ -737,7 +737,10 @@ BOOL CALLBACK DlgMainProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam) {
 				// user changed source
 				LRESULT idx = SendDlgItemMessage(hwndDlg,IDC_SOURCE,CB_GETCURSEL,0,0);
 				if (idx != CB_ERR) {
-					std::string str = WinGUI_CB_GetText(GetDlgItem(hwndDlg,IDC_SOURCE),(WPARAM)idx);
+					std::string str;
+
+					if (idx > 0)//(default) is always index 0
+						str = WinGUI_CB_GetText(GetDlgItem(hwndDlg,IDC_SOURCE),(WPARAM)idx);
 
 					if (ui_source != str) {
 						ui_source = str;
