@@ -121,24 +121,43 @@ public:
                 propertyAddress.mSelector = kAudioDevicePropertyDeviceManufacturerCFString;
                 AudioObjectGetPropertyData(adid, &propertyAddress, 0, NULL, &dataSize, &deviceManufacturer);
 
-                AudioDevicePair p;
+                bool isInput = false;
 
-                if (deviceUID != NULL) {
-                    p.name = CFStringGetCStringPtr(deviceUID,kCFStringEncodingUTF8);
+                dataSize = 0;
+                propertyAddress.mSelector = kAudioDevicePropertyStreamConfiguration;
+                AudioObjectGetPropertyDataSize(adid, &propertyAddress, 0, NULL, &dataSize);
+                {
+                    unsigned char *buf = new unsigned char[dataSize];
+                    AudioBufferList *blist = (AudioBufferList*)buf;
+
+                    if (AudioObjectGetPropertyData(adid, &propertyAddress,
+                        0, NULL, &dataSize, blist) == kAudioHardwareNoError) {
+                        if (blist->mNumberBuffers != 0) isInput = true;
+                    }
+
+                    delete[] buf;
                 }
 
-                if (deviceName != NULL) {
-                    p.desc = CFStringGetCStringPtr(deviceName,kCFStringEncodingUTF8);
-                }
+                if (isInput) {
+                    AudioDevicePair p;
 
-                if (deviceManufacturer != NULL) {
-                    p.desc += " [";
-                    p.desc += CFStringGetCStringPtr(deviceManufacturer,kCFStringEncodingUTF8);
-                    p.desc += "]";
-                }
+                    if (deviceUID != NULL) {
+                        p.name = CFStringGetCStringPtr(deviceUID,kCFStringEncodingUTF8);
+                    }
 
-                if (!p.name.empty())
-                    names.push_back(p);
+                    if (deviceName != NULL) {
+                        p.desc = CFStringGetCStringPtr(deviceName,kCFStringEncodingUTF8);
+                    }
+
+                    if (deviceManufacturer != NULL) {
+                        p.desc += " [";
+                        p.desc += CFStringGetCStringPtr(deviceManufacturer,kCFStringEncodingUTF8);
+                        p.desc += "]";
+                    }
+
+                    if (!p.name.empty())
+                        names.push_back(p);
+                }
 
                 CFRelease(deviceUID);
                 CFRelease(deviceName);
