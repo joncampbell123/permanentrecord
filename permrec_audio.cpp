@@ -692,6 +692,29 @@ void populate_devices(void) {
 	SendMessage(dlgitem,CB_SETCURSEL,(WPARAM)idx,0);
 }
 
+std::string WinGUI_CB_GetText(HWND dlgItem,WPARAM idx) {
+	LRESULT len = SendMessage(dlgItem,CB_GETLBTEXTLEN,(WPARAM)idx,0);
+	std::string str;
+
+	if (len != CB_ERR && len > 0) {//LEN does not include the NUL character
+		char *tmp = new char[len + 2];
+
+		tmp[0]=0;
+		tmp[len+1] = 'x';//overflow check
+
+		SendMessage(dlgItem,CB_GETLBTEXT,(WPARAM)idx,(LPARAM)((LPCSTR)tmp));
+
+		assert(tmp[len+1] == 'x');//overflow check
+		tmp[len] = 0;
+
+		str = tmp;
+
+		delete[] tmp;
+	}
+
+	return str;
+}
+
 BOOL CALLBACK DlgMainProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam) {
 	(void)lParam;
 
@@ -714,19 +737,7 @@ BOOL CALLBACK DlgMainProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam) {
 				// user changed source
 				LRESULT idx = SendDlgItemMessage(hwndDlg,IDC_SOURCE,CB_GETCURSEL,0,0);
 				if (idx != CB_ERR) {
-					LRESULT len = SendDlgItemMessage(hwndDlg,IDC_SOURCE,CB_GETLBTEXTLEN,(WPARAM)idx,0);
-					std::string str;
-
-					if (len != CB_ERR && len > 0) {//LEN does not include the NUL character
-						char *tmp = new char[len + 2];
-						tmp[0]=0;
-						tmp[len+1] = 'x';//overflow check
-						SendDlgItemMessage(hwndDlg,IDC_SOURCE,CB_GETLBTEXT,(WPARAM)idx,(LPARAM)((LPCSTR)tmp));
-						assert(tmp[len+1] == 'x');//overflow check
-						tmp[len] = 0;
-						str = tmp;
-						delete[] tmp;
-					}
+					std::string str = WinGUI_CB_GetText(GetDlgItem(hwndDlg,IDC_SOURCE),(WPARAM)idx);
 
 					if (ui_source != str) {
 						ui_source = str;
