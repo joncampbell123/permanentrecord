@@ -94,7 +94,7 @@ if test "x$ac_cv_header_endian_h" != xyes; then
 fi
 
 if test "x$ac_cv_header_CoreAudio_CoreAudio_h" = xyes; then
-    LDFLAGS="-framework CoreAudio -framework CoreFoundation $LDFLAGS";
+    LDFLAGS="-framework CoreAudio -framework AudioToolbox -framework CoreFoundation $LDFLAGS";
 fi
 
 AM_CONDITIONAL(HAVE_COREAUDIO_COREAUDIO_H, test "x$ac_cv_header_CoreAudio_CoreAudio_h" = xyes )

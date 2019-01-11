@@ -46,7 +46,7 @@ void applecore_atexit_init(void) {
 
 class AudioSourceAPPLECORE : public AudioSource {
 public:
-    AudioSourceAPPLECORE() : bytes_per_frame(0), isUserOpen(false) {
+    AudioSourceAPPLECORE() : bytes_per_frame(0), isUserOpen(false), audio_queue_obj(NULL) {
         chosen_format.bits_per_sample = 0;
         chosen_format.sample_rate = 0;
         chosen_format.format_tag = 0;
@@ -180,13 +180,6 @@ public:
             if (!applecore_open())
                 return -1;
 
-            if (!applecore_apply_format(chosen_format)) {
-                applecore_close();
-                return -1;
-            }
-
-            bytes_per_frame = chosen_format.bytes_per_frame;
-
             isUserOpen = true;
         }
 
@@ -205,17 +198,16 @@ public:
         if (!format_is_valid(fmt))
             return -EINVAL;
 
-        if (!applecore_open())
-            return -ENODEV;
+        AudioFormat old = chosen_format;
 
-        AudioFormat tmp = fmt;
-        if (!applecore_apply_format(/*&*/tmp)) {
-            applecore_close();
-            return -EINVAL;
+        chosen_format = fmt;
+        chosen_format.updateFrameInfo();
+        bytes_per_frame = chosen_format.bytes_per_frame;
+        if (!applecore_open()) {/*may change format*/
+            chosen_format = old;
+            return -ENODEV;
         }
 
-        chosen_format = tmp;
-        chosen_format.updateFrameInfo();
         applecore_close();
         return 0;
     }
@@ -229,16 +221,19 @@ public:
         if (!format_is_valid(fmt))
             return -EINVAL;
 
-        if (!applecore_open())
-            return -ENODEV;
+        AudioFormat old = chosen_format;
 
-        if (!applecore_apply_format(/*&*/fmt)) {
-            applecore_close();
-            return -EINVAL;
+        chosen_format = fmt;
+        chosen_format.updateFrameInfo();
+        bytes_per_frame = chosen_format.bytes_per_frame;
+        if (!applecore_open()) {
+            chosen_format = old;
+            return -ENODEV;
         }
 
         fmt.updateFrameInfo();
         applecore_close();
+        chosen_format = old;
         return 0;
     }
     virtual int GetAvailable(void) {
@@ -275,24 +270,57 @@ private:
 
         return false;
     }
-    bool applecore_apply_format(AudioFormat &fmt) {
-        if (fmt.format_tag == 0)
-            return false;
-
-        if (!applecore_open())
-            return false;
-
-        return false;
-    }
     void applecore_force_close(void) {
         Close();
         applecore_close();
     }
+    static void aq_cb(void *inUserData,AudioQueueRef inAQ,AudioQueueBufferRef inBuffer,const AudioTimeStamp *inStartTime,UInt32 inNumberPacketDescriptions,const AudioStreamPacketDescription *inPacketDescs) {
+        fprintf(stderr,"aq_cb\n");
+    }
     bool applecore_open(void) { // does NOT start capture
-        return false;
+        if (audio_queue_obj == NULL) {
+            /* unfortunately a format is REQUIRED to open an audio queue */
+            if (chosen_format.format_tag == 0)
+                return false;
+
+            if (!FormatToStreamDesc(audio_stream_desc,chosen_format))
+                return false;
+
+            OSStatus err;
+
+            if ((err=AudioQueueNewInput(&audio_stream_desc,aq_cb,(void*)this,NULL,NULL,0,&audio_queue_obj)) != noErr) {
+                fprintf(stderr,"AudioQueueNewInput err %d\n",(int)err);
+                return false;
+            }
+        }
+
+        return true;
     }
     void applecore_close(void) {
+        if (audio_queue_obj != NULL) {
+            AudioQueueDispose(audio_queue_obj, true);
+            audio_queue_obj = NULL;
+        }
     }
+    bool FormatToStreamDesc(AudioStreamBasicDescription &d,AudioFormat &f) {
+        if (f.format_tag == AFMT_PCMU || f.format_tag == AFMT_PCMS) {
+            memset(&d,0,sizeof(d));
+            d.mFormatFlags = kAudioFormatFlagsNativeEndian | kAudioFormatFlagIsSignedInteger | kAudioFormatFlagIsPacked;
+            d.mFormatID = kAudioFormatLinearPCM;
+            d.mBitsPerChannel = f.bits_per_sample;
+            d.mChannelsPerFrame = f.channels;
+            d.mFramesPerPacket = 1;
+            d.mSampleRate = f.sample_rate;
+            d.mBytesPerFrame = ((f.bits_per_sample + 7u) / 8u) * f.channels;
+            d.mBytesPerPacket = d.mBytesPerFrame;
+            return true;
+        }
+
+        return false;
+    }
+private:
+    AudioQueueRef                   audio_queue_obj;
+    AudioStreamBasicDescription     audio_stream_desc; 
 };
 
 AudioSource* AudioSourceAPPLECORE_Alloc(void) {
