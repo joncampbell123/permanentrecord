@@ -659,10 +659,21 @@ void populate_sources(void) {
 	SendMessage(dlgitem,CB_SETCURSEL,(WPARAM)idx,0);
 }
 
+std::vector<AudioDevicePair> devices_list;
+
 void populate_devices(void) {
 	HWND dlgitem = GetDlgItem(hwndMain,IDC_DEVICE);
 
 	SendMessage(dlgitem,CB_RESETCONTENT,0,0);
+
+	devices_list.clear();
+
+	{
+		AudioDevicePair p;
+
+		p.desc = "(default)";
+		devices_list.push_back(p);
+	}
 
 	size_t idx=0;
 
@@ -685,6 +696,8 @@ void populate_devices(void) {
 
 				if (!ui_device.empty() && ui_device == (*i).name)
 					idx = ret;
+
+				devices_list.push_back(*i);
 			}
 		}
 	}
@@ -745,6 +758,22 @@ BOOL CALLBACK DlgMainProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam) {
 					if (ui_source != str) {
 						ui_source = str;
 						populate_devices();
+					}
+				}
+			}
+		}
+		else if (LOWORD(wParam) == IDC_DEVICE) {
+			if (HIWORD(wParam) == CBN_SELCHANGE) {
+				// user changed source
+				LRESULT idx = SendDlgItemMessage(hwndDlg,IDC_DEVICE,CB_GETCURSEL,0,0);
+				if (idx != CB_ERR) {
+					std::string str;
+
+					if ((size_t)idx < devices_list.size())
+						str = devices_list[(size_t)idx].name;
+
+					if (ui_device != str) {
+						ui_device = str;
 					}
 				}
 			}
