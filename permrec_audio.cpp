@@ -1057,6 +1057,11 @@ BOOL CALLBACK DlgMainProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam) {
 				win_start_recording();
 			}
 			else {
+                if (win_is_recording()) {
+                    if (MessageBox(hwndDlg,"Stop recording?","",MB_YESNO) != IDYES)
+                        return TRUE;
+                }
+
 				win_stop_recording();
 			}
 		}
