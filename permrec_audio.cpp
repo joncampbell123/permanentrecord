@@ -32,6 +32,7 @@
 
 #ifdef TARGET_GUI_WINDOWS
 # include "winres/resource.h"
+# include "commctrl.h"
 #endif
 
 #ifndef TARGET_GUI
@@ -231,6 +232,34 @@ void ui_recording_draw(void) {
     }
 
     SetDlgItemText(hwndMain,IDC_STATUS,msg.c_str());
+
+    {
+	    unsigned int L,R;
+            double d;
+
+            d = dBFS_measure((double)VU[0] / 65535);
+            d = (d + 48) / 48; // VU meters are much longer in Windows GUI
+            if (d < 0) d = 0;
+            if (d > 1) d = 1;
+            L = (unsigned int)((d * 0x7FFFul) + 0.5);
+
+	    if (rec_fmt.channels >= 2) {
+		    d = dBFS_measure((double)VU[0] / 65535);
+		    d = (d + 48) / 48; // vu meters are much longer in windows gui
+		    if (d < 0) d = 0;
+		    if (d > 1) d = 1;
+		    R = (unsigned int)((d * 0x7FFFul) + 0.5);
+	    }
+	    else {
+		    R = L;
+	    }
+
+	    SendDlgItemMessage(hwndMain,IDC_VU1,PBM_SETRANGE,0,0ul/*min*/ | (0x7FFFul << 16ul));
+	    SendDlgItemMessage(hwndMain,IDC_VU1,PBM_SETPOS,L,0);
+
+	    SendDlgItemMessage(hwndMain,IDC_VU2,PBM_SETRANGE,0,0ul/*min*/ | (0x7FFFul << 16ul));
+	    SendDlgItemMessage(hwndMain,IDC_VU2,PBM_SETPOS,R,0);
+    }
 #else
     printf("\x0D");
 
