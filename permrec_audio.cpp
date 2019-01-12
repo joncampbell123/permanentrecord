@@ -561,6 +561,7 @@ bool record_main(AudioSource* alsa,AudioFormat &fmt) {
             open_recording();
         }
 
+	rd = 0;
 	patience = 10;
         do {
             if (signal_to_die || --patience < 0) break;
