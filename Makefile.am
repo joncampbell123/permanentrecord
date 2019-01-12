@@ -24,7 +24,7 @@ bin_PROGRAMS += \
 	windres -DWINDRES=1 -o $@ $<
 
 permrec_audio_wingui_SOURCES = $(common_sources) permrec_audio_wingui.cpp winres/permrec_audio.rc
-permrec_audio_wingui_CXXFLAGS = $(permrec_audio_CXXFLAGS)
+permrec_audio_wingui_CXXFLAGS = $(permrec_audio_CXXFLAGS) -mwindows
 permrec_audio_wingui_LDFLAGS = $(permrec_audio_LDFLAGS) -lgdi32 -luser32 -lkernel32
 endif
 
