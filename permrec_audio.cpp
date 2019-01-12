@@ -237,6 +237,14 @@ void ui_recording_draw(void) {
 	msg = tmp;
     }
 
+    {
+	    /* due to limited space, skip "PERMREC" */
+	    const char *s = rec_path_wav.c_str();
+	    if (!strncmp(s,"PERMREC/",8)) s += 8;
+	    msg += " ";
+	    msg += s;
+    }
+
     SetDlgItemText(hwndMain,IDC_STATUS,msg.c_str());
 
     {
