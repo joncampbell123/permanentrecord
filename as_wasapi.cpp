@@ -521,8 +521,11 @@ private:
                     return false;
             }
             else {
-                if (immdevenum->GetDefaultAudioEndpoint(eCapture,eMultimedia,&immdev) != S_OK)
-                    return false;
+                if (immdevenum->GetDefaultAudioEndpoint(eCapture,eMultimedia,&immdev) != S_OK) {
+			if (immdevenum->GetDefaultAudioEndpoint(eRender,eMultimedia,&immdev) != S_OK) {
+				return false;
+			}
+		}
             }
         }
         if (immacl == NULL) {
