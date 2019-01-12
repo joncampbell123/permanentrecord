@@ -30,6 +30,10 @@
 #include "as_alsa.h"
 #include "as_pulse.h"
 
+#ifdef TARGET_GUI_WINDOWS
+# include "winres/resource.h"
+#endif
+
 #ifndef TARGET_GUI
 static std::string          ui_command;
 #endif
@@ -202,6 +206,32 @@ unsigned long VUclip[8];
 unsigned int VU[8];
 
 void ui_recording_draw(void) {
+#ifdef TARGET_GUI_WINDOWS
+    std::string msg;
+
+    {
+        unsigned long long samples = framecount * (unsigned long long)rec_fmt.samples_per_frame;
+        unsigned int H,M,S,ss;
+	char tmp[128];
+
+        ss = (unsigned int)(samples % (unsigned long long)rec_fmt.sample_rate);
+        ss = (unsigned int)(((unsigned long)ss * 100ul) / (unsigned long)rec_fmt.sample_rate);
+
+        S = (unsigned int)(samples / (unsigned long long)rec_fmt.sample_rate);
+
+        M = S / 60u;
+        S %= 60u;
+
+        H = M / 60u;
+        M %= 60u;
+
+        sprintf(tmp,"%02u:%02u:%02u.%02u ",H,M,S,ss);
+
+	msg = tmp;
+    }
+
+    SetDlgItemText(hwndMain,IDC_STATUS,msg.c_str());
+#else
     printf("\x0D");
 
     {
@@ -249,6 +279,7 @@ void ui_recording_draw(void) {
 
     printf("\x0D");
     fflush(stdout);
+#endif
 }
 
 void VU_init(const AudioFormat &fmt) {
@@ -468,7 +499,7 @@ bool open_recording(void) {
 }
 
 bool record_main(AudioSource* alsa,AudioFormat &fmt) {
-    int rd,i;
+    int rd,i,patience;
 
     for (i=0;i < 8;i++) {
         VUclip[i] = 0u;
@@ -493,7 +524,10 @@ bool record_main(AudioSource* alsa,AudioFormat &fmt) {
             open_recording();
         }
 
+	patience = 10;
         do {
+            if (signal_to_die || --patience < 0) break;
+
             audio_tmp[sizeof(audio_tmp) - OVERREAD] = 'x';
             rd = alsa->Read(audio_tmp,(unsigned int)(sizeof(audio_tmp) - OVERREAD));
             if (audio_tmp[sizeof(audio_tmp) - OVERREAD] != 'x') {
@@ -645,8 +679,6 @@ int main(int argc,char **argv) {
 #endif //TARGET_GUI
 
 #ifdef TARGET_GUI_WINDOWS
-# include "winres/resource.h"
-
 DWORD WINAPI WinCapThreadProc(LPVOID param) {
 	(void)param;
 
@@ -724,7 +756,7 @@ bool win_start_recording(void) {
 		}
 
 		EnableDlgItem(hwndMain,IDC_RECORD,TRUE);
-		SetDlgItemText(hwndMain,IDC_RECORD,"Stop");
+		SetDlgItemText(hwndMain,IDC_RECORD,"&Stop");
 	}
 
 	return true;
@@ -732,13 +764,26 @@ bool win_start_recording(void) {
 
 void win_stop_recording(void) {
 	if (active_source != NULL) {
+		EnableDlgItem(hwndMain,IDC_RECORD,FALSE);
+		SetDlgItemText(hwndMain,IDC_RECORD,"Stopping...");
+
 		if (WinCapThread != INVALID_HANDLE_VALUE) {
 			signal_to_die++;
 
 			DWORD ret;
+			MSG msg;
 
 			do {
-				ret = WaitForSingleObject(WinCapThread,1000);
+				while (PeekMessage(&msg,NULL,0,0,PM_REMOVE)) {
+					if (IsDialogMessage(hwndMain,&msg)) {
+					}
+					else {
+						TranslateMessage(&msg);
+						DispatchMessage(&msg);
+					}
+				}
+
+				ret = WaitForSingleObject(WinCapThread,100);
 				if (ret != WAIT_TIMEOUT) break;
 			} while(1);
 
@@ -753,7 +798,7 @@ void win_stop_recording(void) {
 		active_source = NULL;
 
 		EnableDlgItem(hwndMain,IDC_RECORD,TRUE);
-		SetDlgItemText(hwndMain,IDC_RECORD,"Record");
+		SetDlgItemText(hwndMain,IDC_RECORD,"&Record");
 	}
 }
 
@@ -928,6 +973,12 @@ BOOL CALLBACK DlgMainProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam) {
 	}
 	else if (uMsg == WM_COMMAND) {
 		if (LOWORD(wParam) == IDCANCEL) {
+			if (win_is_recording()) {
+				if (MessageBox(hwndDlg,"Recording in progress. Exit anyway?","",MB_YESNO) != IDYES)
+					return TRUE;
+			}
+
+			win_stop_recording();
 			DestroyWindow(hwndDlg);
 		}
 		else if (LOWORD(wParam) == IDC_RECORD) {
@@ -976,6 +1027,7 @@ BOOL CALLBACK DlgMainProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam) {
 		return TRUE;
 	}
 	else if (uMsg == WM_DESTROY) {
+		win_stop_recording();
 		PostQuitMessage(0);
 		return TRUE;
 	}
@@ -1012,6 +1064,7 @@ int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine
 		}
 	}
 
+	win_stop_recording();
 	return 0;
 }
 #endif
