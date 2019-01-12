@@ -775,6 +775,12 @@ bool win_start_recording(void) {
 
 		win_check_device_selection();
 
+		EnableDlgItem(hwndMain,IDC_SRC_BITS,FALSE);
+		EnableDlgItem(hwndMain,IDC_SRC_CHANNELS,FALSE);
+		EnableDlgItem(hwndMain,IDC_SRC_RATE,FALSE);
+		EnableDlgItem(hwndMain,IDC_DEVICE,FALSE);
+		EnableDlgItem(hwndMain,IDC_SOURCE,FALSE);
+
 		EnableDlgItem(hwndMain,IDC_RECORD,FALSE);
 		SetDlgItemText(hwndMain,IDC_RECORD,"Starting...");
 
@@ -855,6 +861,12 @@ void win_stop_recording(void) {
 		active_source->Close();
 		delete active_source;
 		active_source = NULL;
+
+		EnableDlgItem(hwndMain,IDC_SRC_BITS,TRUE);
+		EnableDlgItem(hwndMain,IDC_SRC_CHANNELS,TRUE);
+		EnableDlgItem(hwndMain,IDC_SRC_RATE,TRUE);
+		EnableDlgItem(hwndMain,IDC_DEVICE,TRUE);
+		EnableDlgItem(hwndMain,IDC_SOURCE,TRUE);
 
 		EnableDlgItem(hwndMain,IDC_RECORD,TRUE);
 		SetDlgItemText(hwndMain,IDC_RECORD,"&Record");
@@ -1049,24 +1061,29 @@ BOOL CALLBACK DlgMainProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam) {
 		}
 		else if (LOWORD(wParam) == IDC_SOURCE) {
 			if (HIWORD(wParam) == CBN_SELCHANGE) {
-				// user changed source
-				LRESULT idx = SendDlgItemMessage(hwndDlg,IDC_SOURCE,CB_GETCURSEL,0,0);
-				if (idx != CB_ERR) {
-					std::string str;
+				if (!win_is_recording()) {
+					// user changed source
+					LRESULT idx = SendDlgItemMessage(hwndDlg,IDC_SOURCE,CB_GETCURSEL,0,0);
+					if (idx != CB_ERR) {
+						std::string str;
 
-					if (idx > 0)//(default) is always index 0
-						str = WinGUI_CB_GetText(GetDlgItem(hwndDlg,IDC_SOURCE),(WPARAM)idx);
+						if (idx > 0)//(default) is always index 0
+							str = WinGUI_CB_GetText(GetDlgItem(hwndDlg,IDC_SOURCE),(WPARAM)idx);
 
-					if (ui_source != str) {
-						ui_source = str;
-						populate_devices();
+						if (ui_source != str) {
+							ui_source = str;
+							populate_devices();
+						}
 					}
 				}
 			}
 		}
 		else if (LOWORD(wParam) == IDC_DEVICE) {
-			if (HIWORD(wParam) == CBN_SELCHANGE)
-				win_check_device_selection();
+			if (HIWORD(wParam) == CBN_SELCHANGE) {
+				if (win_is_recording()) {
+					win_check_device_selection();
+				}
+			}
 		}
 
 		return TRUE;
