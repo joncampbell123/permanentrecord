@@ -160,13 +160,15 @@ public:
             return -ENODEV;
 
         assert(immdevenum != NULL);
-        IMMDeviceCollection *immcol = NULL;
+        IMMDeviceCollection *immcol;
 
+        immcol = NULL;
         if (immdevenum->EnumAudioEndpoints(eCapture,DEVICE_STATE_ACTIVE|DEVICE_STATE_UNPLUGGED,&immcol) == S_OK) {
             immcol_enum(names,immcol);
             immcol->Release();
         }
 
+        immcol = NULL;
         if (immdevenum->EnumAudioEndpoints(eRender,DEVICE_STATE_ACTIVE|DEVICE_STATE_UNPLUGGED,&immcol) == S_OK) {
             immcol_enum(names,immcol);
             immcol->Release();
