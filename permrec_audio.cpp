@@ -716,6 +716,8 @@ int main(int argc,char **argv) {
 #endif //TARGET_GUI
 
 #ifdef TARGET_GUI_WINDOWS
+std::vector<AudioDevicePair> devices_list;
+
 DWORD WINAPI WinCapThreadProc(LPVOID param) {
 	(void)param;
 
@@ -732,6 +734,24 @@ void EnableDlgItem(HWND hwnd,int id,BOOL en) {
 }
 
 void win_stop_recording(void);
+
+void win_check_device_selection(void) {
+	// user changed device
+	LRESULT idx = SendDlgItemMessage(hwndMain,IDC_DEVICE,CB_GETCURSEL,0,0);
+	if (idx != CB_ERR) {
+		std::string str;
+
+		if ((size_t)idx < devices_list.size())
+			str = devices_list[(size_t)idx].name;
+
+		if (ui_device != str) {
+			ui_device = str;
+		}
+	}
+	else {
+		ui_device.clear();
+	}
+}
 
 bool win_thread_stopped(void) {
 	if (WinCapThread != INVALID_HANDLE_VALUE) {
@@ -752,6 +772,8 @@ bool win_start_recording(void) {
 	if (active_source == NULL) {
 		assert(WinCapThread == INVALID_HANDLE_VALUE);
 		signal_to_die = 0;
+
+		win_check_device_selection();
 
 		EnableDlgItem(hwndMain,IDC_RECORD,FALSE);
 		SetDlgItemText(hwndMain,IDC_RECORD,"Starting...");
@@ -879,8 +901,6 @@ void populate_sources(void) {
 
 	SendMessage(dlgitem,CB_SETCURSEL,(WPARAM)idx,0);
 }
-
-std::vector<AudioDevicePair> devices_list;
 
 void populate_devices(void) {
 	HWND dlgitem = GetDlgItem(hwndMain,IDC_DEVICE);
@@ -1045,20 +1065,8 @@ BOOL CALLBACK DlgMainProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam) {
 			}
 		}
 		else if (LOWORD(wParam) == IDC_DEVICE) {
-			if (HIWORD(wParam) == CBN_SELCHANGE) {
-				// user changed device
-				LRESULT idx = SendDlgItemMessage(hwndDlg,IDC_DEVICE,CB_GETCURSEL,0,0);
-				if (idx != CB_ERR) {
-					std::string str;
-
-					if ((size_t)idx < devices_list.size())
-						str = devices_list[(size_t)idx].name;
-
-					if (ui_device != str) {
-						ui_device = str;
-					}
-				}
-			}
+			if (HIWORD(wParam) == CBN_SELCHANGE)
+				win_check_device_selection();
 		}
 
 		return TRUE;
