@@ -1046,7 +1046,7 @@ BOOL CALLBACK DlgMainProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam) {
 		}
 		else if (LOWORD(wParam) == IDC_DEVICE) {
 			if (HIWORD(wParam) == CBN_SELCHANGE) {
-				// user changed source
+				// user changed device
 				LRESULT idx = SendDlgItemMessage(hwndDlg,IDC_DEVICE,CB_GETCURSEL,0,0);
 				if (idx != CB_ERR) {
 					std::string str;
