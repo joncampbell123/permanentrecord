@@ -206,6 +206,12 @@ unsigned long long framecount = 0;
 unsigned long VUclip[8];
 unsigned int VU[8];
 
+std::string rec_path_wav;
+std::string rec_path_info;
+std::string rec_path_base;
+WAVWriter* wav_out = NULL;
+FILE *wav_info = NULL;
+
 void ui_recording_draw(void) {
 #ifdef TARGET_GUI_WINDOWS
     std::string msg;
@@ -434,12 +440,6 @@ void VU_advance(const void *audio_tmp,unsigned int rd) {
         VU_advance_pcms(audio_tmp,rd / rec_fmt.bytes_per_frame);
     }
 }
-
-std::string rec_path_wav;
-std::string rec_path_info;
-std::string rec_path_base;
-WAVWriter* wav_out = NULL;
-FILE *wav_info = NULL;
 
 void close_recording(void) {
     if (wav_info != NULL) {
