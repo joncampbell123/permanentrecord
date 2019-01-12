@@ -225,7 +225,7 @@ void ui_recording_draw(void) {
         H = M / 60u;
         M %= 60u;
 
-        sprintf(tmp,"%02u:%02u:%02u.%02u ",H,M,S,ss);
+        sprintf(tmp,"%02u:%02u:%02u.%02u %uHz %uch %ubps",H,M,S,ss,(unsigned int)rec_fmt.sample_rate,(unsigned int)rec_fmt.channels,(unsigned int)rec_fmt.bits_per_sample);
 
 	msg = tmp;
     }
