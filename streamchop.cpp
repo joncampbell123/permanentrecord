@@ -312,6 +312,11 @@ int main(int argc,char **argv) {
         }
     }
 
+    if (opt_prefix.empty() && opt_suffix.empty()) {
+	    fprintf(stderr,"Need a prefix -p and suffix -s\n");
+	    return 1;
+    }
+
     /* make stdin non-blocking */
     {
         int x = fcntl(0,F_GETFL);
