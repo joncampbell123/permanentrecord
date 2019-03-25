@@ -9,7 +9,7 @@
 
 #include <string>
 
-unsigned char           readbuffer[65536];
+unsigned char           readbuffer[4*1024*1024];
 
 std::string             opt_prefix;
 std::string             opt_suffix;
