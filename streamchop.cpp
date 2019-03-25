@@ -22,6 +22,9 @@ time_t                  replay_mark_time = 0;
 int                     p_fd = -1;
 off_t                   p_fd_replay = -1;
 
+int                     c_fd = -1;
+std::string             c_fd_name;
+
 enum {
     CUT_SEC,
     CUT_MIN,
@@ -31,6 +34,22 @@ enum {
 
 int                     cut_amount = 3;
 int                     cut_unit = CUT_HOUR;
+
+std::string tm2string_fn(struct tm &t) {
+    std::string ret;
+    char tmp[512];
+
+    sprintf(tmp,"%04u%02u%02u-%02u%02u%02u",
+        t.tm_year+1900,
+        t.tm_mon+1,
+        t.tm_mday,
+        t.tm_hour,
+        t.tm_min,
+        t.tm_sec);
+    ret = tmp;
+
+    return ret;
+}
 
 std::string tm2string(struct tm &t) {
     std::string ret;
@@ -44,6 +63,17 @@ std::string tm2string(struct tm &t) {
         t.tm_min,
         t.tm_sec);
     ret = tmp;
+
+    return ret;
+}
+
+std::string make_filename(void) { /* uses start_time */
+    struct tm ct = *localtime(&start_time);
+    std::string ret;
+
+    ret  = opt_prefix;
+    ret += tm2string_fn(ct);
+    ret += opt_suffix;
 
     return ret;
 }
@@ -170,6 +200,30 @@ static void update_cut_time(const time_t s) {
     }
 }
 
+bool open_c_fd(void) {
+    if (c_fd < 0) {
+        c_fd_name = make_filename();
+        c_fd = open(c_fd_name.c_str(),O_WRONLY|O_CREAT|O_EXCL,0644); /* for archival reasons DO NOT overwrite existing files */
+        if (c_fd < 0) return false;
+    }
+
+    return true;
+}
+
+void close_c_fd(void) {
+    if (c_fd >= 0) {
+        close(c_fd);
+        c_fd = -1;
+    }
+}
+
+void close_p_fd(void) {
+    if (p_fd >= 0) {
+        close(p_fd);
+        p_fd = -1;
+    }
+}
+
 static void help(void) {
     fprintf(stderr,"-p prefix\n");
     fprintf(stderr,"-s suffix\n");
@@ -252,10 +306,14 @@ int main(int argc,char **argv) {
     start_time = now = time(NULL);
     update_cut_time(start_time);
 
+    if (!open_c_fd()) return 1;
+
     while (1) {
 
     }
 
+    close_c_fd();
+    close_p_fd();
     return 0;
 }
 
