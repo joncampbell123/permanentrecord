@@ -12,7 +12,7 @@
 std::string             opt_prefix;
 std::string             opt_suffix;
 
-unsigned int            replay_time = 0;
+unsigned int            replay_time_interval = 10;
 
 time_t                  now = 0;
 time_t                  cut_time = 0;
@@ -160,6 +160,13 @@ static void update_cut_time(const time_t s) {
     {
         ct = *localtime(&nt);
         printf("Cut date: %s\n",tm2string(ct).c_str());
+    }
+
+    replay_mark_time = cut_time - (time_t)replay_time_interval;
+    {
+        time_t t = replay_mark_time;
+        ct = *localtime(&t);
+        printf("Markdate: %s\n",tm2string(ct).c_str());
     }
 }
 
