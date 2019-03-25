@@ -9,6 +9,8 @@
 
 #include <string>
 
+unsigned char           readbuffer[65536];
+
 std::string             opt_prefix;
 std::string             opt_suffix;
 
@@ -224,6 +226,13 @@ void close_p_fd(void) {
     }
 }
 
+void c_to_p_fd(void) {
+    close_p_fd();
+    p_fd = c_fd;
+    c_fd = -1;
+    c_fd_name.clear();
+}
+
 static void help(void) {
     fprintf(stderr,"-p prefix\n");
     fprintf(stderr,"-s suffix\n");
@@ -303,15 +312,77 @@ int main(int argc,char **argv) {
         }
     }
 
+    /* make stdin non-blocking */
+    {
+        int x = fcntl(0,F_GETFL);
+        if (x < 0) return 1;
+        fcntl(0,F_SETFL,x | O_NONBLOCK);
+    }
+
     start_time = now = time(NULL);
     update_cut_time(start_time);
 
     if (!open_c_fd()) return 1;
 
     while (1) {
+        usleep(500000); /* 500ms */
+        now = time(NULL);
 
+        assert(cut_time != (time_t)0);
+        if (replay_mark_time != 0 && now >= replay_mark_time) {
+            if (c_fd >= 0) {
+                p_fd_replay = lseek(c_fd,0,SEEK_CUR);
+                fprintf(stderr,"Replay mark now, at file offset %ld\n",(signed long)p_fd_replay);
+            }
+
+            replay_mark_time = 0;
+        }
+        if (now >= cut_time) {
+            c_to_p_fd();
+            close_c_fd();
+            start_time = now = time(NULL);
+            update_cut_time(start_time);
+            if (!open_c_fd()) return 1;
+            if (p_fd_replay >= 0) {
+                ssize_t rd;
+
+                assert(p_fd >= 0);
+                lseek(p_fd,p_fd_replay,SEEK_SET);
+                while ((rd=read(p_fd,readbuffer,sizeof(readbuffer))) > 0)
+                    write(c_fd,readbuffer,(size_t)rd);
+
+                p_fd_replay = -1;
+            }
+            close_p_fd();
+        }
+
+        {
+            ssize_t rd;
+
+            rd = read(0,readbuffer,sizeof(readbuffer));
+            if (rd == 0) {
+                /* EOF happened */
+                break;
+            }
+            else if (rd > 0) {
+                if (write(c_fd,readbuffer,(size_t)rd) != rd) {
+                    fprintf(stderr,"Write failure\n");
+                    break;
+                }
+            }
+            else if (rd < 0) {
+                if (errno == EAGAIN || errno == EWOULDBLOCK) {
+                    /* expected */
+                }
+                else {
+                    fprintf(stderr,"Unexpected error '%s'\n",strerror(errno));
+                    break;
+                }
+            }
+        }
     }
 
+    close(0/*STDIN*/);
     close_c_fd();
     close_p_fd();
     return 0;
