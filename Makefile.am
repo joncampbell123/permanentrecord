@@ -4,7 +4,10 @@ EXTRA_DIST = autogen.sh
 #SUBDIRS = src include
 
 bin_PROGRAMS = \
-	permrec_audio
+	permrec_audio \
+	streamchop
+
+streamchop_SOURCES = streamchop.cpp
 
 common_sources = common.cpp monclock.cpp aufmt.cpp ausrc.cpp ausrcls.cpp aufmtui.cpp dbfs.cpp autocut.cpp as_alsa.cpp as_pulse.cpp wavwrite.cpp recpath.cpp as_dsnd.cpp ole32.cpp as_wasapi.cpp
 
