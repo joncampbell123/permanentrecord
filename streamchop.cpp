@@ -205,7 +205,7 @@ static void update_cut_time(const time_t s) {
 bool open_c_fd(void) {
     if (c_fd < 0) {
         c_fd_name = make_filename();
-        c_fd = open(c_fd_name.c_str(),O_WRONLY|O_CREAT|O_EXCL,0644); /* for archival reasons DO NOT overwrite existing files */
+        c_fd = open(c_fd_name.c_str(),O_RDWR|O_CREAT|O_EXCL,0644); /* for archival reasons DO NOT overwrite existing files */
         if (c_fd < 0) return false;
     }
 
@@ -344,12 +344,22 @@ int main(int argc,char **argv) {
             update_cut_time(start_time);
             if (!open_c_fd()) return 1;
             if (p_fd_replay >= 0) {
+                unsigned long count = 0;
                 ssize_t rd;
 
                 assert(p_fd >= 0);
-                lseek(p_fd,p_fd_replay,SEEK_SET);
-                while ((rd=read(p_fd,readbuffer,sizeof(readbuffer))) > 0)
-                    write(c_fd,readbuffer,(size_t)rd);
+
+                if (lseek(p_fd,p_fd_replay,SEEK_SET) == p_fd_replay) {
+                    while ((rd=read(p_fd,readbuffer,sizeof(readbuffer))) > 0) {
+                        write(c_fd,readbuffer,(size_t)rd);
+                        count += (unsigned long)rd;
+                    }
+
+                    printf("Replay buffer: Copied %lu bytes from %lu\n",count,(unsigned long)p_fd_replay);
+                }
+                else {
+                    fprintf(stderr,"No replay copy, lseek failed\n");
+                }
 
                 p_fd_replay = -1;
             }
