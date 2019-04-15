@@ -9,7 +9,8 @@
 
 #include <string>
 
-unsigned char           readbuffer[4*1024*1024];
+unsigned char           copybuffer[64*1024];
+unsigned char           readbuffer[16*1024*1024];
 
 std::string             opt_prefix;
 std::string             opt_suffix;
@@ -369,14 +370,33 @@ int main(int argc,char **argv) {
             if (!open_c_fd()) return 1;
             if (p_fd_replay >= 0) {
                 unsigned long count = 0;
+                unsigned long rdbuf = 0;
                 ssize_t rd;
 
                 assert(p_fd >= 0);
 
                 if (lseek(p_fd,p_fd_replay,SEEK_SET) == p_fd_replay) {
-                    while ((rd=read(p_fd,readbuffer,sizeof(readbuffer))) > 0) {
-                        write(c_fd,readbuffer,(size_t)rd);
+                    while ((rd=read(p_fd,copybuffer,sizeof(copybuffer))) > 0) {
+                        write(c_fd,copybuffer,(size_t)rd);
                         count += (unsigned long)rd;
+
+                        /* don't stop reading from stdin! */
+                        if (rdbuf < sizeof(readbuffer)) {
+                            size_t cando = sizeof(readbuffer) - rdbuf;
+
+                            rd = read(0,readbuffer+rdbuf,cando);
+                            if (rd > 0) rdbuf += (unsigned long)rd;
+                        }
+                    }
+
+                    if (rdbuf != 0) {
+                        if (rdbuf >= sizeof(readbuffer))
+                            printf("WARNING: readbuf overrun while copying\n");
+
+                        if (write(c_fd,readbuffer,(size_t)rdbuf) != (int)rdbuf) {
+                            fprintf(stderr,"Write failure\n");
+                            break;
+                        }
                     }
 
                     printf("Replay buffer: Copied %lu bytes from %lu\n",count,(unsigned long)p_fd_replay);
