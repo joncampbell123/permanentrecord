@@ -373,7 +373,9 @@ int main(int argc,char **argv) {
 
         {
             ssize_t rd;
+            int patience = 100;
 
+read_again:
             rd = read(0,readbuffer,sizeof(readbuffer));
             if (rd == 0) {
                 /* EOF happened */
@@ -384,6 +386,9 @@ int main(int argc,char **argv) {
                     fprintf(stderr,"Write failure\n");
                     break;
                 }
+
+                if (patience-- > 0)
+                    goto read_again;
             }
             else if (rd < 0) {
                 if (errno == EAGAIN || errno == EWOULDBLOCK) {
