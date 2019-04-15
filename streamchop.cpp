@@ -258,6 +258,8 @@ static void help(void) {
 }
 
 int main(int argc,char **argv) {
+    time_t show_data_next = 0;
+
     {
         char *a;
         int i=1;
@@ -437,11 +439,6 @@ read_again:
                     break;
                 }
 
-                if (show_data_count) {
-                    fprintf(stderr,"\x0D" "Data count %llu  ",data_count);
-                    fflush(stderr);
-                }
-
                 if (patience-- > 0)
                     goto read_again;
             }
@@ -454,6 +451,13 @@ read_again:
                     break;
                 }
             }
+        }
+
+        now = time(NULL);
+        if (show_data_count && now >= show_data_next) {
+            show_data_next = now + (time_t)1;
+            fprintf(stderr,"\x0D" "Data count %llu  ",data_count);
+            fflush(stderr);
         }
     }
 
