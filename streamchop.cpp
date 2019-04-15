@@ -28,6 +28,9 @@ off_t                   p_fd_replay = -1;
 int                     c_fd = -1;
 std::string             c_fd_name;
 
+bool                    show_data_count = false;
+unsigned long long      data_count = 0;
+
 enum {
     CUT_SEC,
     CUT_MIN,
@@ -247,6 +250,7 @@ static void help(void) {
     fprintf(stderr,"-s suffix\n");
     fprintf(stderr,"-ca interval amount\n");
     fprintf(stderr,"-cu interval unit (second, minute, hour, day)\n");
+    fprintf(stderr,"-dc show data count\n");
     fprintf(stderr,"\n");
     fprintf(stderr,"NOTE: -w 500 is appropriate for curl and internet radio.\n");
     fprintf(stderr,"      -w 1 should be used for dvbsnoop and DVB/ATSC sources.\n");
@@ -284,6 +288,9 @@ int main(int argc,char **argv) {
                         cut_unit = CUT_DAY;
                     else
                         abort();
+                }
+                else if (!strcmp(a,"dc")) {
+                    show_data_count = true;
                 }
                 else if (!strcmp(a,"p")) {
                     opt_prefix = argv[i++];
@@ -385,7 +392,10 @@ int main(int argc,char **argv) {
                             size_t cando = sizeof(readbuffer) - rdbuf;
 
                             rd = read(0,readbuffer+rdbuf,cando);
-                            if (rd > 0) rdbuf += (unsigned long)rd;
+                            if (rd > 0) {
+                                rdbuf += (unsigned long)rd;
+                                data_count += (unsigned long long)rd;
+                            }
                         }
                     }
 
@@ -421,9 +431,15 @@ read_again:
                 break;
             }
             else if (rd > 0) {
+                data_count += (unsigned long long)rd;
                 if (write(c_fd,readbuffer,(size_t)rd) != rd) {
                     fprintf(stderr,"Write failure\n");
                     break;
+                }
+
+                if (show_data_count) {
+                    fprintf(stderr,"\x0D" "Data count %llu  ",data_count);
+                    fflush(stderr);
                 }
 
                 if (patience-- > 0)
