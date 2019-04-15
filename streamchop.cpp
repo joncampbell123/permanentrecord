@@ -34,6 +34,7 @@ enum {
     CUT_DAY
 };
 
+int                     wait_delay = 500;
 int                     cut_amount = 3;
 int                     cut_unit = CUT_HOUR;
 
@@ -234,10 +235,15 @@ void c_to_p_fd(void) {
 }
 
 static void help(void) {
+    fprintf(stderr,"-w delay     Wait interval in ms (default 500)\n");
     fprintf(stderr,"-p prefix\n");
     fprintf(stderr,"-s suffix\n");
     fprintf(stderr,"-ca interval amount\n");
     fprintf(stderr,"-cu interval unit (second, minute, hour, day)\n");
+    fprintf(stderr,"\n");
+    fprintf(stderr,"NOTE: -w 500 is appropriate for curl and internet radio.\n");
+    fprintf(stderr,"      -w 1 should be used for dvbsnoop and DVB/ATSC sources.\n");
+    fprintf(stderr,"      -w 50 might be appropriate for higher bandwidth streams.\n");
 }
 
 int main(int argc,char **argv) {
@@ -278,6 +284,10 @@ int main(int argc,char **argv) {
                 else if (!strcmp(a,"s")) {
                     opt_suffix = argv[i++];
                 }
+                else if (!strcmp(a,"w")) {
+                    a = argv[i++];
+                    wait_delay = atoi(a);
+                }
                 else {
                     fprintf(stderr,"Unknown switch %s\n",a);
                     help();
@@ -290,6 +300,9 @@ int main(int argc,char **argv) {
             }
         }
     }
+
+    if (wait_delay < 1) wait_delay = 1;
+    if (wait_delay > 2000) wait_delay = 2000;
 
     /* make sure interval is valid */
     if (cut_unit == CUT_SEC ||
@@ -330,7 +343,7 @@ int main(int argc,char **argv) {
     if (!open_c_fd()) return 1;
 
     while (1) {
-        usleep(500000); /* 500ms */
+        usleep((unsigned int)wait_delay * 1000u);
         now = time(NULL);
 
         assert(cut_time != (time_t)0);
