@@ -9,6 +9,14 @@
 
 #include <string>
 
+bool                    is_mpeg_ts = false;
+unsigned long long      mts_packets = 0;
+unsigned long long      mts_packet_error = 0;
+
+/* NTS: For performance reasons, keep this buffer as small as possible but larger than one TS packet */
+unsigned char           mpeg_ts[188+16] = {0};
+unsigned int            mpeg_ts_pos = 0;
+
 unsigned char           copybuffer[64*1024];
 unsigned char           readbuffer[16*1024*1024];
 
@@ -41,6 +49,60 @@ enum {
 int                     wait_delay = 500;
 int                     cut_amount = 3;
 int                     cut_unit = CUT_HOUR;
+
+void proc_input_mpeg_ts(const unsigned char *buf,size_t rd) {
+    while (rd > 0) {
+        /* if the buffer is full, shift bytes over */
+        if (mpeg_ts_pos == sizeof(mpeg_ts)) {
+            mpeg_ts_pos--;
+            assert(mpeg_ts_pos != 0);
+            memmove(mpeg_ts,mpeg_ts+1,mpeg_ts_pos);
+        }
+
+        /* add to buffer */
+        assert(mpeg_ts_pos < sizeof(mpeg_ts));
+        mpeg_ts[mpeg_ts_pos++] = *buf;
+
+        /* if we see two consecutive TS packets, then process the first */
+        if (mpeg_ts_pos >= 190) {
+            if (mpeg_ts[0] == 'G' && mpeg_ts[188] == 'G') {
+                /* MPEG TS: We care about the first 32 bits (4 bytes) */
+                /* 
+                 * 3        2        1        0
+                 * -----------------------------------
+                 * SSSSSSSS ESPppppp pppppppp ssaacccc
+                 * -----------------------------------
+                 *
+                 * S = 0x47 'G'
+                 * E = transport error bit
+                 * S = payload unit start
+                 * P = priority
+                 * p = 13-bit PID
+                 * s = transport scrambling control
+                 * a = adaptation field control
+                 * c = continuity counter
+                 */
+                bool transport_error = !!(mpeg_ts[1] & 0x80);
+
+                mts_packets++;
+                if (transport_error) mts_packet_error++;
+
+                /* rub out packet */
+                mpeg_ts_pos -= 188;
+                assert(mpeg_ts_pos != 0);
+                memmove(mpeg_ts,mpeg_ts+188,mpeg_ts_pos);
+            }
+        }
+
+        buf++;
+        rd--;
+    }
+}
+
+void proc_input(const unsigned char *buf,size_t rd) {
+    if (is_mpeg_ts)
+        proc_input_mpeg_ts(buf,rd);
+}
 
 std::string tm2string_fn(struct tm &t) {
     std::string ret;
@@ -251,6 +313,7 @@ static void help(void) {
     fprintf(stderr,"-ca interval amount\n");
     fprintf(stderr,"-cu interval unit (second, minute, hour, day)\n");
     fprintf(stderr,"-dc show data count\n");
+    fprintf(stderr,"-mts content is MPEG transport stream\n");
     fprintf(stderr,"\n");
     fprintf(stderr,"NOTE: -w 500 is appropriate for curl and internet radio.\n");
     fprintf(stderr,"      -w 1 should be used for dvbsnoop and DVB/ATSC sources.\n");
@@ -290,6 +353,9 @@ int main(int argc,char **argv) {
                         cut_unit = CUT_DAY;
                     else
                         abort();
+                }
+                else if (!strcmp(a,"mts")) {
+                    is_mpeg_ts = true;
                 }
                 else if (!strcmp(a,"dc")) {
                     show_data_count = true;
@@ -395,6 +461,7 @@ int main(int argc,char **argv) {
 
                             rd = read(0,readbuffer+rdbuf,cando);
                             if (rd > 0) {
+                                proc_input(readbuffer+rdbuf,(size_t)rd);
                                 rdbuf += (unsigned long)rd;
                                 data_count += (unsigned long long)rd;
                             }
@@ -433,6 +500,7 @@ read_again:
                 break;
             }
             else if (rd > 0) {
+                proc_input(readbuffer,(size_t)rd);
                 data_count += (unsigned long long)rd;
                 if (write(c_fd,readbuffer,(size_t)rd) != rd) {
                     fprintf(stderr,"Write failure\n");
@@ -456,7 +524,9 @@ read_again:
         now = time(NULL);
         if (show_data_count && now >= show_data_next) {
             show_data_next = now + (time_t)1;
-            fprintf(stderr,"\x0D" "Data count %llu  ",data_count);
+            fprintf(stderr,"\x0D" "Data count %llu ",data_count);
+            if (is_mpeg_ts)
+                fprintf(stderr,"%llu packets %llu err ",mts_packets,mts_packet_error);
             fflush(stderr);
         }
     }
