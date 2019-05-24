@@ -281,14 +281,14 @@ bool open_c_fd(void) {
 
 void close_c_fd(void) {
     if (c_fd >= 0) {
-    off_t sz = lseek(c_fd,0,SEEK_END);
+        off_t sz = lseek(c_fd,0,SEEK_END);
         close(c_fd);
         c_fd = -1;
 
-    if (sz == 0 && !c_fd_name.empty()) {
-        fprintf(stderr,"Removing zero length file %s\n",c_fd_name.c_str());
-        unlink(c_fd_name.c_str());
-    }
+        if (sz == 0 && !c_fd_name.empty()) {
+            fprintf(stderr,"Removing zero length file %s\n",c_fd_name.c_str());
+            unlink(c_fd_name.c_str());
+        }
     }
 }
 
