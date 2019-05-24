@@ -281,14 +281,14 @@ bool open_c_fd(void) {
 
 void close_c_fd(void) {
     if (c_fd >= 0) {
-	off_t sz = lseek(c_fd,0,SEEK_END);
+    off_t sz = lseek(c_fd,0,SEEK_END);
         close(c_fd);
         c_fd = -1;
 
-	if (sz == 0 && !c_fd_name.empty()) {
-		fprintf(stderr,"Removing zero length file %s\n",c_fd_name.c_str());
-		unlink(c_fd_name.c_str());
-	}
+    if (sz == 0 && !c_fd_name.empty()) {
+        fprintf(stderr,"Removing zero length file %s\n",c_fd_name.c_str());
+        unlink(c_fd_name.c_str());
+    }
     }
 }
 
@@ -314,14 +314,18 @@ static void help(void) {
     fprintf(stderr,"-cu interval unit (second, minute, hour, day)\n");
     fprintf(stderr,"-dc show data count\n");
     fprintf(stderr,"-mts content is MPEG transport stream\n");
+    fprintf(stderr,"-dt data timeout in seconds\n");
     fprintf(stderr,"\n");
     fprintf(stderr,"NOTE: -w 500 is appropriate for curl and internet radio.\n");
     fprintf(stderr,"      -w 1 should be used for dvbsnoop and DVB/ATSC sources.\n");
     fprintf(stderr,"      -w 50 might be appropriate for higher bandwidth streams.\n");
 }
 
+int data_timeout = 30; /* seconds */
+
 int main(int argc,char **argv) {
     time_t show_data_next = 0;
+    time_t data_timeout_at = 0;
 
     {
         char *a;
@@ -359,6 +363,10 @@ int main(int argc,char **argv) {
                 }
                 else if (!strcmp(a,"dc")) {
                     show_data_count = true;
+                }
+                else if (!strcmp(a,"dt")) {
+                    a = argv[i++];
+                    data_timeout = atoi(a);
                 }
                 else if (!strcmp(a,"p")) {
                     opt_prefix = argv[i++];
@@ -408,8 +416,8 @@ int main(int argc,char **argv) {
     }
 
     if (opt_prefix.empty() && opt_suffix.empty()) {
-	    fprintf(stderr,"Need a prefix -p and suffix -s\n");
-	    return 1;
+        fprintf(stderr,"Need a prefix -p and suffix -s\n");
+        return 1;
     }
 
     /* make stdin non-blocking */
@@ -421,6 +429,7 @@ int main(int argc,char **argv) {
 
     start_time = now = time(NULL);
     update_cut_time(start_time);
+    data_timeout_at = now + data_timeout;
 
     if (!open_c_fd()) return 1;
 
@@ -461,6 +470,7 @@ int main(int argc,char **argv) {
 
                             rd = read(0,readbuffer+rdbuf,cando);
                             if (rd > 0) {
+                                data_timeout_at = now + data_timeout;
                                 proc_input(readbuffer+rdbuf,(size_t)rd);
                                 rdbuf += (unsigned long)rd;
                                 data_count += (unsigned long long)rd;
@@ -500,6 +510,7 @@ read_again:
                 break;
             }
             else if (rd > 0) {
+                data_timeout_at = now + data_timeout;
                 proc_input(readbuffer,(size_t)rd);
                 data_count += (unsigned long long)rd;
                 if (write(c_fd,readbuffer,(size_t)rd) != rd) {
@@ -528,6 +539,11 @@ read_again:
             if (is_mpeg_ts)
                 fprintf(stderr,"%llu packets %llu err ",mts_packets,mts_packet_error);
             fflush(stderr);
+        }
+
+        if (now >= data_timeout_at) {
+            fprintf(stderr,"Data timeout\n");
+            break;
         }
     }
 
