@@ -189,6 +189,17 @@ AC_CHECK_CXXFLAGS([ -Wno-extended-offsetof ])
 
 dnl library support
 
+dnl --- Do you have the LAME MP3 encoder library? Do you want it?
+AC_CHECK_HEADER([lame/lame.h], [has_lame=yes], [has_lame=no])
+AC_ARG_ENABLE(lame,AC_HELP_STRING([--enable-lame],[Enable LAME MP3 encoder support (yes by default)]),enable_lame=$enableval,enable_lame=yes)
+if test x"$has_lame" == x"yes" -a x"$enable_lame" == x"yes"; then
+    AC_DEFINE(HAVE_LAME, 1, [Has LAME library])
+    choice=1
+else
+    choice=0
+fi
+AM_CONDITIONAL(HAVE_LAME, test $choice = 1)
+
 dnl --- Do you have ALSA? Do you want it?
 x=`pkg-config alsa --exists`; res=$?;
 if test $res = 0; then
