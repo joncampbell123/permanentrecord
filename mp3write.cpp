@@ -1,6 +1,5 @@
 // TODO: Some way for the user to specify MP3 bitrate and other options.
-// TODO: When closing the MP3 file, flush audio from LAME encoder to file.
-//       Keep a buffer of the last 256KB of MP3 audio and re-play it to the
+// TODO: Keep a buffer of the last 256KB of MP3 audio and re-play it to the
 //       next file so that no audio is lost in the transition from MP3 to
 //       MP3 file.
 
