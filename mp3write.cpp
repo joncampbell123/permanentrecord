@@ -59,6 +59,9 @@ bool MP3Writer::Open(const std::string &path) {
 
 void MP3Writer::Close(void) {
     if (fd >= 0) {
+        if (mp3_write_pos != 0)
+            _flush();
+
         close(fd);
         fd = -1;
     }
@@ -169,8 +172,30 @@ bool MP3Writer::_encode(const long *samp,unsigned int tmp_len_samples) {
         return false;
     }
 
-    if (write(fd,output,(size_t)rd) != rd)
+    if (rd > 0) {
+        if (write(fd,output,(size_t)rd) != rd)
+            return false;
+
+        mp3_write_pos += (off_t)rd;
+    }
+
+    return true;
+}
+
+bool MP3Writer::_flush(void) {
+    unsigned char output[8192];
+
+    if (lame_global == NULL || fd < 0)
         return false;
+
+    int rd = lame_encode_flush(lame_global,output,sizeof(output));
+    if (rd > 0) {
+        fprintf(stderr,"LAME: Flushed out %d more bytes at end\n",rd);
+        if (write(fd,output,(size_t)rd) != rd)
+            return false;
+
+        mp3_write_pos += (off_t)rd;
+    }
 
     return true;
 }
