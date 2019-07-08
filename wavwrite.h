@@ -5,13 +5,13 @@
 class WAVWriter {
 public:
     WAVWriter();
-    ~WAVWriter();
+    virtual ~WAVWriter();
 public:
-    bool Open(const std::string &path);
-    void Close(void);
-    bool SetFormat(const AudioFormat &fmt);
-    bool IsOpen(void) const;
-    int Write(const void *buffer,unsigned int len);
+    virtual bool Open(const std::string &path);
+    virtual void Close(void);
+    virtual bool SetFormat(const AudioFormat &fmt);
+    virtual bool IsOpen(void) const;
+    virtual int Write(const void *buffer,unsigned int len);
 private:
     void _xlat(unsigned char *d,const unsigned char *s,unsigned int len);
     int _write_xlat(const void *buffer,unsigned int len);
