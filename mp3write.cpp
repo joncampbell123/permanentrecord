@@ -102,8 +102,6 @@ template <typename T,typename sT,const bool flip_sign> static void _convert_type
     const long shf = (long)((sizeof(long) - sizeof(T)) * size_t(8u)) - 1l;
     const T xorT = flip_sign ? half : (T)0;
 
-    fprintf(stderr,"xorT=%lx shf=%lu\n",(unsigned long)xorT,shf);
-
     for (unsigned int c=0;c < channels;c++) {
         assert(dst[c] != NULL);
 
