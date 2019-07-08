@@ -25,6 +25,7 @@
 #include "wavstruc.h"
 #include "wavwrite.h"
 #include "mp3write.h"
+#include "vrbwrite.h"
 #include "recpath.h"
 #include "ole32.h"
 
@@ -41,6 +42,9 @@ enum {
     FILEFMT_WAV,
 #if defined(HAVE_LAME)
     FILEFMT_MP3,
+#endif
+#if defined(HAVE_VORBISENC)
+    FILEFMT_VORBIS,
 #endif
     FILEFMT_MAX
 };
@@ -79,6 +83,9 @@ static void help(void) {
 #if defined(HAVE_LAME)
     fprintf(stderr,"    mp3     record as MP3\n");
 #endif
+#if defined(HAVE_VORBISENC)
+    fprintf(stderr,"    vorbis  record as Ogg Vorbis\n");
+#endif
     fprintf(stderr," -d <device>\n");
     fprintf(stderr," -s <source>\n");
     fprintf(stderr," -c <command>\n");
@@ -110,6 +117,10 @@ static int parse_argv(int argc,char **argv) {
 #if defined(HAVE_LAME)
                 else if (!strcmp(a,"mp3"))
                     ui_want_ff = FILEFMT_MP3;
+#endif
+#if defined(HAVE_VORBISENC)
+                else if (!strcmp(a,"vorbis"))
+                    ui_want_ff = FILEFMT_VORBIS;
 #endif
                 else
                     return 1;
@@ -518,6 +529,8 @@ bool open_recording(void) {
         rec_path_wav = rec_path_base + ".WAV";
     else if (ui_want_ff == FILEFMT_MP3)
         rec_path_wav = rec_path_base + ".MP3";
+    else if (ui_want_ff == FILEFMT_VORBIS)
+        rec_path_wav = rec_path_base + ".OGG";
     else
         abort();
 
@@ -534,6 +547,8 @@ bool open_recording(void) {
         wav_out = new WAVWriter();
     else if (ui_want_ff == FILEFMT_MP3)
         wav_out = new MP3Writer();
+    else if (ui_want_ff == FILEFMT_VORBIS)
+        wav_out = new VorbisWriter();
     else
         abort();
 
