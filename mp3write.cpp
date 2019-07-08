@@ -243,7 +243,7 @@ bool MP3Writer::setup_lame(void) {
 
         lame_set_original(lame_global, 1);
         lame_set_copyright(lame_global, 0);
-        lame_set_quality(lame_global, 2);
+        lame_set_quality(lame_global, 0);
 
         // TODO: User spec of bitrate
         if (source_rate >= 32000)
