@@ -241,6 +241,25 @@ else
 fi
 AM_CONDITIONAL(HAVE_VORBIS, [ test $do_have_ogg = 1 -a test $do_have_vorbis = 1 ])
 
+dnl --- Do you have VORBISENC? Do you want it?
+x=`pkg-config vorbisenc --exists`; res=$?;
+if test $res = 0; then
+    has_vorbisenc=yes
+    r=`pkg-config vorbisenc --cflags`
+    CXXFLAGS="$CXXFLAGS $r"
+    r=`pkg-config vorbisenc --libs`
+    LDFLAGS="$LDFLAGS $r"
+fi
+AC_ARG_ENABLE(vorbisenc,AC_HELP_STRING([--enable-vorbisenc],[Enable VORBISENC codec support (yes by default)]),enable_vorbisenc=$enableval,enable_vorbisenc=yes)
+if test x"$has_vorbisenc" == x"yes" -a x"$enable_vorbisenc" == x"yes"; then
+    AC_DEFINE(HAVE_VORBISENC, 1, [Has VORBISENC library])
+    do_have_vorbisenc=1
+    choice=1
+else
+    choice=0
+fi
+AM_CONDITIONAL(HAVE_VORBISENC, [ test $do_have_ogg = 1 -a test $do_have_vorbis = 1 -a test $do_have_vorbisenc = 1 ])
+
 dnl --- Do you have OPUS? Do you want it?
 x=`pkg-config opus --exists`; res=$?;
 if test $res = 0; then
