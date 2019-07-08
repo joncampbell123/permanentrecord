@@ -9,7 +9,7 @@ bin_PROGRAMS = \
 
 streamchop_SOURCES = streamchop.cpp
 
-common_sources = common.cpp monclock.cpp aufmt.cpp ausrc.cpp ausrcls.cpp aufmtui.cpp dbfs.cpp autocut.cpp as_alsa.cpp as_pulse.cpp wavwrite.cpp mp3write.cpp vrbwrite.cpp recpath.cpp as_dsnd.cpp ole32.cpp as_wasapi.cpp
+common_sources = common.cpp monclock.cpp aufmt.cpp ausrc.cpp ausrcls.cpp aufmtui.cpp dbfs.cpp autocut.cpp as_alsa.cpp as_pulse.cpp wavwrite.cpp mp3write.cpp vrbwrite.cpp opuwrite.cpp recpath.cpp as_dsnd.cpp ole32.cpp as_wasapi.cpp
 
 permrec_audio_SOURCES = $(common_sources) permrec_audio.cpp
 permrec_audio_CXXFLAGS = $(AM_CXXFLAGS) $(AM_CFLAGS) $(ALSA_CFLAGS) $(PULSE_CFLAGS)
