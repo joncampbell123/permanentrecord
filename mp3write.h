@@ -1,14 +1,12 @@
 
-#ifndef __WAV_WRITER_H
-#define __WAV_WRITER_H
-
 #include "config.h"
 #include "wavstruc.h"
+#include "wavwrite.h"
 
-class WAVWriter {
+class MP3Writer : public WAVWriter {
 public:
-    WAVWriter();
-    virtual ~WAVWriter();
+    MP3Writer();
+    virtual ~MP3Writer();
 public:
     virtual bool Open(const std::string &path);
     virtual void Close(void);
@@ -34,6 +32,4 @@ private:
     unsigned int    bytes_per_sample;
     unsigned int    block_align;
 };
-
-#endif // __WAV_WRITER_H
 

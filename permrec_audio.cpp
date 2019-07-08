@@ -24,6 +24,7 @@
 #include "autocut.h"
 #include "wavstruc.h"
 #include "wavwrite.h"
+#include "mp3write.h"
 #include "recpath.h"
 #include "ole32.h"
 
@@ -531,6 +532,8 @@ bool open_recording(void) {
 
     if (ui_want_ff == FILEFMT_WAV)
         wav_out = new WAVWriter();
+    else if (ui_want_ff == FILEFMT_MP3)
+        wav_out = new MP3Writer();
     else
         abort();
 
