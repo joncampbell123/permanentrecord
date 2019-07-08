@@ -3,6 +3,7 @@
 #include "wavstruc.h"
 #include "wavwrite.h"
 
+#if defined(HAVE_LAME)
 class MP3Writer : public WAVWriter {
 public:
     MP3Writer();
@@ -32,4 +33,5 @@ private:
     unsigned int    bytes_per_sample;
     unsigned int    block_align;
 };
+#endif
 

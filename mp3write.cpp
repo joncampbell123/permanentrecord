@@ -28,6 +28,7 @@
 
 #include "as_alsa.h"
 
+#if defined(HAVE_LAME)
 MP3Writer::MP3Writer() : fd(-1), fmt_size(0), wav_data_start(0), wav_data_limit((uint32_t)0x7F000000ul) {
 }
 
@@ -297,4 +298,5 @@ windows_WAVEFORMATEX *MP3Writer::waveformatex(void) {
 windows_WAVEFORMATEXTENSIBLE *MP3Writer::waveformatextensible(void) {
     return (windows_WAVEFORMATEXTENSIBLE*)fmt;
 }
+#endif
 
