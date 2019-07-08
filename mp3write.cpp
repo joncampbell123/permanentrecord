@@ -75,13 +75,10 @@ bool MP3Writer::SetFormat(const AudioFormat &fmt) {
             if (fmt.sample_rate < 1000 || fmt.sample_rate > 192000)
                 return false;
 
-            /* WAV only supports 8-bit unsigned or 16/24/32-bit signed PCM */
-            if (fmt.bits_per_sample == 8 && fmt.format_tag == AFMT_PCMS)
-                flip_sign = true;
-            else if (fmt.bits_per_sample != 8 && fmt.format_tag == AFMT_PCMU)
-                flip_sign = true;
-            else
+            if (fmt.format_tag == AFMT_PCMS)
                 flip_sign = false;
+            else
+                flip_sign = true;
 
             source_rate = fmt.sample_rate;
             source_format = fmt.format_tag;
@@ -99,14 +96,101 @@ bool MP3Writer::IsOpen(void) const {
     return (fd >= 0);
 }
 
+template <typename T,typename sT,const bool flip_sign> static void _convert_type(long *dst[2],const T* buffer,unsigned int tmp_len_samples,const unsigned int channels) {
+    static_assert(sizeof(long) >= sizeof(T), "long type not large enough");
+    const long half = ((T)1u << ((T)((sizeof(T) * size_t(8u)) - size_t(1u))));
+    const long shf = (long)((sizeof(long) - sizeof(T)) * size_t(8u)) - 1l;
+    const T xorT = flip_sign ? half : (T)0;
+
+    fprintf(stderr,"xorT=%lx shf=%lu\n",(unsigned long)xorT,shf);
+
+    for (unsigned int c=0;c < channels;c++) {
+        assert(dst[c] != NULL);
+
+        const T* sp = buffer + c;
+        long *dp = dst[c];
+
+        for (unsigned int s=0;s < tmp_len_samples;s++,sp += channels)
+            *dp++ = ((long)((sT)(*sp ^ xorT))) << (long)shf;
+    }
+}
+
+void MP3Writer::_convert(const size_t dstlen_b,long *dst,const size_t bpf,const void* &buffer,unsigned int tmp_len_samples) {
+    assert(source_channels == 1u || source_channels == 2u);
+    long *dstp[2] = {NULL,NULL};
+
+    assert(dstlen_b >= (tmp_len_samples * source_channels * sizeof(long)));
+    assert(bpf == ((unsigned int)source_channels * ((unsigned int)source_bits_per_sample >> 3u)));
+
+    dstp[0] = dst;
+    if (source_channels == 2u) dstp[1] = dst + tmp_len_samples;
+
+    if (flip_sign) {
+        if (source_bits_per_sample == 8)
+            _convert_type<uint8_t,int8_t,/*flipsign*/true>(dstp,(const uint8_t*)buffer,tmp_len_samples,source_channels);
+        else if (source_bits_per_sample == 16)
+            _convert_type<uint16_t,int16_t,/*flipsign*/true>(dstp,(const uint16_t*)buffer,tmp_len_samples,source_channels);
+        else if (source_bits_per_sample == 32)
+            _convert_type<uint32_t,int32_t,/*flipsign*/true>(dstp,(const uint32_t*)buffer,tmp_len_samples,source_channels);
+        else
+            abort();
+    }
+    else {
+        if (source_bits_per_sample == 8)
+            _convert_type<uint8_t,int8_t,/*flipsign*/false>(dstp,(const uint8_t*)buffer,tmp_len_samples,source_channels);
+        else if (source_bits_per_sample == 16)
+            _convert_type<uint16_t,int16_t,/*flipsign*/false>(dstp,(const uint16_t*)buffer,tmp_len_samples,source_channels);
+        else if (source_bits_per_sample == 32)
+            _convert_type<uint32_t,int32_t,/*flipsign*/false>(dstp,(const uint32_t*)buffer,tmp_len_samples,source_channels);
+        else
+            abort();
+    }
+
+    buffer = (const void*)((const unsigned char*)buffer + (bpf * tmp_len_samples));
+}
+
+bool MP3Writer::_encode(const long *samp,unsigned int tmp_len_samples) {
+    const long *dstp[2] = {NULL,NULL};
+    unsigned char output[8192];
+
+    if (lame_global == NULL || fd < 0)
+        return false;
+
+    dstp[0] = samp;
+    if (source_channels == 2u) dstp[1] = samp + tmp_len_samples;
+    else dstp[1] = dstp[0];
+
+    int rd = lame_encode_buffer_long2(lame_global,dstp[0],dstp[1],(int)tmp_len_samples,output,sizeof(output));
+    if (rd < 0) {
+        fprintf(stderr,"LAME encoder error %d\n",rd);
+        return false;
+    }
+
+    if (write(fd,output,(size_t)rd) != rd)
+        return false;
+
+    return true;
+}
+
 int MP3Writer::Write(const void *buffer,unsigned int len) {
     if (IsOpen()) {
-#if 0
-        if (flip_sign)
-            return _write_xlat(buffer,len);
-        else
-            return _write_raw(buffer,len);
-#endif
+        const size_t bpf = (size_t)((unsigned int)source_bits_per_sample >> 3u) * (size_t)source_channels;
+        unsigned int samples = len / (unsigned int)bpf;
+        constexpr unsigned int tmp_len = 4096;
+        const unsigned int tmp_len_samples = tmp_len / source_channels;
+        long tmp[tmp_len];
+
+        while (samples >= tmp_len_samples) {
+            _convert(sizeof(tmp),tmp,bpf,buffer,tmp_len_samples);
+            if (!_encode(tmp,tmp_len_samples)) return -ENOSPC;
+            samples -= tmp_len_samples;
+        }
+        if (samples > 0) {
+            _convert(sizeof(tmp),tmp,bpf,buffer,samples);
+            if (!_encode(tmp,samples)) return -ENOSPC;
+        }
+
+        return (int)len;
     }
 
     return -EINVAL;

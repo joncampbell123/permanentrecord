@@ -31,6 +31,8 @@ private:
 private:
     void free_lame(void);
     bool setup_lame(void);
+    void _convert(const size_t dstlen_b,long *dst,const size_t bpf,const void* &buffer,unsigned int tmp_len_samples);
+    bool _encode(const long *samp,unsigned int tmp_len_samples);
 };
 #endif
 
