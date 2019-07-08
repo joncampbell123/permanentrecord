@@ -194,6 +194,8 @@ AC_CHECK_HEADER([lame/lame.h], [has_lame=yes], [has_lame=no])
 AC_ARG_ENABLE(lame,AC_HELP_STRING([--enable-lame],[Enable LAME MP3 encoder support (yes by default)]),enable_lame=$enableval,enable_lame=yes)
 if test x"$has_lame" == x"yes" -a x"$enable_lame" == x"yes"; then
     AC_DEFINE(HAVE_LAME, 1, [Has LAME library])
+    r=`-lmp3lame`
+    LDFLAGS="$LDFLAGS $r"
     choice=1
 else
     choice=0

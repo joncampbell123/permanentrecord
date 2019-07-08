@@ -35,6 +35,15 @@
 # include "commctrl.h"
 #endif
 
+enum {
+    FILEFMT_NONE=0,
+    FILEFMT_WAV,
+#if defined(HAVE_LAME)
+    FILEFMT_MP3,
+#endif
+    FILEFMT_MAX
+};
+
 #ifndef TARGET_GUI
 static std::string          ui_command;
 #endif
@@ -44,6 +53,7 @@ static int                  ui_want_fmt = 0;
 static long                 ui_want_rate = 0;
 static int                  ui_want_channels = 0;
 static int                  ui_want_bits = 0;
+static int                  ui_want_ff = FILEFMT_WAV;
 
 #ifdef TARGET_GUI_WINDOWS
 DWORD WinCapThreadID = 0;
@@ -63,6 +73,11 @@ static void help(void) {
     fprintf(stderr," -fmt <format>\n");
     fprintf(stderr,"    pcmu    unsigned PCM\n");
     fprintf(stderr,"    pcms    signed PCM\n");
+    fprintf(stderr," -ff <format>\n");
+    fprintf(stderr,"    wav     record as WAV (default)\n");
+#if defined(HAVE_LAME)
+    fprintf(stderr,"    mp3     record as MP3\n");
+#endif
     fprintf(stderr," -d <device>\n");
     fprintf(stderr," -s <source>\n");
     fprintf(stderr," -c <command>\n");
@@ -84,6 +99,19 @@ static int parse_argv(int argc,char **argv) {
             if (!strcmp(a,"h") || !strcmp(a,"help")) {
                 help();
                 return 1;
+            }
+            else if (!strcmp(a,"ff")) {
+                a = argv[i++];
+                if (a == NULL) return 1;
+
+                if (!strcmp(a,"wav"))
+                    ui_want_ff = FILEFMT_WAV;
+#if defined(HAVE_LAME)
+                else if (!strcmp(a,"mp3"))
+                    ui_want_ff = FILEFMT_MP3;
+#endif
+                else
+                    return 1;
             }
             else if (!strcmp(a,"fmt")) {
                 a = argv[i++];
@@ -485,7 +513,13 @@ bool open_recording(void) {
         return false;
     }
 
-    rec_path_wav = rec_path_base + ".WAV";
+    if (ui_want_ff == FILEFMT_WAV)
+        rec_path_wav = rec_path_base + ".WAV";
+    else if (ui_want_ff == FILEFMT_MP3)
+        rec_path_wav = rec_path_base + ".MP3";
+    else
+        abort();
+
     rec_path_info = rec_path_base + ".TXT";
 
     wav_info = fopen(rec_path_info.c_str(),"w");
@@ -495,7 +529,11 @@ bool open_recording(void) {
         return false;
     }
 
-    wav_out = new WAVWriter();
+    if (ui_want_ff == FILEFMT_WAV)
+        wav_out = new WAVWriter();
+    else
+        abort();
+
     if (wav_out == NULL) {
         close_recording();
         return false;
