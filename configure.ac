@@ -239,7 +239,7 @@ if test x"$has_vorbis" == x"yes" -a x"$enable_vorbis" == x"yes"; then
 else
     choice=0
 fi
-AM_CONDITIONAL(HAVE_VORBIS, [ test $do_have_ogg = 1 -a test $do_have_vorbis = 1 ])
+AM_CONDITIONAL(HAVE_VORBIS, [ test x"$do_have_ogg" = 1 -a x"$do_have_vorbis" = 1 ])
 
 dnl --- Do you have VORBISENC? Do you want it?
 x=`pkg-config vorbisenc --exists`; res=$?;
@@ -258,7 +258,7 @@ if test x"$has_vorbisenc" == x"yes" -a x"$enable_vorbisenc" == x"yes"; then
 else
     choice=0
 fi
-AM_CONDITIONAL(HAVE_VORBISENC, [ test $do_have_ogg = 1 -a test $do_have_vorbis = 1 -a test $do_have_vorbisenc = 1 ])
+AM_CONDITIONAL(HAVE_VORBISENC, [ test x"$do_have_ogg" = 1 -a x"$do_have_vorbis" = 1 -a x"$do_have_vorbisenc" = 1 ])
 
 dnl --- Do you have OPUS? Do you want it?
 x=`pkg-config opus --exists`; res=$?;
@@ -277,7 +277,7 @@ if test x"$has_opus" == x"yes" -a x"$enable_opus" == x"yes"; then
 else
     choice=0
 fi
-AM_CONDITIONAL(HAVE_OPUS, [ test $do_have_ogg = 1 -a test $do_have_opus = 1 ])
+AM_CONDITIONAL(HAVE_OPUS, [ test x"$do_have_ogg" = 1 -a x"$do_have_opus" = 1 ])
 
 dnl --- Do you have ALSA? Do you want it?
 x=`pkg-config alsa --exists`; res=$?;
