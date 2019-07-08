@@ -527,10 +527,14 @@ bool open_recording(void) {
 
     if (ui_want_ff == FILEFMT_WAV)
         rec_path_wav = rec_path_base + ".WAV";
+#if defined(HAVE_LAME)
     else if (ui_want_ff == FILEFMT_MP3)
         rec_path_wav = rec_path_base + ".MP3";
+#endif
+#if defined(HAVE_VORBISENC)
     else if (ui_want_ff == FILEFMT_VORBIS)
         rec_path_wav = rec_path_base + ".OGG";
+#endif
     else
         abort();
 
@@ -545,10 +549,14 @@ bool open_recording(void) {
 
     if (ui_want_ff == FILEFMT_WAV)
         wav_out = new WAVWriter();
+#if defined(HAVE_LAME)
     else if (ui_want_ff == FILEFMT_MP3)
         wav_out = new MP3Writer();
+#endif
+#if defined(HAVE_VORBISENC)
     else if (ui_want_ff == FILEFMT_VORBIS)
         wav_out = new VorbisWriter();
+#endif
     else
         abort();
 
