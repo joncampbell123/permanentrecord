@@ -89,6 +89,8 @@ bool VorbisWriter::_flush_ogg_os(void) {
 void VorbisWriter::Close(void) {
     if (fd >= 0) {
         if (vrb_write_pos != (off_t)0 && vrb_init) {
+            bool eos = false;
+
             /* write closing page */
             vorbis_analysis_wrote(&vrb_vd, 0);
 
@@ -100,9 +102,14 @@ void VorbisWriter::Close(void) {
                 while (vorbis_bitrate_flushpacket(&vrb_vd, &ogg_op)) {
                     ogg_stream_packetin(&ogg_os, &ogg_op);
                     if (!_flush_ogg_os()) break;
-                    if (ogg_page_eos(&ogg_og)) break;
+                    if (ogg_page_eos(&ogg_og)) {
+                        eos = true;
+                        break;
+                    }
                 }
             }
+
+            if (!eos) fprintf(stderr,"Ogg Vorbis warning, last page did not signal EOS\n");
         }
 
         close(fd);
