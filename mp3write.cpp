@@ -99,7 +99,7 @@ bool MP3Writer::IsOpen(void) const {
 template <typename T,typename sT,const bool flip_sign> static void _convert_type(long *dst[2],const T* buffer,unsigned int tmp_len_samples,const unsigned int channels) {
     static_assert(sizeof(long) >= sizeof(T), "long type not large enough");
     const long half = ((T)1u << ((T)((sizeof(T) * size_t(8u)) - size_t(1u))));
-    const long shf = (long)((sizeof(long) - sizeof(T)) * size_t(8u)) - 1l;
+    const long shf = (long)((sizeof(long) - sizeof(T)) * size_t(8u));
     const T xorT = flip_sign ? half : (T)0;
 
     for (unsigned int c=0;c < channels;c++) {
