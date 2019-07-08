@@ -279,6 +279,25 @@ else
 fi
 AM_CONDITIONAL(HAVE_OPUS, [ test x"$do_have_ogg" = 1 -a x"$do_have_opus" = 1 ])
 
+dnl --- Do you have OPUSENC? Do you want it?
+x=`pkg-config libopusenc --exists`; res=$?;
+if test $res = 0; then
+    has_opusenc=yes
+    r=`pkg-config libopusenc --cflags`
+    CXXFLAGS="$CXXFLAGS $r"
+    r=`pkg-config libopusenc --libs`
+    LDFLAGS="$LDFLAGS $r"
+fi
+AC_ARG_ENABLE(opusenc,AC_HELP_STRING([--enable-opusenc],[Enable OPUSENC codec support (yes by default)]),enable_opusenc=$enableval,enable_opusenc=yes)
+if test x"$has_opusenc" == x"yes" -a x"$enable_opusenc" == x"yes"; then
+    AC_DEFINE(HAVE_OPUSENC, 1, [Has OPUSENC library])
+    do_have_opusenc=1
+    choice=1
+else
+    choice=0
+fi
+AM_CONDITIONAL(HAVE_OPUSENC, [ test x"$do_have_ogg" = 1 -a x"$do_have_opus" = 1 -a x"$do_have_opusenc" = 1 ])
+
 dnl --- Do you have ALSA? Do you want it?
 x=`pkg-config alsa --exists`; res=$?;
 if test $res = 0; then
