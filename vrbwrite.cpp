@@ -79,6 +79,8 @@ bool VorbisWriter::_flush_ogg_os(void) {
 
         if (write(fd, ogg_og.header, (size_t)ogg_og.header_len) != ogg_og.header_len) return false;
         if (write(fd, ogg_og.body,   (size_t)ogg_og.body_len)   != ogg_og.body_len)   return false;
+
+        vrb_write_pos += (off_t)(ogg_og.header_len + ogg_og.body_len);
     }
 
     return true;
@@ -86,6 +88,23 @@ bool VorbisWriter::_flush_ogg_os(void) {
 
 void VorbisWriter::Close(void) {
     if (fd >= 0) {
+        if (vrb_write_pos != (off_t)0 && vrb_init) {
+            /* write closing page */
+            vorbis_analysis_wrote(&vrb_vd, 0);
+
+            /* write out until the EOS page */
+            while (vorbis_analysis_blockout(&vrb_vd, &vrb_vb) == 1) {
+                vorbis_analysis(&vrb_vb, NULL);
+                vorbis_bitrate_addblock(&vrb_vb);
+
+                while (vorbis_bitrate_flushpacket(&vrb_vd, &ogg_op)) {
+                    ogg_stream_packetin(&ogg_os, &ogg_op);
+                    if (!_flush_ogg_os()) break;
+                    if (ogg_page_eos(&ogg_og)) break;
+                }
+            }
+        }
+
         close(fd);
         fd = -1;
     }
