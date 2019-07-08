@@ -62,6 +62,9 @@ bool OpusWriter::Open(const std::string &path) {
         return false;
     }
 
+    ope_encoder_ctl(opus_enc, OPUS_SET_BITRATE((source_channels == 2 ? 112 : 64)*1024));
+    ope_encoder_ctl(opus_enc, OPUS_SET_VBR(1)); /* VBR, not hard */
+
     opus_init = true;
     return true;
 }
