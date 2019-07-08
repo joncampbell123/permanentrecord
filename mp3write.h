@@ -4,6 +4,11 @@
 #include "wavwrite.h"
 
 #if defined(HAVE_LAME)
+
+extern "C" {
+#include <lame/lame.h>
+}
+
 class MP3Writer : public WAVWriter {
 public:
     MP3Writer();
@@ -32,6 +37,10 @@ private:
     uint32_t        wav_write_pos;
     unsigned int    bytes_per_sample;
     unsigned int    block_align;
+    lame_global_flags*  lame_global = NULL;
+private:
+    void free_lame(void);
+    bool setup_lame(void);
 };
 #endif
 

@@ -298,5 +298,29 @@ windows_WAVEFORMATEX *MP3Writer::waveformatex(void) {
 windows_WAVEFORMATEXTENSIBLE *MP3Writer::waveformatextensible(void) {
     return (windows_WAVEFORMATEXTENSIBLE*)fmt;
 }
+
+void MP3Writer::free_lame(void) {
+    if (lame_global != NULL) {
+        lame_close(lame_global);
+        lame_global = NULL;
+    }
+}
+
+bool MP3Writer::setup_lame(void) {
+    if (lame_global == NULL) {
+        lame_global = lame_init();
+        if (lame_global == NULL) return false;
+
+        // TODO
+
+        if (lame_init_params(lame_global)) {
+            fprintf(stderr,"LAME MP3 encoder rejected setup\n");
+            free_lame();
+            return false;
+        }
+    }
+
+    return (lame_global != NULL);
+}
 #endif
 
