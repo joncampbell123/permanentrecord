@@ -203,6 +203,60 @@ else
 fi
 AM_CONDITIONAL(HAVE_LAME, test $choice = 1)
 
+dnl --- Do you have OGG? Do you want it?
+x=`pkg-config ogg --exists`; res=$?;
+if test $res = 0; then
+    has_ogg=yes
+    r=`pkg-config ogg --cflags`
+    CXXFLAGS="$CXXFLAGS $r"
+    r=`pkg-config ogg --libs`
+    LDFLAGS="$LDFLAGS $r"
+fi
+AC_ARG_ENABLE(ogg,AC_HELP_STRING([--enable-ogg],[Enable OGG bitstream support (yes by default)]),enable_ogg=$enableval,enable_ogg=yes)
+if test x"$has_ogg" == x"yes" -a x"$enable_ogg" == x"yes"; then
+    AC_DEFINE(HAVE_OGG, 1, [Has OGG library])
+    choice=1
+else
+    choice=0
+fi
+AM_CONDITIONAL(HAVE_OGG, test $choice = 1)
+
+dnl --- Do you have VORBIS? Do you want it?
+x=`pkg-config vorbis --exists`; res=$?;
+if test $res = 0; then
+    has_vorbis=yes
+    r=`pkg-config vorbis --cflags`
+    CXXFLAGS="$CXXFLAGS $r"
+    r=`pkg-config vorbis --libs`
+    LDFLAGS="$LDFLAGS $r"
+fi
+AC_ARG_ENABLE(vorbis,AC_HELP_STRING([--enable-vorbis],[Enable VORBIS codec support (yes by default)]),enable_vorbis=$enableval,enable_vorbis=yes)
+if test x"$has_vorbis" == x"yes" -a x"$enable_vorbis" == x"yes"; then
+    AC_DEFINE(HAVE_VORBIS, 1, [Has VORBIS library])
+    choice=1
+else
+    choice=0
+fi
+AM_CONDITIONAL(HAVE_VORBIS, test $choice = 1)
+
+dnl --- Do you have OPUS? Do you want it?
+x=`pkg-config opus --exists`; res=$?;
+if test $res = 0; then
+    has_opus=yes
+    r=`pkg-config opus --cflags`
+    CXXFLAGS="$CXXFLAGS $r"
+    r=`pkg-config opus --libs`
+    LDFLAGS="$LDFLAGS $r"
+fi
+AC_ARG_ENABLE(opus,AC_HELP_STRING([--enable-opus],[Enable OPUS codec support (yes by default)]),enable_opus=$enableval,enable_opus=yes)
+if test x"$has_opus" == x"yes" -a x"$enable_opus" == x"yes"; then
+    AC_DEFINE(HAVE_OPUS, 1, [Has OPUS library])
+    choice=1
+else
+    choice=0
+fi
+AM_CONDITIONAL(HAVE_OPUS, test $choice = 1)
+
 dnl --- Do you have ALSA? Do you want it?
 x=`pkg-config alsa --exists`; res=$?;
 if test $res = 0; then
