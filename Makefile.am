@@ -5,7 +5,10 @@ EXTRA_DIST = autogen.sh
 
 bin_PROGRAMS = \
 	permrec_audio \
-	streamchop
+	streamchop \
+	permrec_timerexec
+
+permrec_timerexec_SOURCES = permrec_timerexec.cpp
 
 streamchop_SOURCES = streamchop.cpp
 
