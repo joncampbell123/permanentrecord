@@ -141,17 +141,24 @@ struct TimeSpec {
 
 struct TimeRange {
     TimeRangeType       type = TimeRangeType::Daily;
+    time_t              start_t=0,end_t=0;
     TimeSpec            start,end;
 
     void default_fill(void) {
         start.default_begin();
         end.default_end();
     }
-    time_t begin_time(const time_t _now) const {
-        return start.time(_now,type);
+    time_t begin_time(void) const {
+        return start_t;
     }
-    time_t end_time(const time_t _now) const {
-        return end.time(_now,type);
+    time_t end_time(void) const {
+        return end_t;
+    }
+    time_t begin_time(const time_t _now) {
+        return (start_t=start.time(_now,type));
+    }
+    time_t end_time(const time_t _now) {
+        return (end_t=end.time(_now,type));
     }
 };
 
@@ -159,7 +166,7 @@ vector<TimeRange>   time_ranges;
 vector<string>      program_args;
 
 bool time_to_run(const time_t _now,const TimeRange &range) {
-    if (_now >= range.begin_time(_now) && _now < range.end_time(_now))
+    if (_now >= range.begin_time() && _now < range.end_time())
         return true;
 
     return false;
