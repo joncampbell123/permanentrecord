@@ -152,10 +152,10 @@ struct TimeRange {
         end.default_end();
     }
     time_t begin_time(void) const {
-        return start.timeval;
+        return start.time();
     }
     time_t end_time(void) const {
-        return end.timeval;
+        return end.time();
     }
     time_t begin_time(const time_t _now) {
         return start.time(_now,type);
