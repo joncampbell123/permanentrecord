@@ -150,6 +150,7 @@ struct TimeSpec {
 
         tm = *localtime(&_now);
 
+        tm.tm_sec = second;
         tm.tm_hour = hour;
         tm.tm_min = minute;
         tm.tm_sec = 0;
