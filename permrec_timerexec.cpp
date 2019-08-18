@@ -105,6 +105,9 @@ time_t roundday(struct tm &ct,const int day) {
 
 static void help(void) {
     fprintf(stderr,"permrec_timerexec [options] <command> [command args]\n");
+    fprintf(stderr," --daily <dspec>-<dspec>\n");
+    fprintf(stderr,"\n");
+    fprintf(stderr," dspec: h[:m[:s]]      h=hour(0-23) m=minute s=second\n");
 }
 
 enum class TimeRangeType {
@@ -114,15 +117,18 @@ enum class TimeRangeType {
 struct TimeSpec {
     int                 hour = -1;
     int                 minute = -1;
+    int                 second = -1;
     time_t              timeval = 0;
 
     void default_begin(void) {
         if (hour < 0) hour = 0;
         if (minute < 0) minute = 0;
+        if (second < 0) second = 0;
     }
     void default_end(void) {
         if (hour < 0) hour = 0;
         if (minute < 0) minute = 0;
+        if (second < 0) second = 0;
     }
     time_t time(void) const {
         return timeval;
@@ -140,6 +146,33 @@ struct TimeSpec {
         tm.tm_isdst = -1;
 
         return (timeval=mktime(&tm));
+    }
+    bool parse_string(char * &s) {
+        hour = minute = second = -1;
+
+        /* h[:m[:s]] */
+        if (!isdigit(*s)) return false;
+
+        hour = (int)strtol(s,&s,10);
+        if (hour < 0 || hour > 23) return false;
+
+        if (*s == 0 || *s == '-') return true;
+        if (*s != ':') return false;
+        s++;
+
+        minute = (int)strtol(s,&s,10);
+        if (minute < 0 || minute > 59) return false;
+
+        if (*s == 0 || *s == '-') return true;
+        if (*s != ':') return false;
+        s++;
+
+        second = (int)strtol(s,&s,10);
+        if (second < 0 || second > 59) return false;
+
+        if (*s == 0 || *s == '-') return true;
+
+        return false;
     }
 };
 
@@ -162,6 +195,18 @@ struct TimeRange {
     }
     time_t end_time(const time_t _now) {
         return end.time(_now,type);
+    }
+    bool parse_string(char * &s) {
+        if (!start.parse_string(/*&*/s))
+            return false;
+
+        if (*s != '-') return false;
+        s++;
+
+        if (!end.parse_string(/*&*/s))
+            return false;
+
+        return true;
     }
 };
 
@@ -199,6 +244,18 @@ int main(int argc,char **argv) {
                 if (!strcmp(a,"h")) {
                     help();
                     return 1;
+                }
+                else if (!strcmp(a,"daily")) {
+                    a = argv[i++];
+                    if (a == NULL) return 1;
+
+                    TimeRange r;
+                    if (!r.parse_string(a)) {
+                        fprintf(stderr,"daily range parse fail\n");
+                        return 1;
+                    }
+
+                    time_ranges.push_back(move(r));
                 }
                 else {
                     fprintf(stderr,"Unknown switch %s\n",a);
