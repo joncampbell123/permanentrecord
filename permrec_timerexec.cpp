@@ -153,7 +153,6 @@ struct TimeSpec {
         tm.tm_sec = second;
         tm.tm_hour = hour;
         tm.tm_min = minute;
-        tm.tm_sec = 0;
         tm.tm_isdst = -1;
 
         return (timeval=mktime(&tm));
