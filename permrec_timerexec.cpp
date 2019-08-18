@@ -207,6 +207,11 @@ struct TimeRange {
     time_t end_time(const time_t _now) {
         return end.time(_now,type);
     }
+    void recalc_time(const time_t _now) {
+        begin_time(_now);
+        end_time(_now);
+        wrap_correct();
+    }
     bool parse_string(char * &s) {
         if (!start.parse_string(/*&*/s))
             return false;
@@ -217,6 +222,7 @@ struct TimeRange {
         if (!end.parse_string(/*&*/s))
             return false;
 
+        default_fill();
         return true;
     }
     void wrap_correct(void) {
@@ -315,6 +321,23 @@ int main(int argc,char **argv) {
     signal(SIGTERM,sigma);
 
     while (!DIE) {
+        time_t now = time(NULL);
+
+        for (auto &ev : time_ranges) {
+            if (!ev.timeval_defined() || ev.expired(now)) {
+                time_t tmp;
+
+                ev.recalc_time(now);
+                fprintf(stderr,"Recalc time range:\n");
+
+                tmp = ev.begin_time();
+                fprintf(stderr,"  Start: %s",ctime(&tmp));
+
+                tmp = ev.end_time();
+                fprintf(stderr,"    End: %s",ctime(&tmp));
+            }
+        }
+
         usleep(250000);
     }
 
