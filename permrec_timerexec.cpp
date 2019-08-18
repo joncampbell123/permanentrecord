@@ -225,14 +225,17 @@ struct TimeRange {
         default_fill();
         return true;
     }
+    time_t next_unit_adv(const time_t _t) const {
+        struct tm tm = *localtime(&_t);
+
+        // FIXME: Daily only
+        tm.tm_mday++;
+
+        return mktime(&tm);
+    }
     void wrap_correct(void) {
         if (inverted()) {
-            struct tm tm = *localtime(&end.timeval);
-
-            tm.tm_mday++;
-
-            end.timeval = mktime(&tm);
-
+            end.timeval = next_unit_adv(end.timeval);
             assert(!inverted());
         }
     }
