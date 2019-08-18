@@ -371,6 +371,16 @@ int main(int argc,char **argv) {
         usleep(500000);
     }
 
+    if (running()) {
+        fprintf(stderr,"Stopping program\n");
+        stop();
+
+        while (running() && !DIE)
+            usleep(250000);
+
+        fprintf(stderr,"Program stopped\n");
+    }
+
     return 0;
 }
 
