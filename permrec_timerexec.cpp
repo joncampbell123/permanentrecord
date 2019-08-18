@@ -259,14 +259,26 @@ struct TimeRange {
 vector<TimeRange>   time_ranges;
 vector<string>      program_args;
 
-bool time_to_run(void) {
-    now = time(NULL);
-
+bool time_to_run(const time_t _now) {
     for (auto &range : time_ranges)
-        if (range.time_to_run(now))
+        if (range.time_to_run(_now))
             return true;
 
     return false;
+}
+
+bool                run_flag = false;
+
+bool running(void) {
+    return run_flag;
+}
+
+void run(void) {
+    run_flag = true;
+}
+
+void stop(void) {
+    run_flag = false;
 }
 
 int main(int argc,char **argv) {
@@ -343,7 +355,20 @@ int main(int argc,char **argv) {
             }
         }
 
-        usleep(250000);
+        if (time_to_run(now)) {
+            if (!running()) {
+                fprintf(stderr,"Running program\n");
+                run();
+            }
+        }
+        else {
+            if (running()) {
+                fprintf(stderr,"Stopping program\n");
+                stop();
+            }
+        }
+
+        usleep(500000);
     }
 
     return 0;
