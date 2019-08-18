@@ -1,4 +1,6 @@
 
+#include <sys/types.h>
+#include <sys/wait.h>
 #include <signal.h>
 #include <stdio.h>
 #include <assert.h>
@@ -267,18 +269,69 @@ bool time_to_run(const time_t _now) {
     return false;
 }
 
-bool                run_flag = false;
+pid_t               process_group = (pid_t)-1;
+
+void check_process(void) {
+    int status;
+    pid_t pid;
+
+    if (process_group > (pid_t)0) {
+        pid = waitpid(-process_group,&status,WNOHANG);
+        if (pid > (pid_t)0) {
+            fprintf(stderr,"Process %d terminated\n",(int)pid);
+            if (kill(-process_group,0) != 0) {
+                if (errno == ESRCH) {
+                    fprintf(stderr,"Process group finished\n");
+                    process_group = (pid_t)-1;
+                }
+            }
+        }
+    }
+}
 
 bool running(void) {
-    return run_flag;
+    check_process();
+    return process_group > (pid_t)0;
 }
 
 void run(void) {
-    run_flag = true;
+    if (!running()) {
+        pid_t pid;
+
+        pid = fork();
+        if (pid < 0) return;
+
+        if (pid == 0) {/*child*/
+            char **arg = new char*[program_args.size()+size_t(1)];
+
+            {
+                size_t i=0;
+
+                for (;i < program_args.size();i++)
+                    arg[i] = (char*)program_args[i].c_str();
+
+                arg[i] = NULL;
+            }
+
+            setpgrp(); /* we are the process group leader */
+
+            execv(arg[0],arg);
+
+            fprintf(stderr,"Failed to exec %s\n",arg[0]);
+
+            delete[] arg;
+            _exit(1);
+        }
+        else {
+            process_group = pid;
+        }
+    }
 }
 
 void stop(void) {
-    run_flag = false;
+    if (running()) {
+        kill(-process_group,SIGTERM);
+    }
 }
 
 int main(int argc,char **argv) {
