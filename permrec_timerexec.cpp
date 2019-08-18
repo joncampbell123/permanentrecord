@@ -217,8 +217,8 @@ vector<TimeRange>   time_ranges;
 vector<string>      program_args;
 
 bool time_to_run(const time_t _now,const TimeRange &range) {
-    if (range.inverted()) {
-        if (_now < range.begin_time() || _now >= range.end_time())
+    if (range.inverted()) { /* start >= end */
+        if (_now >= range.begin_time() || _now < range.end_time())
             return true;
     }
     else {
