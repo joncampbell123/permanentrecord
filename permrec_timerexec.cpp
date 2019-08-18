@@ -180,6 +180,9 @@ struct TimeRange {
     TimeRangeType       type = TimeRangeType::Daily;
     TimeSpec            start,end;
 
+    bool inverted(void) const {
+        return start.time() >= end.time();
+    }
     void default_fill(void) {
         start.default_begin();
         end.default_end();
@@ -214,10 +217,9 @@ vector<TimeRange>   time_ranges;
 vector<string>      program_args;
 
 bool time_to_run(const time_t _now,const TimeRange &range) {
-    if (_now >= range.begin_time() && _now < range.end_time())
-        return true;
-
-    return false;
+    bool cond = (_now >= range.begin_time() && _now < range.end_time());
+    if (range.inverted()) cond = !cond;
+    return cond;
 }
 
 bool time_to_run(void) {
