@@ -251,23 +251,19 @@ struct TimeRange {
     bool expired(const time_t _now) const {
         return timeval_defined() && _now > end_time();
     }
+    bool time_to_run(const time_t _now) const {
+        return (_now >= begin_time() && _now < end_time());
+    }
 };
 
 vector<TimeRange>   time_ranges;
 vector<string>      program_args;
 
-bool time_to_run(const time_t _now,const TimeRange &range) {
-    if (_now >= range.begin_time() && _now < range.end_time())
-        return true;
-
-    return false;
-}
-
 bool time_to_run(void) {
     now = time(NULL);
 
     for (auto &range : time_ranges)
-        if (time_to_run(now,range))
+        if (range.time_to_run(now))
             return true;
 
     return false;
