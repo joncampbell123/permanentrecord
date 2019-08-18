@@ -211,6 +211,17 @@ struct TimeRange {
 
         return true;
     }
+    void wrap_correct(void) {
+        if (inverted()) {
+            struct tm tm = *localtime(&end.timeval);
+
+            tm.tm_mday++;
+
+            end.timeval = mktime(&tm);
+
+            assert(!inverted());
+        }
+    }
 };
 
 vector<TimeRange>   time_ranges;
