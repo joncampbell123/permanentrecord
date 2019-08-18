@@ -222,6 +222,12 @@ struct TimeRange {
             assert(!inverted());
         }
     }
+    bool timeval_defined(void) const {
+        return begin_time() != 0 && end_time() != 0;
+    }
+    bool expired(const time_t _now) const {
+        return timeval_defined() && _now > end_time();
+    }
 };
 
 vector<TimeRange>   time_ranges;
