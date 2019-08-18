@@ -315,6 +315,12 @@ void run(void) {
 
             setpgrp(); /* we are the process group leader */
 
+            {
+                int fd = open("/dev/null",O_RDONLY);
+                dup2(fd,0); /* over STDIN */
+                close(fd);
+            }
+
             execv(arg[0],arg);
 
             fprintf(stderr,"Failed to exec %s\n",arg[0]);
