@@ -114,6 +114,7 @@ enum class TimeRangeType {
 struct TimeSpec {
     int                 hour = -1;
     int                 minute = -1;
+    time_t              timeval = 0;
 
     void default_begin(void) {
         if (hour < 0) hour = 0;
@@ -123,7 +124,10 @@ struct TimeSpec {
         if (hour < 0) hour = 0;
         if (minute < 0) minute = 0;
     }
-    time_t time(const time_t _now,const TimeRangeType _type) const {
+    time_t time(void) const {
+        return timeval;
+    }
+    time_t time(const time_t _now,const TimeRangeType _type) {
         struct tm tm;
 
         (void)_type; // unused for now
@@ -135,7 +139,7 @@ struct TimeSpec {
         tm.tm_sec = 0;
         tm.tm_isdst = -1;
 
-        return mktime(&tm);
+        return (timeval=mktime(&tm));
     }
 };
 
