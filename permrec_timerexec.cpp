@@ -1,4 +1,5 @@
 
+#include <signal.h>
 #include <stdio.h>
 #include <assert.h>
 #include <stdlib.h>
@@ -11,6 +12,13 @@
 #include <vector>
 
 using namespace std;
+
+volatile int DIE = 0;
+
+static void sigma(int x) {
+    (void)x;
+    if (++DIE >= 10) abort();
+}
 
 time_t                  now = 0;
 
@@ -300,6 +308,14 @@ int main(int argc,char **argv) {
     if (time_ranges.empty()) {
         fprintf(stderr,"Time ranges required\n");
         return 1;
+    }
+
+    signal(SIGINT,sigma);
+    signal(SIGQUIT,sigma);
+    signal(SIGTERM,sigma);
+
+    while (!DIE) {
+        usleep(250000);
     }
 
     return 0;
