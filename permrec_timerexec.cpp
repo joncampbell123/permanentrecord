@@ -211,6 +211,12 @@ struct TimeRange {
         begin_time(_now);
         end_time(_now);
         wrap_correct();
+
+        if (expired(_now)) {
+            start.timeval = next_unit_adv(start.timeval);
+            end.timeval = next_unit_adv(end.timeval);
+            assert(!expired(_now));
+        }
     }
     bool parse_string(char * &s) {
         if (!start.parse_string(/*&*/s))
