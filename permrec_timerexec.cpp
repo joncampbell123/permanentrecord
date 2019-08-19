@@ -336,6 +336,7 @@ void run(void) {
 
 void stop(void) {
     if (running()) {
+        kill(-process_group,SIGINT);
         kill(-process_group,SIGTERM);
     }
 }
@@ -424,6 +425,11 @@ int main(int argc,char **argv) {
             if (running()) {
                 fprintf(stderr,"Stopping program\n");
                 stop();
+
+                while (running() && !DIE)
+                    usleep(250000);
+
+                fprintf(stderr,"Program stopped\n");
             }
         }
 
