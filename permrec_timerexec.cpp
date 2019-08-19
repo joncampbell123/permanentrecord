@@ -289,7 +289,7 @@ void check_process(void) {
     }
 }
 
-bool want_stop = true;
+bool want_stop = false;
 time_t stop_timeout = 0;
 
 void force_kill(void) {
