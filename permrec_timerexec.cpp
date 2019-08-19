@@ -289,7 +289,23 @@ void check_process(void) {
     }
 }
 
+bool want_stop = true;
+time_t stop_timeout = 0;
+
+void force_kill(void) {
+    if (process_group > (pid_t)0)
+        kill(-process_group,SIGKILL);
+}
+
 bool running(void) {
+    if (want_stop) {
+        if (time(NULL) >= stop_timeout) {
+            fprintf(stderr,"Stop timeout: Force terminating\n");
+            force_kill();
+            stop_timeout += 5;
+        }
+    }
+
     check_process();
     return process_group > (pid_t)0;
 }
@@ -297,6 +313,8 @@ bool running(void) {
 void run(void) {
     if (!running()) {
         pid_t pid;
+
+        want_stop = false;
 
         pid = fork();
         if (pid < 0) return;
@@ -335,6 +353,11 @@ void run(void) {
 }
 
 void stop(void) {
+    if (!want_stop) {
+        want_stop = true;
+        stop_timeout = time(NULL) + 10; /* YOU HAVE 10 SECONDS TO COMPLY */
+    }
+
     if (running()) {
         kill(-process_group,SIGINT);
         kill(-process_group,SIGTERM);
