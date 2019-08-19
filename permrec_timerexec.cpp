@@ -301,7 +301,7 @@ void force_kill(void) {
 }
 
 bool running(void) {
-    if (want_stop) {
+    if (want_stop && (process_group > (pid_t)0)) {
         if (time(NULL) >= stop_timeout) {
             fprintf(stderr,"Stop timeout: Force terminating\n");
             force_kill();
