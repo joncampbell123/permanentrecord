@@ -284,6 +284,9 @@ void check_process(void) {
                     fprintf(stderr,"Process group finished\n");
                     process_group = (pid_t)-1;
                 }
+                else {
+                    fprintf(stderr,"Process group scan failed? %s\n",strerror(errno));
+                }
             }
         }
     }
