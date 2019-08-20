@@ -277,16 +277,16 @@ void check_process(void) {
 
     if (process_group > (pid_t)0) {
         pid = waitpid(-process_group,&status,WNOHANG);
-        if (pid > (pid_t)0) {
+        if (pid > (pid_t)0)
             fprintf(stderr,"Process %d terminated (group %d)\n",(int)pid,(int)process_group);
-            if (kill(-process_group,0) != 0) {
-                if (errno == ESRCH) {
-                    fprintf(stderr,"Process group finished\n");
-                    process_group = (pid_t)-1;
-                }
-                else {
-                    fprintf(stderr,"Process group scan failed? %s\n",strerror(errno));
-                }
+
+        if (kill(-process_group,0) != 0) {
+            if (errno == ESRCH) {
+                fprintf(stderr,"Process group finished\n");
+                process_group = (pid_t)-1;
+            }
+            else {
+                fprintf(stderr,"Process group scan failed? %s\n",strerror(errno));
             }
         }
     }
