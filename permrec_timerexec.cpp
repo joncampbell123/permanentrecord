@@ -278,7 +278,7 @@ void check_process(void) {
     if (process_group > (pid_t)0) {
         pid = waitpid(-process_group,&status,WNOHANG);
         if (pid > (pid_t)0) {
-            fprintf(stderr,"Process %d terminated\n",(int)pid);
+            fprintf(stderr,"Process %d terminated (group %d)\n",(int)pid,(int)process_group);
             if (kill(-process_group,0) != 0) {
                 if (errno == ESRCH) {
                     fprintf(stderr,"Process group finished\n");
@@ -303,7 +303,7 @@ void force_kill(void) {
 bool running(void) {
     if (want_stop && (process_group > (pid_t)0)) {
         if (time(NULL) >= stop_timeout) {
-            fprintf(stderr,"Stop timeout: Force terminating\n");
+            fprintf(stderr,"Stop timeout: Force terminating process group %d\n",(int)process_group);
             force_kill();
             stop_timeout += 5;
         }
