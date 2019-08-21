@@ -165,6 +165,18 @@ struct TimeSpec {
 
         hour = (int)strtol(s,&s,10);
         if (hour < 0 || hour > 23) return false;
+        /* allow 'a' and 'p' suffixes for the hour */
+        if (*s == 'a') {
+            if (hour > 12) return false;
+            hour %= 12;
+            s++;
+        }
+        else if (*s == 'p') {
+            if (hour > 12) return false;
+            hour %= 12;
+            hour += 12;
+            s++;
+        }
 
         if (*s == 0 || *s == '-') return true;
         if (*s != ':') return false;
