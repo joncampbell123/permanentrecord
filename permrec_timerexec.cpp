@@ -22,6 +22,7 @@ static void sigma(int x) {
     if (++DIE >= 10) abort();
 }
 
+bool                    exit_if_none = false;
 time_t                  now = 0;
 
 time_t roundsec(struct tm &ct,const int sec) {
@@ -116,6 +117,7 @@ time_t roundday(struct tm &ct,const int day) {
 static void help(void) {
     fprintf(stderr,"permrec_timerexec [options] <command> [command args]\n");
     fprintf(stderr," --daily <dspec>-<dspec>\n");
+    fprintf(stderr," -x --exit-if-none      Exit when none of the time ranges are in effect.\n");
     fprintf(stderr,"\n");
     fprintf(stderr," dspec: h[:m[:s]]      h=hour(0-23) m=minute s=second\n");
 }
@@ -394,6 +396,9 @@ int main(int argc,char **argv) {
                     help();
                     return 1;
                 }
+                else if (!strcmp(a,"x") || !strcmp(a,"exit-if-none")) {
+                    exit_if_none = true;
+                }
                 else if (!strcmp(a,"daily")) {
                     a = argv[i++];
                     if (a == NULL) return 1;
@@ -469,6 +474,8 @@ int main(int argc,char **argv) {
 
                 fprintf(stderr,"Program stopped\n");
             }
+
+            if (exit_if_none) break;
         }
 
         usleep(500000);
