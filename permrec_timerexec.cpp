@@ -22,6 +22,7 @@ static void sigma(int x) {
     if (++DIE >= 10) abort();
 }
 
+bool                    print_timerange = true;
 bool                    exit_if_none = false;
 time_t                  now = 0;
 
@@ -118,6 +119,7 @@ static void help(void) {
     fprintf(stderr,"permrec_timerexec [options] <command> [command args]\n");
     fprintf(stderr," --daily <dspec>-<dspec>\n");
     fprintf(stderr," -x --exit-if-none      Exit when none of the time ranges are in effect.\n");
+    fprintf(stderr," --npt                  Don't print time calc\n");
     fprintf(stderr,"\n");
     fprintf(stderr," dspec: h[:m[:s]]      h=hour(0-23) m=minute s=second\n");
 }
@@ -396,6 +398,9 @@ int main(int argc,char **argv) {
                     help();
                     return 1;
                 }
+                else if (!strcmp(a,"npt")) {
+                    print_timerange = false;
+                }
                 else if (!strcmp(a,"x") || !strcmp(a,"exit-if-none")) {
                     exit_if_none = true;
                 }
@@ -448,13 +453,16 @@ int main(int argc,char **argv) {
                 time_t tmp;
 
                 ev.recalc_time(now);
-                fprintf(stderr,"Recalc time range:\n");
 
-                tmp = ev.begin_time();
-                fprintf(stderr,"  Start: %s",ctime(&tmp));
+                if (print_timerange) {
+                    fprintf(stderr,"Recalc time range:\n");
 
-                tmp = ev.end_time();
-                fprintf(stderr,"    End: %s",ctime(&tmp));
+                    tmp = ev.begin_time();
+                    fprintf(stderr,"  Start: %s",ctime(&tmp));
+
+                    tmp = ev.end_time();
+                    fprintf(stderr,"    End: %s",ctime(&tmp));
+                }
             }
         }
 
