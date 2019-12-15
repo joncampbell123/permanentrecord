@@ -270,20 +270,20 @@ int main(int argc,char **argv) {
                         }
                     }
                 }
+                {
+                    auto i = downloaded.begin();
+                    while (i != downloaded.end() && i->second.gone) {
+                        fprintf(stderr,"Flushing gone download '%s'\n",i->first.c_str());
+                        downloaded.erase(i);
+                        i = downloaded.begin();
+                    }
+                }
                 if (downloading.empty()) {
                     if (!stream_m3u8.m3u8list.empty()) {
                         downloading = stream_m3u8.m3u8list.front().url;
                         if (!downloading.empty())
                             fprintf(stderr,"Starting download with '%s'\n",downloading.c_str());
                     }
-                }
-            }
-
-            {
-                auto i = downloaded.begin();
-                while (i != downloaded.end() && i->second.gone) {
-                    downloaded.erase(i);
-                    i = downloaded.begin();
                 }
             }
         }
