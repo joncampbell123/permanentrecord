@@ -13,6 +13,10 @@
 #include <vector>
 #include <map>
 
+#ifndef O_BINARY
+#define O_BINARY (0)
+#endif
+
 using namespace std;
 
 static void chomp(char *s) {
@@ -42,6 +46,42 @@ int download_m3u8_fragment(const string dpath,const string url) {
     }
 
     return 0;
+}
+
+int file_to_stdout(const string spath) {
+    unsigned char buf[4096];
+    int r,w,rt;
+    int c=0;
+    int fd;
+
+    fd = open(spath.c_str(),O_RDONLY | O_BINARY);
+    if (fd < 0) return -1;
+
+    while ((r=(int)read(fd,buf,sizeof(buf))) > 0) {
+        w=0;
+        while (w < r) {
+            rt=(int)write(1/*STDOUT*/,buf+w,size_t(r-w));
+            if (rt == 0) {
+                c = 0;
+                break;
+            }
+            else if (rt < 0) {
+                c = -1;
+                break;
+            }
+            else {
+                c = rt;
+                w += c;
+                assert(w <= r);
+            }
+        }
+
+        if (c <= 0)
+            break;
+    }
+
+    close(fd);
+    return c;
 }
 
 class M3U8Entry {
@@ -327,6 +367,15 @@ int main(int argc,char **argv) {
             }
             else if (download_m3u8_fragment("tmp.fragment.bin",downloading) == 0) {
                 fprintf(stderr,"Fragment '%s' obtained\n",downloading.c_str());
+
+                if (!isatty(1)) {
+                    int w = file_to_stdout("tmp.fragment.bin");
+                    if (w == 0) {
+                        fprintf(stderr,"File to stdout indicates EOF\n");
+                        break;
+                    }
+                }
+
                 do_next = true;
             }
             else {
