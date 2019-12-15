@@ -173,6 +173,7 @@ M3U8                main_m3u8;
 string              main_url;
 M3U8                stream_m3u8;
 string              stream_url;
+bool                giveup = false;
 
 static int parse_argv(int argc,char **argv) {
     int i,nswi=0;
@@ -223,7 +224,7 @@ int main(int argc,char **argv) {
             fprintf(stderr,"Failed to parse M3U8\n");
             return 1;
         }
-        main_m3u8.dump();
+//      main_m3u8.dump();
         stream_url = main_url;
 
         /* main stream or pick one within? TODO: Let the user choose. */
@@ -235,6 +236,18 @@ int main(int argc,char **argv) {
         }
 
         fprintf(stderr,"Chosen stream URL: %s\n",stream_url.c_str());
+    }
+
+    while (!giveup) {
+        if (download_m3u8("tmp.stream.m3u8",stream_url) == 0) {
+            stream_m3u8 = M3U8();
+            if (stream_m3u8.parse_file("tmp.stream.m3u8") == 0) {
+                // TODO
+                stream_m3u8.dump();
+            }
+        }
+
+        sleep(5);
     }
 
     return 0;
