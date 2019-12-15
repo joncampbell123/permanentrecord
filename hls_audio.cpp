@@ -21,7 +21,7 @@ static void chomp(char *s) {
 }
 
 int download_m3u8(const string dpath,const string url) {
-    string cmd = string("wget -t 10 --show-progress -O '") + dpath + "' '" + url + "'";
+    string cmd = string("wget -nv -t 10 --show-progress -O '") + dpath + "' '" + url + "'";
     int x = system(cmd.c_str());
 
     if (x != 0) {
@@ -33,7 +33,7 @@ int download_m3u8(const string dpath,const string url) {
 }
 
 int download_m3u8_fragment(const string dpath,const string url) {
-    string cmd = string("wget -t 15 --show-progress -O '") + dpath + "' '" + url + "'";
+    string cmd = string("wget -nv -t 15 --show-progress -O '") + dpath + "' '" + url + "'";
     int x = system(cmd.c_str());
 
     if (x != 0) {
