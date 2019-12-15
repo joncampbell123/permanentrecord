@@ -3,6 +3,7 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -21,6 +22,18 @@ static void chomp(char *s) {
 
 int download_m3u8(const string dpath,const string url) {
     string cmd = string("wget -t 10 --show-progress -O '") + dpath + "' '" + url + "'";
+    int x = system(cmd.c_str());
+
+    if (x != 0) {
+        fprintf(stderr,"Download failed\n");
+        return 1;
+    }
+
+    return 0;
+}
+
+int download_m3u8_fragment(const string dpath,const string url) {
+    string cmd = string("wget -t 15 --show-progress -O '") + dpath + "' '" + url + "'";
     int x = system(cmd.c_str());
 
     if (x != 0) {
@@ -171,6 +184,7 @@ int M3U8::parse_file(const string path) {
 
 class DownloadTracking {
     public:
+        time_t                      expiration = 0;
         bool                        done = false;
         bool                        seen = false;
         bool                        gone = false;
@@ -178,6 +192,7 @@ class DownloadTracking {
 
 map<string,DownloadTracking>        downloaded;
 string                              downloading;
+bool                                downloading_eof = false;
 
 M3U8                main_m3u8;
 string              main_url;
@@ -257,8 +272,12 @@ int main(int argc,char **argv) {
             if (download_m3u8("tmp.stream.m3u8",stream_url) == 0) {
                 stream_m3u8 = M3U8();
                 if (stream_m3u8.parse_file("tmp.stream.m3u8") == 0) {
-                    for (auto i=downloaded.begin();i!=downloaded.end();i++)
-                        i->second.gone = true;
+                    for (auto i=downloaded.begin();i!=downloaded.end();i++) {
+                        if (!i->second.gone) {
+                            i->second.expiration = now + 60;
+                            i->second.gone = true;
+                        }
+                    }
                     for (auto i=stream_m3u8.m3u8list.begin();i!=stream_m3u8.m3u8list.end();i++) {
                         if (!((*i).url.empty())) {
                             downloaded[(*i).url].gone = false;
@@ -277,7 +296,7 @@ int main(int argc,char **argv) {
                     }
                     {
                         auto i = downloaded.begin();
-                        while (i != downloaded.end() && i->second.gone) {
+                        while (i != downloaded.end() && i->second.gone && now >= i->second.expiration) {
                             fprintf(stderr,"Flushing gone download '%s'\n",i->first.c_str());
                             downloaded.erase(i);
                             i = downloaded.begin();
@@ -285,11 +304,76 @@ int main(int argc,char **argv) {
                     }
                     if (downloading.empty()) {
                         if (!stream_m3u8.m3u8list.empty()) {
-                            downloading = stream_m3u8.m3u8list.front().url;
+                            if (downloading_eof) {
+                                downloading = stream_m3u8.m3u8list.back().url;
+                            }
+                            else {
+                                downloading = stream_m3u8.m3u8list.front().url;
+                            }
+
                             if (!downloading.empty())
                                 fprintf(stderr,"Starting download with '%s'\n",downloading.c_str());
                         }
                     }
+                }
+            }
+        }
+
+        if (!downloading.empty()) {
+            bool do_next = false;
+
+            if (downloaded[downloading].done) {
+                do_next = true;
+            }
+            else if (download_m3u8_fragment("tmp.fragment.bin",downloading) == 0) {
+                fprintf(stderr,"Fragment '%s' obtained\n",downloading.c_str());
+                do_next = true;
+            }
+            else {
+                if (!downloading.empty()) {
+                    if (downloaded[downloading].gone) {
+                        do_next = true;
+                    }
+                }
+            }
+
+            if (do_next) {
+                int count = -1;
+                string new_url;
+                {
+                    auto i = stream_m3u8.m3u8list.begin();
+                    while (i != stream_m3u8.m3u8list.end()) {
+                        if (!(*i).url.empty()) {
+                            if (!downloaded[(*i).url].gone &&
+                                 downloaded[(*i).url].seen) {
+                                if ((*i).url == downloading) {
+                                    downloaded[(*i).url].done = true;
+                                    count = 0;
+                                }
+                                else if (!downloaded[(*i).url].done) {
+                                    if (count < 0) count = 0;
+                                    else if (count++ >= 0) {
+                                        new_url = (*i).url;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+
+                        i++;
+                    }
+
+                    if (i == stream_m3u8.m3u8list.end())
+                        downloading_eof = true;
+                }
+
+                downloading = new_url;
+                if (downloading_eof) {
+                    assert(downloading.empty());
+                    fprintf(stderr,"Waiting for next fragment\n");
+                }
+                else {
+                    fprintf(stderr,"Downloading next fragment '%s'\n",new_url.c_str());
                 }
             }
         }
