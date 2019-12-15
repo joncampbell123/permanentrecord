@@ -224,6 +224,17 @@ int main(int argc,char **argv) {
             return 1;
         }
         main_m3u8.dump();
+        stream_url = main_url;
+
+        /* main stream or pick one within? TODO: Let the user choose. */
+        if (!main_m3u8.m3u8list.empty()) {
+            auto i = main_m3u8.m3u8list.front();
+            if (i.is_stream_inf && !i.url.empty()) {
+                stream_url = i.url;
+            }
+        }
+
+        fprintf(stderr,"Chosen stream URL: %s\n",stream_url.c_str());
     }
 
     return 0;
