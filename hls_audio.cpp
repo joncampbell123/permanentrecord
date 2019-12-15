@@ -218,6 +218,8 @@ static int parse_argv(int argc,char **argv) {
 }
 
 int main(int argc,char **argv) {
+    time_t now,next_m3u8_dl = 0;
+
     if (parse_argv(argc,argv))
         return 1;
 
@@ -249,46 +251,50 @@ int main(int argc,char **argv) {
     }
 
     while (!giveup) {
-        if (download_m3u8("tmp.stream.m3u8",stream_url) == 0) {
-            stream_m3u8 = M3U8();
-            if (stream_m3u8.parse_file("tmp.stream.m3u8") == 0) {
-                for (auto i=downloaded.begin();i!=downloaded.end();i++)
-                    i->second.gone = true;
-                for (auto i=stream_m3u8.m3u8list.begin();i!=stream_m3u8.m3u8list.end();i++) {
-                    if (!((*i).url.empty())) {
-                        downloaded[(*i).url].gone = false;
-                        downloaded[(*i).url].seen = true;
-                    }
-                }
-
-                if (!downloading.empty()) {
-                    auto i=downloaded.find(downloading);
-                    if (i != downloaded.end()) {
-                        if (i->second.gone) {
-                            fprintf(stderr,"Fragment '%s' disappeared before we could finish downloading\n",downloading.c_str());
-                            downloading.clear();
+        now = time(NULL);
+        if (now >= next_m3u8_dl) {
+            next_m3u8_dl = now + 5;
+            if (download_m3u8("tmp.stream.m3u8",stream_url) == 0) {
+                stream_m3u8 = M3U8();
+                if (stream_m3u8.parse_file("tmp.stream.m3u8") == 0) {
+                    for (auto i=downloaded.begin();i!=downloaded.end();i++)
+                        i->second.gone = true;
+                    for (auto i=stream_m3u8.m3u8list.begin();i!=stream_m3u8.m3u8list.end();i++) {
+                        if (!((*i).url.empty())) {
+                            downloaded[(*i).url].gone = false;
+                            downloaded[(*i).url].seen = true;
                         }
                     }
-                }
-                {
-                    auto i = downloaded.begin();
-                    while (i != downloaded.end() && i->second.gone) {
-                        fprintf(stderr,"Flushing gone download '%s'\n",i->first.c_str());
-                        downloaded.erase(i);
-                        i = downloaded.begin();
+
+                    if (!downloading.empty()) {
+                        auto i=downloaded.find(downloading);
+                        if (i != downloaded.end()) {
+                            if (i->second.gone) {
+                                fprintf(stderr,"Fragment '%s' disappeared before we could finish downloading\n",downloading.c_str());
+                                downloading.clear();
+                            }
+                        }
                     }
-                }
-                if (downloading.empty()) {
-                    if (!stream_m3u8.m3u8list.empty()) {
-                        downloading = stream_m3u8.m3u8list.front().url;
-                        if (!downloading.empty())
-                            fprintf(stderr,"Starting download with '%s'\n",downloading.c_str());
+                    {
+                        auto i = downloaded.begin();
+                        while (i != downloaded.end() && i->second.gone) {
+                            fprintf(stderr,"Flushing gone download '%s'\n",i->first.c_str());
+                            downloaded.erase(i);
+                            i = downloaded.begin();
+                        }
+                    }
+                    if (downloading.empty()) {
+                        if (!stream_m3u8.m3u8list.empty()) {
+                            downloading = stream_m3u8.m3u8list.front().url;
+                            if (!downloading.empty())
+                                fprintf(stderr,"Starting download with '%s'\n",downloading.c_str());
+                        }
                     }
                 }
             }
         }
 
-        sleep(5);
+        sleep(1);
     }
 
     return 0;
