@@ -169,6 +169,16 @@ int M3U8::parse_file(const string path) {
     return 0;
 }
 
+class DownloadTracking {
+    public:
+        bool                        done = false;
+        bool                        seen = false;
+        bool                        gone = false;
+};
+
+map<string,DownloadTracking>        downloaded;
+string                              downloading;
+
 M3U8                main_m3u8;
 string              main_url;
 M3U8                stream_m3u8;
@@ -242,8 +252,39 @@ int main(int argc,char **argv) {
         if (download_m3u8("tmp.stream.m3u8",stream_url) == 0) {
             stream_m3u8 = M3U8();
             if (stream_m3u8.parse_file("tmp.stream.m3u8") == 0) {
-                // TODO
-                stream_m3u8.dump();
+                for (auto i=downloaded.begin();i!=downloaded.end();i++)
+                    i->second.gone = true;
+                for (auto i=stream_m3u8.m3u8list.begin();i!=stream_m3u8.m3u8list.end();i++) {
+                    if (!((*i).url.empty())) {
+                        downloaded[(*i).url].gone = false;
+                        downloaded[(*i).url].seen = true;
+                    }
+                }
+
+                if (!downloading.empty()) {
+                    auto i=downloaded.find(downloading);
+                    if (i != downloaded.end()) {
+                        if (i->second.gone) {
+                            fprintf(stderr,"Fragment '%s' disappeared before we could finish downloading\n",downloading.c_str());
+                            downloading.clear();
+                        }
+                    }
+                }
+                if (downloading.empty()) {
+                    if (!stream_m3u8.m3u8list.empty()) {
+                        downloading = stream_m3u8.m3u8list.front().url;
+                        if (!downloading.empty())
+                            fprintf(stderr,"Starting download with '%s'\n",downloading.c_str());
+                    }
+                }
+            }
+
+            {
+                auto i = downloaded.begin();
+                while (i != downloaded.end() && i->second.gone) {
+                    downloaded.erase(i);
+                    i = downloaded.begin();
+                }
             }
         }
 
