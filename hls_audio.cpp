@@ -50,6 +50,7 @@ int download_m3u8_fragment(const string dpath,const string url) {
 
 int file_to_stdout(const string spath) {
     unsigned char buf[4096];
+    off_t ofs = 0;
     int r,w,rt;
     int c=0;
     int fd;
@@ -57,6 +58,17 @@ int file_to_stdout(const string spath) {
     fd = open(spath.c_str(),O_RDONLY | O_BINARY);
     if (fd < 0) return -1;
 
+    /* skip the ID3v2 tag */
+    lseek(fd,ofs,SEEK_SET);
+    if (read(fd,buf,10) == 10) {
+        if (memcmp(buf,"ID3",3) == 0 && buf[3] >= 1 && buf[3] <= 4 &&
+            ((buf[6] | buf[7] | buf[8] | buf[9]) & 0x80) == 0) {
+            ofs = (off_t)((buf[6] << 21ul) | (buf[7] << 14ul) | (buf[8] << 7ul) | (buf[9] << 0ul));
+            fprintf(stderr,"ID3 tag size %lu\n",(unsigned long)ofs);
+        }
+    }
+
+    lseek(fd,ofs,SEEK_SET);
     while ((r=(int)read(fd,buf,sizeof(buf))) > 0) {
         w=0;
         while (w < r) {
