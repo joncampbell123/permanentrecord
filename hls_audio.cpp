@@ -446,7 +446,6 @@ int main(int argc,char **argv) {
 
                 downloading = new_url;
                 if (downloading_eof) {
-                    assert(downloading.empty());
                     fprintf(stderr,"Waiting for next fragment\n");
                 }
                 else {
