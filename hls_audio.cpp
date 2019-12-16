@@ -117,7 +117,7 @@ class M3U8 {
         signed long long        media_sequence = -1ll;  // EXT-X-MEDIA-SEQUENCE
         vector<M3U8Entry>       m3u8list;
     public:
-        int                     parse_file(const string path);
+        int                     parse_file(const string path,const string url);
         void                    dump(FILE *fp=NULL);
 };
 
@@ -149,7 +149,7 @@ void M3U8::dump(FILE *fp) {
     fprintf(stderr,"}\n");
 }
 
-int M3U8::parse_file(const string path) {
+int M3U8::parse_file(const string path,const string url) {
     char tmp[1024],*s;
     M3U8Entry ent;
     FILE *fp;
@@ -224,7 +224,23 @@ int M3U8::parse_file(const string path) {
         }
         else if (*s != 0) {
             // url
-            ent.url = s;
+
+            if (!strncmp(s,"http://",7) || !strncmp(s,"https://",8)) {
+                ent.url = s;
+            }
+            // TODO: Urls that are absolute in domain, start with /
+            else {
+                ent.url = url;
+                {
+                    int i = (int)ent.url.length();
+                    while (i >= 0 && !(ent.url[(size_t)i] == '/')) i--;
+                    i++;
+                    assert(i >= 0 && size_t(i) <= ent.url.length());
+                    ent.url = ent.url.substr(0,(size_t)i);
+                }
+                ent.url += s;
+            }
+
             m3u8list.push_back(ent);
             ent = M3U8Entry();
         }
@@ -299,7 +315,7 @@ int main(int argc,char **argv) {
             sleep(2);
         }
 
-        if (main_m3u8.parse_file("tmp.main.m3u8")) {
+        if (main_m3u8.parse_file("tmp.main.m3u8",main_url)) {
             fprintf(stderr,"Failed to parse M3U8\n");
             return 1;
         }
@@ -323,7 +339,7 @@ int main(int argc,char **argv) {
             next_m3u8_dl = now + 5;
             if (download_m3u8("tmp.stream.m3u8",stream_url) == 0) {
                 stream_m3u8 = M3U8();
-                if (stream_m3u8.parse_file("tmp.stream.m3u8") == 0) {
+                if (stream_m3u8.parse_file("tmp.stream.m3u8",stream_url) == 0) {
                     for (auto i=downloaded.begin();i!=downloaded.end();i++) {
                         if (!i->second.gone) {
                             i->second.expiration = now + 60;
