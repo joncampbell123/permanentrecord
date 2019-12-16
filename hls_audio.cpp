@@ -99,7 +99,7 @@ int file_to_stdout(const string spath) {
 class M3U8Entry {
     public:
         string                  url;
-        int                     bandwidth;              // EXT-X-STREAM-INF
+        int                     bandwidth = -1;         // EXT-X-STREAM-INF
         string                  codecs;                 // EXT-X-STREAM-INF
         double                  duration = -1;          // EXT-INF
         string                  title;                  // EXT-INF
@@ -280,6 +280,12 @@ string              main_url;
 M3U8                stream_m3u8;
 string              stream_url;
 bool                giveup = false;
+int                 want_bandwidth = -1;
+
+static void help() {
+    fprintf(stderr,"hls_audio [options] <m3u8 url>\n");
+    fprintf(stderr,"  -b <n>            Select stream by bandwidth\n");
+}
 
 static int parse_argv(int argc,char **argv) {
     int i,nswi=0;
@@ -292,7 +298,19 @@ static int parse_argv(int argc,char **argv) {
         if (*a == '-') {
             do { a++; } while (*a == '-');
 
-            return 1;
+            if (!strcmp(a,"h")) {
+                help();
+                return 1;
+            }
+            else if (!strcmp(a,"b")) {
+                a = argv[i++];
+                if (a == NULL) return 1;
+                want_bandwidth = atoi(a);
+            }
+            else {
+                fprintf(stderr,"Unknown switch %s\n",a);
+                return 1;
+            }
         }
         else {
             switch (nswi++) {
@@ -333,15 +351,29 @@ int main(int argc,char **argv) {
             return 1;
         }
         main_m3u8.dump();
-        stream_url = main_url;
+        stream_url.clear();
 
-        /* main stream or pick one within? TODO: Let the user choose. */
-        if (!main_m3u8.m3u8list.empty()) {
+        if (stream_url.empty() && want_bandwidth > 0) {
+            int sel_bw = -1;
+
+            for (auto i = main_m3u8.m3u8list.begin();i != main_m3u8.m3u8list.end();i++) {
+                if ((*i).is_stream_inf && !(*i).url.empty() && (*i).bandwidth > 0 &&
+                    (*i).bandwidth <= want_bandwidth && (*i).bandwidth > sel_bw) {
+                    sel_bw = (*i).bandwidth;
+                    stream_url = (*i).url;
+                }
+            }
+        }
+
+        if (stream_url.empty() && !main_m3u8.m3u8list.empty()) {
             auto i = main_m3u8.m3u8list.front();
             if (i.is_stream_inf && !i.url.empty()) {
                 stream_url = i.url;
             }
         }
+
+        if (stream_url.empty())
+            stream_url = main_url;
 
         fprintf(stderr,"Chosen stream URL: %s\n",stream_url.c_str());
     }
