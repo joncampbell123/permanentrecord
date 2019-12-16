@@ -105,6 +105,8 @@ class M3U8Entry {
         string                  title;                  // EXT-INF
         bool                    discontinuity = false;  // EXT-X-DISCONTINUITY
         bool                    is_stream_inf = false;  // EXT-X-STREAM-INF
+        int                     resolution_width = -1;  // EXT-X-STREAM-INF
+        int                     resolution_height = -1; // EXT-X-STREAM-INF
     public:
         void                    dump(FILE *fp=NULL);
 };
@@ -132,6 +134,7 @@ void M3U8Entry::dump(FILE *fp) {
     fprintf(fp,"  duration=%.3f\n",duration);
     fprintf(fp,"  title='%s'\n",title.c_str());
     fprintf(fp,"  discontinuity=%u\n",discontinuity?1:0);
+    fprintf(fp,"  resolution=%d x %d\n",resolution_width,resolution_height);
 }
 
 void M3U8::dump(FILE *fp) {
@@ -219,6 +222,16 @@ int M3U8::parse_file(const string path,const string url) {
                         ent.bandwidth = atoi(ivalue);
                     else if (!strcmp(iname,"CODECS"))
                         ent.codecs = ivalue;
+                    else if (!strcmp(iname,"RESOLUTION")) {
+                        /* ex: RESOLUTION=640x360 */
+                        if (isdigit(*ivalue)) {
+                            ent.resolution_width = (int)strtol(ivalue,&ivalue,10);
+                            if (*ivalue == 'x') ivalue++;
+                        }
+                        if (isdigit(*ivalue)) {
+                            ent.resolution_height = (int)strtol(ivalue,&ivalue,10);
+                        }
+                    }
                 }
             }
         }
@@ -319,7 +332,7 @@ int main(int argc,char **argv) {
             fprintf(stderr,"Failed to parse M3U8\n");
             return 1;
         }
-//      main_m3u8.dump();
+        main_m3u8.dump();
         stream_url = main_url;
 
         /* main stream or pick one within? TODO: Let the user choose. */
