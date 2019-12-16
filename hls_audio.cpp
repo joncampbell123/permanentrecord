@@ -11,6 +11,7 @@
 
 #include <string>
 #include <vector>
+#include <list>
 #include <map>
 
 #ifndef O_BINARY
@@ -272,8 +273,8 @@ class DownloadTracking {
 };
 
 map<string,DownloadTracking>        downloaded;
+list<string>                        download_todo;
 string                              downloading;
-bool                                downloading_eof = false;
 
 M3U8                main_m3u8;
 string              main_url;
@@ -397,13 +398,10 @@ int main(int argc,char **argv) {
                             downloaded[(*i).url].seen = true;
                         }
                     }
-
-                    if (!downloading.empty()) {
-                        auto i=downloaded.find(downloading);
-                        if (i != downloaded.end()) {
-                            if (i->second.gone) {
-                                fprintf(stderr,"Fragment '%s' disappeared before we could finish downloading\n",downloading.c_str());
-                                downloading.clear();
+                    for (auto i=stream_m3u8.m3u8list.begin();i!=stream_m3u8.m3u8list.end();i++) {
+                        if (!((*i).url.empty())) {
+                            if (!downloaded[(*i).url].gone) {
+                                download_todo.push_back((*i).url);
                             }
                         }
                     }
@@ -415,87 +413,42 @@ int main(int argc,char **argv) {
                             i = downloaded.begin();
                         }
                     }
-                    if (downloading.empty()) {
-                        if (!stream_m3u8.m3u8list.empty()) {
-                            if (downloading_eof) {
-                                downloading = stream_m3u8.m3u8list.back().url;
-                            }
-                            else {
-                                downloading = stream_m3u8.m3u8list.front().url;
-                            }
-
-                            if (!downloading.empty())
-                                fprintf(stderr,"Starting download with '%s'\n",downloading.c_str());
-                        }
-                    }
                 }
             }
         }
 
-        if (!downloading.empty()) {
-            bool do_next = false;
+        int downloadcount = 0;
 
-            if (downloaded[downloading].done) {
-                do_next = true;
+        while (downloadcount == 0) {
+            if (downloading.empty() && !download_todo.empty()) {
+                downloading = download_todo.front();
+                download_todo.pop_front();
             }
-            else if (download_m3u8_fragment("tmp.fragment.bin",downloading) == 0) {
-                fprintf(stderr,"Fragment '%s' obtained\n",downloading.c_str());
 
-                if (!isatty(1)) {
-                    int w = file_to_stdout("tmp.fragment.bin");
-                    if (w == 0) {
-                        fprintf(stderr,"File to stdout indicates EOF\n");
-                        break;
-                    }
+            if (!downloading.empty()) {
+                if (downloaded[downloading].done || downloaded[downloading].gone) {
+                    downloading.clear();
                 }
+                else if (download_m3u8_fragment("tmp.fragment.bin",downloading) == 0) {
+                    fprintf(stderr,"Fragment '%s' obtained\n",downloading.c_str());
 
-                do_next = true;
-            }
-            else {
-                if (!downloading.empty()) {
-                    if (downloaded[downloading].gone) {
-                        do_next = true;
-                    }
-                }
-            }
-
-            if (do_next) {
-                int count = -1;
-                string new_url;
-                {
-                    auto i = stream_m3u8.m3u8list.begin();
-                    while (i != stream_m3u8.m3u8list.end()) {
-                        if (!(*i).url.empty()) {
-                            if (!downloaded[(*i).url].gone &&
-                                 downloaded[(*i).url].seen) {
-                                if ((*i).url == downloading) {
-                                    downloaded[(*i).url].done = true;
-                                    count = 0;
-                                }
-                                else if (!downloaded[(*i).url].done) {
-                                    if (count < 0) count = 0;
-                                    else if (count++ >= 0) {
-                                        new_url = (*i).url;
-                                        break;
-                                    }
-                                }
-                            }
+                    if (!isatty(1)) {
+                        int w = file_to_stdout("tmp.fragment.bin");
+                        if (w == 0) {
+                            fprintf(stderr,"File to stdout indicates EOF\n");
+                            break;
                         }
-
-                        i++;
                     }
 
-                    if (i == stream_m3u8.m3u8list.end())
-                        downloading_eof = true;
-                }
-
-                downloading = new_url;
-                if (downloading_eof) {
-                    fprintf(stderr,"Waiting for next fragment\n");
+                    downloadcount++;
+                    downloading.clear();
                 }
                 else {
-                    fprintf(stderr,"Downloading next fragment '%s'\n",new_url.c_str());
+                    break;
                 }
+            }
+            else {
+                break;
             }
         }
 
