@@ -440,6 +440,8 @@ int main(int argc,char **argv) {
                         }
                     }
 
+                    downloaded[downloading].done = true;
+
                     downloadcount++;
                     downloading.clear();
                 }
