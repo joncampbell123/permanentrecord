@@ -25,7 +25,19 @@ static void chomp(char *s) {
     while (e >= s && (*e == '\n' || *e == '\r')) *e-- = 0;
 }
 
+static bool valid_url(const string url) {
+    if (url.find_first_of('$') != string::npos) return false;
+    if (url.find_first_of('\\') != string::npos) return false;
+    if (url.find_first_of('\'') != string::npos) return false;
+    if (url.find_first_of('\"') != string::npos) return false;
+
+    return true;
+}
+
 int download_m3u8(const string dpath,const string url) {
+    if (!valid_url(url))
+        return 1;
+
     string cmd = string("wget -nv -t 10 --show-progress -O '") + dpath + "' '" + url + "'";
     int x = system(cmd.c_str());
 
@@ -38,6 +50,9 @@ int download_m3u8(const string dpath,const string url) {
 }
 
 int download_m3u8_fragment(const string dpath,const string url) {
+    if (!valid_url(url))
+        return 1;
+
     string cmd = string("wget -nv -t 15 --show-progress -O '") + dpath + "' '" + url + "'";
     int x = system(cmd.c_str());
 
