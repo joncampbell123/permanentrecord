@@ -423,7 +423,7 @@ int main(int argc,char **argv) {
                     {
                         auto i = downloaded.begin();
                         while (i != downloaded.end() && i->second.gone && now >= i->second.expiration) {
-                            fprintf(stderr,"Flushing gone download '%s'\n",i->first.c_str());
+//                          fprintf(stderr,"Flushing gone download '%s'\n",i->first.c_str());
                             downloaded.erase(i);
                             i = downloaded.begin();
                         }
