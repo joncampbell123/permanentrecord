@@ -264,7 +264,6 @@ public:
 
             while (bytes > 0) {
                 assert(pulse_stream != NULL);
-                pulse_idle();
 
                 if (pending_data == NULL) {
                     const void *ptr = NULL;
@@ -302,6 +301,9 @@ public:
                         pending_data_free();
                 }
             }
+
+            if (rd == 0)
+                pulse_idle();
 
             return rd;
         }
