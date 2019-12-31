@@ -159,6 +159,8 @@ int main() { /* TODO: command line options */
     /* NTS: If the process we are piping to closes it's end, we'll terminate
      *      with SIGPIPE. No cleanup needed. */
     while (1) {
+        sliding_window_lazy_flush(sio);
+
         ssize_t rd = sliding_window_refill_from_fd(sio,0/*STDIN*/,0);
         if (rd < 0 && sliding_window_data_available(sio) == 0)
             break;
@@ -167,13 +169,15 @@ int main() { /* TODO: command line options */
         if (wd < 0)
             break;
 
+        if (rd == 0 && sliding_window_can_write(sio) == 0)
+            fprintf(stderr,"WARNING: Potential incoming data loss, buffer overrun\n");
+
         if (rd == 0 && wd == 0) {
             usleep(sleep_period);
             if (sleep_period < 250000)
                 sleep_period += 10000;
         }
         else {
-            sliding_window_lazy_flush(sio);
             sleep_period = 10000;
         }
     }
