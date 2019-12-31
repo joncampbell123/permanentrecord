@@ -167,6 +167,8 @@ int main() { /* TODO: command line options */
 
         if (rd == 0 && wd == 0)
             usleep(250000);
+        else
+            sliding_window_lazy_flush(sio);
     }
 
     sio = sliding_window_destroy(sio);
