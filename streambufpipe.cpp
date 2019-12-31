@@ -146,6 +146,8 @@ static int fd_non_block(int fd) {
 }
 
 int main() { /* TODO: command line options */
+    unsigned int sleep_period = 10000;
+
     /* make STDIN and STDOUT non-blocking */
     if (fd_non_block(0/*STDIN*/) != 0 || fd_non_block(1/*STDOUT*/) != 0)
         return 1;
@@ -165,10 +167,15 @@ int main() { /* TODO: command line options */
         if (wd < 0)
             break;
 
-        if (rd == 0 && wd == 0)
-            usleep(250000);
-        else
+        if (rd == 0 && wd == 0) {
+            usleep(sleep_period);
+            if (sleep_period < 250000)
+                sleep_period += 10000;
+        }
+        else {
             sliding_window_lazy_flush(sio);
+            sleep_period = 10000;
+        }
     }
 
     sio = sliding_window_destroy(sio);
