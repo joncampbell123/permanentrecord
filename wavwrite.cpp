@@ -7,7 +7,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
-#include <unistd.h>
+#if defined(_MSC_VER)
+# include <io.h>
+#else
+# include <unistd.h>
+#endif
 #include <signal.h>
 #include <fcntl.h>
 #include <errno.h>

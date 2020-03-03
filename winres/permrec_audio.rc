@@ -1,6 +1,10 @@
 // Microsoft Visual C++ generated resource script.
 //
 #include "resource.h"
+
+/* AAARRRRRRRGH Visual Studio 2019 */
+#include <windows.h>
+
 /////////////////////////////////////////////////////////////////////////////
 // English (United States) resources
 
