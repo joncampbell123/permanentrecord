@@ -10,7 +10,7 @@
 # define __PDP_ENDIAN    3412
 #endif
 
-#if defined(WIN32)
+#if defined(WIN32) || defined(_WIN32) || defined(_WIN64)
 # define __BYTE_ORDER   __LITTLE_ENDIAN
 #elif defined(__APPLE__)
 # include <libkern/OSByteOrder.h>
