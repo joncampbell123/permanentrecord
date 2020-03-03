@@ -1069,7 +1069,7 @@ std::string WinGUI_CB_GetText(HWND dlgItem,WPARAM idx) {
 	return str;
 }
 
-BOOL CALLBACK DlgMainProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam) {
+INT_PTR CALLBACK DlgMainProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam) {
 	(void)lParam;
 
 	if (uMsg == WM_INITDIALOG) {
