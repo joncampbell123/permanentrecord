@@ -9,6 +9,8 @@
 #include <errno.h>
 #include <time.h>
 
+#if !defined(_WIN32)/*NOT for Windows*/
+
 typedef struct sliding_window {
     unsigned char		*buffer;
     unsigned char		*fence;
@@ -185,4 +187,10 @@ int main() { /* TODO: command line options */
     sio = sliding_window_destroy(sio);
     return 0;
 }
+#else /*WIN32*/
+int main() {
+	fprintf(stderr,"Not for Windows\n");
+	return 1;
+}
+#endif /*WIN32*/
 

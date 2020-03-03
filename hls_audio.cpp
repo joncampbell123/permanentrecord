@@ -1,4 +1,6 @@
 
+#if !defined(_WIN32)/*NOT for Windows*/
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
@@ -474,4 +476,11 @@ int main(int argc,char **argv) {
 
     return 0;
 }
+#else /*WIN32*/
+#include <stdio.h>
+int main() {
+	fprintf(stderr,"Not for Windows\n");
+	return 1;
+}
+#endif /*WIN32*/
 

@@ -9,6 +9,8 @@
 
 #include <string>
 
+#if !defined(_WIN32)/*NOT for Windows*/
+
 bool                    is_mpeg_ts = false;
 unsigned long long      mts_packets = 0;
 unsigned long long      mts_packet_error = 0;
@@ -552,4 +554,10 @@ read_again:
     close_p_fd();
     return 0;
 }
+#else /*WIN32*/
+int main() {
+	fprintf(stderr,"Not for Windows\n");
+	return 1;
+}
+#endif /*WIN32*/
 
