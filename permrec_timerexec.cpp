@@ -205,6 +205,7 @@ struct TimeSpec {
 };
 
 struct TimeRange {
+    bool                weekly_enable[7] = {/*Sun*/true,/*Mon*/true,/*Tue*/true,/*Wed*/true,/*Thu*/true,/*Fri*/true,/*Sat*/true};
     TimeRangeType       type = TimeRangeType::Daily;
     TimeSpec            start,end;
 
@@ -232,13 +233,114 @@ struct TimeRange {
         end_time(_now);
         wrap_correct();
 
-        if (expired(_now)) {
-            start.timeval = next_unit_adv(start.timeval);
-            end.timeval = next_unit_adv(end.timeval);
+        if (expired(_now) || !unit_enabled(start.timeval)) {
+            do {
+                start.timeval = next_unit_adv(start.timeval);
+                end.timeval = next_unit_adv(end.timeval);
+            } while (!unit_enabled(start.timeval));
             assert(!expired(_now));
         }
     }
+    bool unit_enabled(const time_t _now) {
+        if (type == TimeRangeType::Daily) {
+            const int dow = day_of_week(_now);
+            if (dow >= 0 && dow <= 6)
+                return weekly_enable[dow];
+        }
+
+        return true;
+    }
     bool parse_string(char * &s) {
+        for (unsigned int i=0;i < 7;i++) weekly_enable[i] = true;
+
+        /* week spec? allow daily schedule that only runs on specific days of the week */
+        if (*s == 'w') {
+            bool exclude = false;
+
+            s++; /* skip 'w' */
+            /* w[Sun,Mon,Tue,Wed,Thu,Fri,Sat] = only the days listed */
+            /* w-[Sat,Sun] = all days except listed */
+
+            if (*s == '-') {
+                s++; /* skip '-' */
+                exclude = true;
+            }
+
+            /* unless excluding, mark all days disabled  */
+            if (!exclude) {
+                for (unsigned int i=0;i < 7;i++) weekly_enable[i] = false;
+            }
+
+            /* start parsing */
+            if (*s == '[') {
+                s++;
+
+                do {
+                    if (*s == 0) return false; /* end of string (invalid) */
+                    if (*s == ']') { s++; break; } /* end of spec */
+
+                    /* match day of week */
+                    int dow = -1;
+                    if (!strncmp(s,"sun",3)) {
+                        dow = 0;
+                        s += 3;
+                    }
+                    else if (!strncmp(s,"mon",3)) {
+                        dow = 1;
+                        s += 3;
+                    }
+                    else if (!strncmp(s,"tue",3)) {
+                        dow = 2;
+                        s += 3;
+                    }
+                    else if (!strncmp(s,"wed",3)) {
+                        dow = 3;
+                        s += 3;
+                    }
+                    else if (!strncmp(s,"thu",3)) {
+                        dow = 4;
+                        s += 3;
+                    }
+                    else if (!strncmp(s,"fri",3)) {
+                        dow = 5;
+                        s += 3;
+                    }
+                    else if (!strncmp(s,"sat",3)) {
+                        dow = 6;
+                        s += 3;
+                    }
+                    else {
+                        return false;
+                    }
+
+                    if (exclude)
+                        weekly_enable[dow] = false;
+                    else
+                        weekly_enable[dow] = true;
+
+                    if (*s == ']') { s++; break; }
+                    else if (*s == ',') { s++; continue; }
+                    else return false;
+                } while (1);
+            }
+            else {
+                return false;
+            }
+
+            /* bug check */
+            {
+                int c=0;
+                for (int i=0;i < 7;i++)
+                    c += (weekly_enable[i] ? 1 : 0);
+
+                if (c == 0)
+                    return false;
+            }
+
+            /* allow space between week spec and timespec */
+            while (*s == ' ') s++;
+        }
+
         if (!start.parse_string(/*&*/s))
             return false;
 
@@ -273,6 +375,14 @@ struct TimeRange {
     }
     bool time_to_run(const time_t _now) const {
         return (_now >= begin_time() && _now < end_time());
+    }
+    int day_of_week(const time_t now) const {
+        if (timeval_defined()) {
+            struct tm tm = *localtime(&now);
+            return tm.tm_wday;
+        }
+
+        return -1;
     }
 };
 
