@@ -234,7 +234,10 @@ struct TimeRange {
         wrap_correct();
 
         if (expired(_now) || !unit_enabled(start.timeval)) {
+            int patience = 10000;
+
             do {
+                assert((--patience) > 0); /* should never happen unless somehow all days of the week were zeroed, which should not happen either! */
                 start.timeval = next_unit_adv(start.timeval);
                 end.timeval = next_unit_adv(end.timeval);
             } while (!unit_enabled(start.timeval));
