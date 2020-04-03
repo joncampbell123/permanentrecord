@@ -11,6 +11,8 @@
 
 #if !defined(_WIN32)/*NOT for Windows*/
 
+#include <poll.h>
+
 typedef struct sliding_window {
     unsigned char		*buffer;
     unsigned char		*fence;
@@ -170,6 +172,22 @@ int main() { /* TODO: command line options */
         ssize_t wd = sliding_window_empty_to_fd(sio,1/*STDOUT*/,0);
         if (wd < 0)
             break;
+
+        /* check for output hangup even if we never have anything to write.
+         * this program can be left dangling if output closes and the input
+         * never sent in any data such as dvbsnoop without a tuner command. */
+        if (rd == 0 && wd == 0) {
+            struct pollfd p;
+            memset(&p,0,sizeof(p));
+            p.fd = 1;
+            p.events = POLLHUP;
+            if (poll(&p,1,0) > 0) {
+                if (p.revents != 0) {
+                    fprintf(stderr,"Output hung up.\n");
+                    break;
+                }
+            }
+        }
 
         if (rd == 0 && sliding_window_can_write(sio) == 0)
             fprintf(stderr,"WARNING: Potential incoming data loss, buffer overrun\n");
