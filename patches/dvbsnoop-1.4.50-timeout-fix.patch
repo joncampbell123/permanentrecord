@@ -1,0 +1,23 @@
+diff -u -r dvbsnoop-1.4.50.old/src/dvb_api/dmx_ts.c dvbsnoop-1.4.50/src/dvb_api/dmx_ts.c
+--- dvbsnoop-1.4.50.old/src/dvb_api/dmx_ts.c	2006-01-02 11:23:58.000000000 -0800
++++ dvbsnoop-1.4.50/src/dvb_api/dmx_ts.c	2020-04-03 02:54:52.756152222 -0700
+@@ -431,7 +431,9 @@
+     *skipped_bytes = 0;
+     found = 0;
+     while (! found) {
++        alarm(5); /* most can get data moving in milliseconds */
+     	n1 = read(fd,buf,TS_PACKET_LEN);
++        alarm(0); /* cancel */
+     	if (n1 <= 0) return n1;			// error or strange, abort
+ 
+     	for (i=0;i<n1; i++) {			// search sync byte
+@@ -448,7 +450,9 @@
+ 
+     if (i == 0) return n1;			// already complete packet read...
+ 
++    alarm(5); /* most can get data moving in milliseconds */
+     n2 = read(fd,buf+n1,TS_PACKET_LEN-n1+i);	// continue read TS packet
++    alarm(0); /* cancel */
+     if (n2 >=0) n2 = n1+n2-i; ;			// should be TS_PACKET_LEN anyway...
+ 
+     return n2;
