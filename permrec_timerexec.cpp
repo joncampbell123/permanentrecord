@@ -123,6 +123,7 @@ static void help(void) {
     fprintf(stderr,"permrec_timerexec [options] <command> [command args]\n");
     fprintf(stderr," --daily [wspec]<dspec>-<dspec>\n");
     fprintf(stderr," -x --exit-if-none      Exit when none of the time ranges are in effect.\n");
+    fprintf(stderr," --exit-if-terminate    Exit when program terminates after running.\n");
     fprintf(stderr," --npt                  Don't print time calc\n");
     fprintf(stderr,"\n");
     fprintf(stderr," wspec: w[sun,mon,tue,wed,thu,fri,sat]   which days of the week to allow execution\n");
