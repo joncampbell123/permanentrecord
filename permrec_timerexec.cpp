@@ -25,6 +25,7 @@ static void sigma(int x) {
 }
 
 bool                    print_timerange = true;
+bool                    exit_if_terminate = false;
 bool                    exit_if_none = false;
 time_t                  now = 0;
 
@@ -427,6 +428,7 @@ void check_process(void) {
 
 bool want_stop = false;
 time_t stop_timeout = 0;
+unsigned int run_counter = 0;
 
 void force_kill(void) {
     if (process_group > (pid_t)0)
@@ -483,6 +485,7 @@ void run(void) {
             _exit(1);
         }
         else {
+            run_counter++;
             process_group = pid;
         }
     }
@@ -517,6 +520,9 @@ int main(int argc,char **argv) {
                 }
                 else if (!strcmp(a,"npt")) {
                     print_timerange = false;
+                }
+                else if (!strcmp(a,"exit-if-terminate")) {
+                    exit_if_terminate = true;
                 }
                 else if (!strcmp(a,"x") || !strcmp(a,"exit-if-none")) {
                     exit_if_none = true;
@@ -585,6 +591,7 @@ int main(int argc,char **argv) {
 
         if (time_to_run(now)) {
             if (!running()) {
+                if (run_counter > 0 && exit_if_terminate) break;
                 fprintf(stderr,"Running program\n");
                 run();
             }
