@@ -2,6 +2,7 @@
 #if !defined(_WIN32)/*NOT for Windows*/
 
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <sys/wait.h>
 #include <signal.h>
 #include <stdio.h>
@@ -562,6 +563,38 @@ int main(int argc,char **argv) {
     if (time_ranges.empty()) {
         fprintf(stderr,"Time ranges required\n");
         return 1;
+    }
+
+    /* if no forward slashes are in argv[0] then searching the PATH is necessary */
+    {
+        assert(program_args.size() > 0);
+        const string &a = program_args[0];
+        if (a.find_first_of('/') == string::npos) {
+            bool ok = false;
+            const char *path = getenv("PATH"); /* example: /bin:/usr/bin:/usr/sbin */
+            if (path != NULL) {
+                while (*path != 0) {
+                    const char *elem = path;
+                    while (*path != 0 && *path != ':') path++;
+                    const char *elemend = path;
+                    if (*path == ':') path++;
+
+                    struct stat st;
+                    const string searchpath = string(elem,(size_t)(elemend-elem)) + "/" + a;
+                    if (stat(searchpath.c_str(),&st) == 0 && S_ISREG(st.st_mode)) {
+                        if (access(searchpath.c_str(),X_OK) == 0) {
+                            program_args[0] = searchpath;
+                            ok = true;
+                        }
+                    }
+                }
+            }
+
+            if (!ok) {
+                fprintf(stderr,"Unable to find '%s' in PATH\n",a.c_str());
+                return 1;
+            }
+        }
     }
 
     signal(SIGINT,sigma);
