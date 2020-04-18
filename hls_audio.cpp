@@ -171,7 +171,7 @@ void M3U8::dump(FILE *fp) {
 }
 
 int M3U8::parse_file(const string path,const string url) {
-    char tmp[1024],*s;
+    char tmp[16384],*s;
     M3U8Entry ent;
     FILE *fp;
 
