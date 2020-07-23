@@ -165,7 +165,30 @@ public:
         if (info->description != NULL) ent.desc = info->description;
         names.push_back(ent);
     }
+    static void cb_sink_inputs(pa_context *ctx,const pa_sink_input_info *info,int eol,void *userdata) {
+        if (eol) return;
+        assert(userdata != NULL);
+        assert(info != NULL);
+        (void)ctx;
+        (void)eol;
+
+        std::vector<AudioDevicePair> &names = *((std::vector<AudioDevicePair>*)userdata);
+
+        AudioDevicePair ent;
+        if (info->name != NULL) ent.name = info->name;
+        if (ent.name != "AudioStream") return;
+        if (info->index == (uint32_t)-1) return;
+
+        char tmp[256];
+        sprintf(tmp,":sinkinput:%d",info->index);
+        ent.name = tmp;
+
+        names.push_back(ent);
+    }
     virtual int EnumDevices(std::vector<AudioDevicePair> &names) {
+        pa_operation_state past;
+        pa_operation *pa;
+
         pulse_atexit_init();
 
         names.clear();
@@ -174,11 +197,21 @@ public:
 
         assert(pulse_context != NULL);
 
-        pa_operation *pa = pa_context_get_source_info_list(pulse_context,cb_source,(void*)(&names));
+        /* audio sources */
+        pa = pa_context_get_source_info_list(pulse_context,cb_source,(void*)(&names));
         if (pa == NULL)
             return -ENOMEM;
 
-        pa_operation_state past;
+        while ((past=pa_operation_get_state(pa)) == PA_OPERATION_RUNNING)
+            pulse_idle();
+
+        if (past != PA_OPERATION_DONE)
+            return -ENODEV;
+
+        /* audio sink inputs */
+        pa = pa_context_get_sink_input_info_list(pulse_context,cb_sink_inputs,(void*)(&names));
+        if (pa == NULL)
+            return -ENOMEM;
 
         while ((past=pa_operation_get_state(pa)) == PA_OPERATION_RUNNING)
             pulse_idle();
@@ -419,9 +452,26 @@ private:
             pulse_close();
             return false;
         }
-        if (pa_stream_connect_record(pulse_stream,pulse_device_string.empty() ? NULL : pulse_device_string.c_str(),NULL,(pa_stream_flags_t)0) < 0) {
-            pulse_close();
-            return false;
+        if (pulse_device_string.substr(0,11) == ":sinkinput:") {
+            std::string x = pulse_device_string.substr(11);
+            uint32_t idx = (uint32_t)strtoul(x.c_str(),NULL,10);
+
+            if (pa_stream_set_monitor_stream(pulse_stream,idx) < 0) {
+                fprintf(stderr,"Unable to set monitor stream %d\n",(int)idx);
+                pulse_close();
+                return false;
+            }
+            if (pa_stream_connect_record(pulse_stream,NULL,NULL,(pa_stream_flags_t)(PA_STREAM_DONT_MOVE | PA_STREAM_NOFLAGS)) < 0) {
+                fprintf(stderr,"Unable to connect record\n");
+                pulse_close();
+                return false;
+            }
+        }
+        else {
+            if (pa_stream_connect_record(pulse_stream,pulse_device_string.empty() ? NULL : pulse_device_string.c_str(),NULL,(pa_stream_flags_t)0) < 0) {
+                pulse_close();
+                return false;
+            }
         }
         pulse_idle();
 
