@@ -183,6 +183,27 @@ public:
         sprintf(tmp,":sinkinput:%d",info->index);
         ent.name = tmp;
 
+        if (info->proplist != NULL) {
+            const char *s;
+
+            ent.desc.clear();
+            if ((s=pa_proplist_gets(info->proplist,"application.name")) != NULL) {
+                if (!ent.desc.empty()) ent.desc += ",";
+                ent.desc += "appname=";
+                ent.desc += s;
+            }
+            if ((s=pa_proplist_gets(info->proplist,"application.process.id")) != NULL) {
+                if (!ent.desc.empty()) ent.desc += ",";
+                ent.desc += "pid=";
+                ent.desc += s;
+            }
+            if ((s=pa_proplist_gets(info->proplist,"application.process.binary")) != NULL) {
+                if (!ent.desc.empty()) ent.desc += ",";
+                ent.desc += "proc=";
+                ent.desc += s;
+            }
+        }
+
         names.push_back(ent);
     }
     virtual int EnumDevices(std::vector<AudioDevicePair> &names) {
