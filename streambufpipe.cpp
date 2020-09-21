@@ -156,7 +156,7 @@ int main() { /* TODO: command line options */
     if (fd_non_block(0/*STDIN*/) != 0 || fd_non_block(1/*STDOUT*/) != 0)
         return 1;
 
-    sliding_window *sio = sliding_window_create(64*1024*1024);
+    sliding_window *sio = sliding_window_create(256*1024*1024);
     if (sio == NULL)
         return 1;
 
