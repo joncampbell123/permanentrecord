@@ -163,7 +163,10 @@ int main() { /* TODO: command line options */
     /* NTS: If the process we are piping to closes it's end, we'll terminate
      *      with SIGPIPE. No cleanup needed. */
     while (1) {
-        sliding_window_lazy_flush(sio);
+        if (sliding_window_data_available(sio) >= 4096)
+            sliding_window_lazy_flush(sio);
+        else
+            sliding_window_flush(sio);
 
         ssize_t rd = sliding_window_refill_from_fd(sio,0/*STDIN*/,0);
         if (rd < 0 && sliding_window_data_available(sio) == 0)
