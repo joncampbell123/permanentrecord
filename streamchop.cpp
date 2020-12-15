@@ -491,6 +491,7 @@ int main(int argc,char **argv) {
                     }
 
                     printf("Replay buffer: Copied %lu bytes from %lu\n",count,(unsigned long)p_fd_replay);
+                    mts_packet_error = 0;
                 }
                 else {
                     fprintf(stderr,"No replay copy, lseek failed\n");
