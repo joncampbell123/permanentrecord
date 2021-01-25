@@ -103,6 +103,8 @@ static unsigned char tmpbuf[65536];
 static pcap_hdr_t pcaphdr;
 
 static void dump_ip4(const struct ipv4_hdr_t *ip4hdr,pcaprec_hdr_t *prec,const unsigned char *ip4pl,const unsigned char *ip4plf) {
+    (void)prec;
+
     fprintf(stderr,"ipv4 v:%u hl:%u(words) st:0x%02x tlen:%u id:0x%04x fl:0x%x fragof:0x%04x ttl:%u proto:0x%02x s-ip:%u.%u.%u.%u d-ip:%u.%u.%u.%u\n",
         ip4hdr->getver(),
         ip4hdr->gethdrlenwords(),
@@ -121,6 +123,37 @@ static void dump_ip4(const struct ipv4_hdr_t *ip4hdr,pcaprec_hdr_t *prec,const u
         (ip4hdr->getdstip()>>16u)&0xFFu,
         (ip4hdr->getdstip()>>8u)&0xFFu,
         (ip4hdr->getdstip()>>0u)&0xFFu);
+    fprintf(stderr,"content:\n");
+    {
+        const unsigned char *p = ip4pl,*f = ip4plf;
+        unsigned int col = 0;
+
+        while (p < f) {
+            fprintf(stderr,"    ");
+            for (col=0;col < 16;col++) {
+                if ((p+col) < f)
+                    fprintf(stderr,"%02X ",p[col]);
+                else
+                    fprintf(stderr,"   ");
+            }
+
+            fprintf(stderr,"   ");
+            for (col=0;col < 16;col++) {
+                if ((p+col) < f) {
+                    if (p[col] >= 0x20 && p[col] <= 0x7E)
+                        fprintf(stderr,"%c",(char)p[col]);
+                    else
+                        fprintf(stderr,".");
+                }
+                else {
+                    fprintf(stderr," ");
+                }
+            }
+
+            fprintf(stderr,"\n");
+            p += 16;
+        }
+    }
 }
 
 static void dump_eth(const struct ethernet_hdr_t *ethhdr,pcaprec_hdr_t *prec,const unsigned char *ethpl,const unsigned char *fence) {
