@@ -5,6 +5,7 @@
 #include <endian.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 #include <stdio.h>
 #include <fcntl.h>
 
@@ -258,15 +259,44 @@ static void dump_eth(const struct ethernet_hdr_t *ethhdr,pcaprec_hdr_t *prec,con
 }
 
 int main(int argc,char **argv) {
+    char *srcfn = NULL;
     int dump = 0;
     int fd;
 
-    if (argc < 2) {
+    {
+        int ai = 1;
+
+        while (ai < argc) {
+            char *a = argv[ai];
+
+            if (*a == '-') {
+                while (*a == '-') a++;
+                if (!strcmp(a,"dump")) {
+                    dump = 1;
+                }
+                else {
+                    fprintf(stderr,"Unknown switch %s\n",a);
+                    return 1;
+                }
+
+                ai++;
+            }
+            else {
+                break;
+            }
+        }
+
+        if (ai < argc) {
+            srcfn = argv[ai++];
+        }
+    }
+
+    if (srcfn == NULL) {
         fprintf(stderr,"%s <pcap file>\n",argv[0]);
         return 1;
     }
 
-    fd = open(argv[1],O_RDONLY);
+    fd = open(srcfn,O_RDONLY);
     if (fd < 0) return 1;
 
     if (read(fd,tmpbuf,sizeof(pcap_hdr_t)) != sizeof(pcap_hdr_t)) return 1;
@@ -314,7 +344,7 @@ int main(int argc,char **argv) {
                     if (udp4plf > ip4plf) continue;
                     if (udp4pl > udp4plf) continue;
 
-                    if (dump || true) dump_udp4(udp4hdr,&prec,udp4pl,udp4plf);
+                    if (dump) dump_udp4(udp4hdr,&prec,udp4pl,udp4plf);
                 }
             }
         }
