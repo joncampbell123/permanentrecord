@@ -69,14 +69,59 @@ typedef struct ipv4_hdr_t { // bitfields, bits MSB to LSB, bytes LSB to MSB
     unsigned int gethdrlenbytes() const {
         return gethdrlenwords() * 4u;
     }
+    unsigned int getservtype() const {
+        return (bs(version_helen_servtype_totallen) >> 16ul) & 0xFFu;
+    }
     unsigned int gettotallen() const {
         return bs(version_helen_servtype_totallen) & 0xFFFFu;
+    }
+    unsigned int getid() const {
+        return (bs(ident_flags_fragoff) >> 16u) & 0xFFFFu;
+    }
+    unsigned int getflags() const {
+        return (bs(ident_flags_fragoff) >> 13u) & 7u;
+    }
+    unsigned int getfragofs() const {
+        return bs(ident_flags_fragoff) & 0x1FFFu;
+    }
+    unsigned int getttl() const {
+        return (bs(ttl_proto_hdrchksum) >> 24u) & 0xFFu;
+    }
+    unsigned int getproto() const {
+        return (bs(ttl_proto_hdrchksum) >> 16u) & 0xFFu;
+    }
+    uint32_t getsrcip() const {
+        return bs(source_ip_address);
+    }
+    uint32_t getdstip() const {
+        return bs(dest_ip_address);
     }
 } ipv4_hdr_t;
 #pragma pack(pop)
 
 static unsigned char tmpbuf[65536];
 static pcap_hdr_t pcaphdr;
+
+static void dump_ip4(const struct ipv4_hdr_t *ip4hdr,pcaprec_hdr_t *prec,const unsigned char *ip4pl,const unsigned char *ip4plf) {
+    fprintf(stderr,"ipv4 v:%u hl:%u(words) st:0x%02x tlen:%u id:0x%04x fl:0x%x fragof:0x%04x ttl:%u proto:0x%02x s-ip:%u.%u.%u.%u d-ip:%u.%u.%u.%u\n",
+        ip4hdr->getver(),
+        ip4hdr->gethdrlenwords(),
+        ip4hdr->getservtype(),
+        ip4hdr->gettotallen(),
+        ip4hdr->getid(),
+        ip4hdr->getflags(),
+        ip4hdr->getfragofs(),
+        ip4hdr->getttl(),
+        ip4hdr->getproto(),
+        (ip4hdr->getsrcip()>>24u)&0xFFu,
+        (ip4hdr->getsrcip()>>16u)&0xFFu,
+        (ip4hdr->getsrcip()>>8u)&0xFFu,
+        (ip4hdr->getsrcip()>>0u)&0xFFu,
+        (ip4hdr->getdstip()>>24u)&0xFFu,
+        (ip4hdr->getdstip()>>16u)&0xFFu,
+        (ip4hdr->getdstip()>>8u)&0xFFu,
+        (ip4hdr->getdstip()>>0u)&0xFFu);
+}
 
 static void dump_eth(const struct ethernet_hdr_t *ethhdr,pcaprec_hdr_t *prec,const unsigned char *ethpl,const unsigned char *fence) {
     fprintf(stderr,"ethernet to-mac:%02x-%02x-%02x-%02x-%02x-%02x from-mac:%02x-%02x-%02x-%02x-%02x-%02x eth-type:0x%04x len:%u\n",
@@ -162,6 +207,8 @@ int main(int argc,char **argv) {
                 const unsigned char *ip4plf = ethpl + ip4hdr->gettotallen();
                 if (ip4plf > fence) continue;
                 if (ip4pl > ip4plf) continue;
+
+                if (dump || true) dump_ip4(ip4hdr,&prec,ip4pl,ip4plf);
             }
         }
     }
