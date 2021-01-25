@@ -225,6 +225,8 @@ int main(int argc,char **argv) {
         if (read(fd,tmpbuf,prec.incl_len) != prec.incl_len) return 1;
         const unsigned char *fence = tmpbuf + prec.incl_len;
 
+        fprintf(stderr,"---------------packet-----------------\n");
+
         if (pcaphdr.network == NET_ETHERNET/*ethernet*/) {
             const struct ethernet_hdr_t *ethhdr = (const struct ethernet_hdr_t*)tmpbuf;
             const unsigned char *ethpl = tmpbuf + sizeof(*ethhdr);
@@ -241,7 +243,7 @@ int main(int argc,char **argv) {
                 if (ip4plf > fence) continue;
                 if (ip4pl > ip4plf) continue;
 
-                if (dump || true) dump_ip4(ip4hdr,&prec,ip4pl,ip4plf);
+                if (dump) dump_ip4(ip4hdr,&prec,ip4pl,ip4plf);
             }
         }
     }
