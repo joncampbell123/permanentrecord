@@ -3,12 +3,17 @@
 EXTRA_DIST = autogen.sh
 #SUBDIRS = src include
 
+noinst_PROGRAMS = \
+	pcap1
+
 bin_PROGRAMS = \
 	permrec_audio \
 	streambufpipe \
 	streamchop \
 	permrec_timerexec \
 	hls_audio
+
+pcap1_SOURCES = pcap1.cpp
 
 hls_audio_SOURCES = hls_audio.cpp
 
