@@ -225,7 +225,7 @@ int main(int argc,char **argv) {
         if (read(fd,tmpbuf,prec.incl_len) != prec.incl_len) return 1;
         const unsigned char *fence = tmpbuf + prec.incl_len;
 
-        fprintf(stderr,"---------------packet-----------------\n");
+        if (dump) fprintf(stderr,"---------------packet-----------------\n");
 
         if (pcaphdr.network == NET_ETHERNET/*ethernet*/) {
             const struct ethernet_hdr_t *ethhdr = (const struct ethernet_hdr_t*)tmpbuf;
