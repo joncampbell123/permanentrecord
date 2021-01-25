@@ -92,6 +92,7 @@ static void dump_eth(const struct ethernet_hdr_t *ethhdr,pcaprec_hdr_t *prec,con
 }
 
 int main(int argc,char **argv) {
+    int dump = 0;
     int fd;
 
     if (argc < 2) {
@@ -117,14 +118,14 @@ int main(int argc,char **argv) {
         if (prec.incl_len == 0) continue;
 
         if (read(fd,tmpbuf,prec.incl_len) != prec.incl_len) return 1;
-        unsigned char *fence = tmpbuf + prec.incl_len;
+        const unsigned char *fence = tmpbuf + prec.incl_len;
 
         if (pcaphdr.network == NET_ETHERNET/*ethernet*/) {
             if ((tmpbuf+sizeof(ethernet_hdr_t)) > fence) continue;
-            struct ethernet_hdr_t *ethhdr = (struct ethernet_hdr_t*)tmpbuf;
-            unsigned char *ethpl = tmpbuf + sizeof(struct ethernet_hdr_t);
+            const struct ethernet_hdr_t *ethhdr = (const struct ethernet_hdr_t*)tmpbuf;
+            const unsigned char *ethpl = tmpbuf + sizeof(struct ethernet_hdr_t);
 
-            dump_eth(ethhdr,&prec,ethpl,fence);
+            if (dump) dump_eth(ethhdr,&prec,ethpl,fence);
         }
     }
 
