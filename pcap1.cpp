@@ -109,11 +109,57 @@ typedef struct udp4_hdr_t {
     uint16_t gettotallen() const {
         return be16toh(length);
     }
+    uint16_t getsrcport() const {
+        return be16toh(src_port);
+    }
+    uint16_t getdstport() const {
+        return be16toh(dst_port);
+    }
 } udp4_hdr_t;
 #pragma pack(pop)
 
 static unsigned char tmpbuf[65536];
 static pcap_hdr_t pcaphdr;
+
+static void dump_udp4(const struct udp4_hdr_t *udp4hdr,pcaprec_hdr_t *prec,const unsigned char *udp4pl,const unsigned char *udp4plf) {
+    (void)prec;
+
+    fprintf(stderr,"udp4 s-port:%u d-port:%u tlen:%u\n",
+        udp4hdr->getsrcport(),
+        udp4hdr->getdstport(),
+        udp4hdr->gettotallen());
+    fprintf(stderr,"content:\n");
+    {
+        const unsigned char *p = udp4pl,*f = udp4plf;
+        unsigned int col = 0;
+
+        while (p < f) {
+            fprintf(stderr,"    ");
+            for (col=0;col < 16;col++) {
+                if ((p+col) < f)
+                    fprintf(stderr,"%02X ",p[col]);
+                else
+                    fprintf(stderr,"   ");
+            }
+
+            fprintf(stderr,"   ");
+            for (col=0;col < 16;col++) {
+                if ((p+col) < f) {
+                    if (p[col] >= 0x20 && p[col] <= 0x7E)
+                        fprintf(stderr,"%c",(char)p[col]);
+                    else
+                        fprintf(stderr,".");
+                }
+                else {
+                    fprintf(stderr," ");
+                }
+            }
+
+            fprintf(stderr,"\n");
+            p += 16;
+        }
+    }
+}
 
 static void dump_ip4(const struct ipv4_hdr_t *ip4hdr,pcaprec_hdr_t *prec,const unsigned char *ip4pl,const unsigned char *ip4plf) {
     (void)prec;
@@ -265,6 +311,8 @@ int main(int argc,char **argv) {
                     const unsigned char *udp4plf = ip4pl + udp4hdr->gettotallen();
                     if (udp4plf > ip4plf) continue;
                     if (udp4pl > udp4plf) continue;
+
+                    if (dump || true) dump_udp4(udp4hdr,&prec,udp4pl,udp4plf);
                 }
             }
         }
