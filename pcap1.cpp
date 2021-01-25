@@ -45,6 +45,9 @@ typedef struct ethernet_hdr_t {
 
 #define NET_ETHERNET        0x0001
 
+#define ETH_T_IPV4          0x0800
+#define ETH_T_ARP           0x0806
+
 static unsigned char tmpbuf[65536];
 static pcap_hdr_t pcaphdr;
 
@@ -79,6 +82,7 @@ int main(int argc,char **argv) {
         if (pcaphdr.network == NET_ETHERNET/*ethernet*/) {
             if ((tmpbuf+sizeof(ethernet_hdr_t)) > fence) continue;
             struct ethernet_hdr_t *ethhdr = (struct ethernet_hdr_t*)tmpbuf;
+            unsigned char *ethpl = tmpbuf + sizeof(struct ethernet_hdr_t);
 
 #if 1
             fprintf(stderr,"to:%02x%02x%02x%02x%02x%02x from:%02x%02x%02x%02x%02x%02x type:%04x len:%u\n",
@@ -87,6 +91,39 @@ int main(int argc,char **argv) {
                 ethhdr->src_mac.b[0],ethhdr->src_mac.b[1],ethhdr->src_mac.b[2],
                 ethhdr->src_mac.b[3],ethhdr->src_mac.b[4],ethhdr->src_mac.b[5],
                 be16toh(ethhdr->eth_type),prec.incl_len);
+#endif
+#if 1
+            fprintf(stderr,"content:\n");
+            {
+                unsigned char *p = ethpl,*f = fence;
+                unsigned int col = 0;
+
+                while (p < f) {
+                    fprintf(stderr,"    ");
+                    for (col=0;col < 16;col++) {
+                        if ((p+col) < f)
+                            fprintf(stderr,"%02X ",p[col]);
+                        else
+                            fprintf(stderr,"   ");
+                    }
+
+                    fprintf(stderr," - ");
+                    for (col=0;col < 16;col++) {
+                        if ((p+col) < f) {
+                            if (p[col] >= 0x20 && p[col] <= 0x7F)
+                                fprintf(stderr,"%c",(char)p[col]);
+                            else
+                                fprintf(stderr,".");
+                        }
+                        else {
+                            fprintf(stderr," ");
+                        }
+                    }
+
+                    fprintf(stderr,"\n");
+                    p += 16;
+                }
+            }
 #endif
         }
     }
