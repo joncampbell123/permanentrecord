@@ -124,10 +124,11 @@ static pcap_hdr_t pcaphdr;
 static void dump_udp4(const struct udp4_hdr_t *udp4hdr,pcaprec_hdr_t *prec,const unsigned char *udp4pl,const unsigned char *udp4plf) {
     (void)prec;
 
-    fprintf(stderr,"udp4 s-port:%u d-port:%u tlen:%u\n",
+    fprintf(stderr,"udp4 s-port:%u d-port:%u tlen:%u plen:%u\n",
         udp4hdr->getsrcport(),
         udp4hdr->getdstport(),
-        udp4hdr->gettotallen());
+        udp4hdr->gettotallen(),
+        (unsigned int)(udp4plf-udp4pl));
     fprintf(stderr,"content:\n");
     {
         const unsigned char *p = udp4pl,*f = udp4plf;
@@ -164,11 +165,12 @@ static void dump_udp4(const struct udp4_hdr_t *udp4hdr,pcaprec_hdr_t *prec,const
 static void dump_ip4(const struct ipv4_hdr_t *ip4hdr,pcaprec_hdr_t *prec,const unsigned char *ip4pl,const unsigned char *ip4plf) {
     (void)prec;
 
-    fprintf(stderr,"ipv4 v:%u hl:%u(words) st:0x%02x tlen:%u id:0x%04x fl:0x%x fragof:0x%04x ttl:%u proto:0x%02x s-ip:%u.%u.%u.%u d-ip:%u.%u.%u.%u\n",
+    fprintf(stderr,"ipv4 v:%u hl:%u(words) st:0x%02x tlen:%u plen:%u id:0x%04x fl:0x%x fragof:0x%04x ttl:%u proto:0x%02x s-ip:%u.%u.%u.%u d-ip:%u.%u.%u.%u\n",
         ip4hdr->getver(),
         ip4hdr->gethdrlenwords(),
         ip4hdr->getservtype(),
         ip4hdr->gettotallen(),
+        (unsigned int)(ip4plf-ip4pl),
         ip4hdr->getid(),
         ip4hdr->getflags(),
         ip4hdr->getfragofs(),
