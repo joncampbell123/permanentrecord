@@ -99,6 +99,19 @@ typedef struct ipv4_hdr_t { // bitfields, bits MSB to LSB, bytes LSB to MSB
 } ipv4_hdr_t;
 #pragma pack(pop)
 
+#pragma pack(push,1)
+typedef struct udp4_hdr_t {
+    uint16_t        src_port;       // big endian
+    uint16_t        dst_port;       // big endian
+    uint16_t        length;         // big endian
+    uint16_t        checksum;       // big endian
+
+    uint16_t gettotallen() const {
+        return be16toh(length);
+    }
+} udp4_hdr_t;
+#pragma pack(pop)
+
 static unsigned char tmpbuf[65536];
 static pcap_hdr_t pcaphdr;
 
@@ -244,6 +257,15 @@ int main(int argc,char **argv) {
                 if (ip4pl > ip4plf) continue;
 
                 if (dump) dump_ip4(ip4hdr,&prec,ip4pl,ip4plf);
+
+                if (ip4hdr->getproto() == 0x11/*UDP*/) {
+                    const struct udp4_hdr_t *udp4hdr = (const struct udp4_hdr_t*)ip4pl;
+                    const unsigned char *udp4pl = ip4pl + sizeof(*udp4hdr);
+                    if (udp4pl > ip4plf) continue;
+                    const unsigned char *udp4plf = ip4pl + udp4hdr->gettotallen();
+                    if (udp4plf > ip4plf) continue;
+                    if (udp4pl > udp4plf) continue;
+                }
             }
         }
     }
