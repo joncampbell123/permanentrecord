@@ -119,8 +119,79 @@ typedef struct udp4_hdr_t {
 } udp4_hdr_t;
 #pragma pack(pop)
 
+#pragma pack(push,1)
+typedef struct rtp_hdr_t {
+    uint32_t        ver_pxccmptseqnum;
+    uint32_t        timestamp;
+    uint32_t        ssrc_ident;
+
+    uint32_t bs(const uint32_t w) const {
+        return be32toh(w);
+    }
+
+    unsigned int getver() const {
+        return (bs(ver_pxccmptseqnum) >> 30u) & 3u;
+    }
+    unsigned int getpayloadtype() const {
+        return (bs(ver_pxccmptseqnum) >> 16u) & 0x7Fu;
+    }
+    uint16_t getseqnum() const {
+        return bs(ver_pxccmptseqnum) & 0xFFFFu;
+    }
+    uint32_t gettimestamp() const {
+        return bs(timestamp);
+    }
+    uint32_t getssrc() const {
+        return bs(ssrc_ident);
+    }
+} rtp_hdr_t;
+#pragma pack(pop)
+
 static unsigned char tmpbuf[65536];
 static pcap_hdr_t pcaphdr;
+
+static void dump_rtp(const struct rtp_hdr_t *rtphdr,pcaprec_hdr_t *prec,const unsigned char *rtppl,const unsigned char *rtpplf) {
+    (void)prec;
+
+    fprintf(stderr,"rtp v:%u pt:0x%02x seqnum:0x%04x timestamp:0x%04x ssrc:0x%04x tlen:%u\n",
+        rtphdr->getver(),
+        rtphdr->getpayloadtype(),
+        rtphdr->getseqnum(),
+        rtphdr->gettimestamp(),
+        rtphdr->getssrc(),
+        (unsigned int)(rtpplf-rtppl));
+    fprintf(stderr,"content:\n");
+    {
+        const unsigned char *p = rtppl,*f = rtpplf;
+        unsigned int col = 0;
+
+        while (p < f) {
+            fprintf(stderr,"    ");
+            for (col=0;col < 16;col++) {
+                if ((p+col) < f)
+                    fprintf(stderr,"%02X ",p[col]);
+                else
+                    fprintf(stderr,"   ");
+            }
+
+            fprintf(stderr,"   ");
+            for (col=0;col < 16;col++) {
+                if ((p+col) < f) {
+                    if (p[col] >= 0x20 && p[col] <= 0x7E)
+                        fprintf(stderr,"%c",(char)p[col]);
+                    else
+                        fprintf(stderr,".");
+                }
+                else {
+                    fprintf(stderr," ");
+                }
+            }
+
+            fprintf(stderr,"\n");
+            p += 16;
+        }
+    }
+}
 
 static void dump_udp4(const struct udp4_hdr_t *udp4hdr,pcaprec_hdr_t *prec,const unsigned char *udp4pl,const unsigned char *udp4plf) {
     (void)prec;
@@ -345,6 +416,17 @@ int main(int argc,char **argv) {
                     if (udp4pl > udp4plf) continue;
 
                     if (dump) dump_udp4(udp4hdr,&prec,udp4pl,udp4plf);
+
+                    /* we're looking for RTP on port 3333 to multicast addr 239.3.3.3 */
+                    if (udp4hdr->getdstport() == 3333 && ip4hdr->getdstip() == 0xEF030303) {
+                        const struct rtp_hdr_t *rtphdr = (const struct rtp_hdr_t*)udp4pl;
+                        const unsigned char *rtppl = udp4pl + sizeof(*rtphdr);
+                        const unsigned char *rtpplf = udp4plf;
+                        if (rtpplf > udp4plf) continue;
+                        if (rtppl > rtpplf) continue;
+
+                        if (dump) dump_rtp(rtphdr,&prec,rtppl,rtpplf);
+                    }
                 }
             }
         }
