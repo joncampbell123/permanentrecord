@@ -110,7 +110,7 @@ int main(int argc,char **argv) {
                     fprintf(stderr," - ");
                     for (col=0;col < 16;col++) {
                         if ((p+col) < f) {
-                            if (p[col] >= 0x20 && p[col] <= 0x7F)
+                            if (p[col] >= 0x20 && p[col] <= 0x7E)
                                 fprintf(stderr,"%c",(char)p[col]);
                             else
                                 fprintf(stderr,".");
