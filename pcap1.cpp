@@ -48,6 +48,33 @@ typedef struct ethernet_hdr_t {
 #define ETH_T_IPV4          0x0800
 #define ETH_T_ARP           0x0806
 
+#pragma pack(push,1)
+typedef struct ipv4_hdr_t { // bitfields, bits MSB to LSB, bytes LSB to MSB
+    uint32_t            version_helen_servtype_totallen;            // bitfield low-to-high ver=4 helen=4 servicetype=8 totallen=16
+    uint32_t            ident_flags_fragoff;                        // bitfield low-to-high ident=16 flags=3 fragmentoffset=13
+    uint32_t            ttl_proto_hdrchksum;                        // bitfield low-to-high timetolive=8 protocol=8 headerchecksum=16
+    uint32_t            source_ip_address;
+    uint32_t            dest_ip_address;
+
+    uint32_t bs(const uint32_t w) const {
+        return be32toh(w);
+    }
+
+    unsigned int getver() const { /* be [31:28] */
+        return (bs(version_helen_servtype_totallen) >> 28ul) & 0xFu;
+    }
+    unsigned int gethdrlenwords() const { /* be [27:24] */
+        return (bs(version_helen_servtype_totallen) >> 24ul) & 0xFu;
+    }
+    unsigned int gethdrlenbytes() const {
+        return gethdrlenwords() * 4u;
+    }
+    unsigned int gettotallen() const {
+        return bs(version_helen_servtype_totallen) & 0xFFFFu;
+    }
+} ipv4_hdr_t;
+#pragma pack(pop)
+
 static unsigned char tmpbuf[65536];
 static pcap_hdr_t pcaphdr;
 
@@ -121,11 +148,21 @@ int main(int argc,char **argv) {
         const unsigned char *fence = tmpbuf + prec.incl_len;
 
         if (pcaphdr.network == NET_ETHERNET/*ethernet*/) {
-            if ((tmpbuf+sizeof(ethernet_hdr_t)) > fence) continue;
             const struct ethernet_hdr_t *ethhdr = (const struct ethernet_hdr_t*)tmpbuf;
-            const unsigned char *ethpl = tmpbuf + sizeof(struct ethernet_hdr_t);
+            const unsigned char *ethpl = tmpbuf + sizeof(*ethhdr);
+            if (ethpl > fence) continue;
 
             if (dump) dump_eth(ethhdr,&prec,ethpl,fence);
+
+            if (be16toh(ethhdr->eth_type) == ETH_T_IPV4) {
+                const struct ipv4_hdr_t *ip4hdr = (const struct ipv4_hdr_t*)ethpl;
+                if (ip4hdr->getver() != 4) continue;
+                const unsigned char *ip4pl = ethpl + ip4hdr->gethdrlenbytes();
+                if (ip4pl > fence) continue;
+                const unsigned char *ip4plf = ethpl + ip4hdr->gettotallen();
+                if (ip4plf > fence) continue;
+                if (ip4pl > ip4plf) continue;
+            }
         }
     }
 
