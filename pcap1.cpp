@@ -43,6 +43,8 @@ typedef struct ethernet_hdr_t {
 } ethernet_hdr_t;
 #pragma pack(pop)
 
+#define NET_ETHERNET        0x0001
+
 static unsigned char tmpbuf[65536];
 static pcap_hdr_t pcaphdr;
 
@@ -61,7 +63,6 @@ int main(int argc,char **argv) {
     pcaphdr = *((pcap_hdr_t*)tmpbuf);
     if (pcaphdr.magic_number != 0xA1B2C3D4) return 1;
     if (pcaphdr.version_major != 2) return 1;
-    if (pcaphdr.network != 1) return 1;/*must be ethernet*/
 
     while (read(fd,tmpbuf,sizeof(pcaprec_hdr_t)) == sizeof(pcaprec_hdr_t)) {
         pcaprec_hdr_t prec = *((pcaprec_hdr_t*)tmpbuf);
@@ -75,7 +76,7 @@ int main(int argc,char **argv) {
         if (read(fd,tmpbuf,prec.incl_len) != prec.incl_len) return 1;
         unsigned char *fence = tmpbuf + prec.incl_len;
 
-        if (pcaphdr.network == 1/*ethernet*/) {
+        if (pcaphdr.network == NET_ETHERNET/*ethernet*/) {
             if ((tmpbuf+sizeof(ethernet_hdr_t)) > fence) continue;
             struct ethernet_hdr_t *ethhdr = (struct ethernet_hdr_t*)tmpbuf;
 
