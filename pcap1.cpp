@@ -2,6 +2,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <endian.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -26,6 +27,20 @@ typedef struct pcaprec_hdr_t {
     uint32_t    incl_len;       /* number of octets of packet saved in file */
     uint32_t    orig_len;       /* actual length of packet */
 } pcaprec_hdr_t;
+#pragma pack(pop)
+
+#pragma pack(push,1)
+typedef struct eth_mac_addr_t {
+    uint8_t             b[6];
+} eth_mac_addr_t;
+#pragma pack(pop)
+
+#pragma pack(push,1)
+typedef struct ethernet_hdr_t {
+    eth_mac_addr_t      dest_mac;
+    eth_mac_addr_t      src_mac;
+    uint16_t            eth_type;           // big endian
+} ethernet_hdr_t;
 #pragma pack(pop)
 
 static unsigned char tmpbuf[65536];
@@ -54,11 +69,25 @@ int main(int argc,char **argv) {
         if (prec.orig_len < prec.incl_len) return 1;
         if (prec.incl_len > pcaphdr.snaplen) return 1;
         if (prec.incl_len > sizeof(tmpbuf)) return 1;
+        if (prec.incl_len < prec.orig_len) continue;
         if (prec.incl_len == 0) continue;
 
         if (read(fd,tmpbuf,prec.incl_len) != prec.incl_len) return 1;
+        unsigned char *fence = tmpbuf + prec.incl_len;
 
-        // TODO
+        if (pcaphdr.network == 1/*ethernet*/) {
+            if ((tmpbuf+sizeof(ethernet_hdr_t)) > fence) continue;
+            struct ethernet_hdr_t *ethhdr = (struct ethernet_hdr_t*)tmpbuf;
+
+#if 1
+            fprintf(stderr,"to:%02x%02x%02x%02x%02x%02x from:%02x%02x%02x%02x%02x%02x type:%04x len:%u\n",
+                ethhdr->dest_mac.b[0],ethhdr->dest_mac.b[1],ethhdr->dest_mac.b[2],
+                ethhdr->dest_mac.b[3],ethhdr->dest_mac.b[4],ethhdr->dest_mac.b[5],
+                ethhdr->src_mac.b[0],ethhdr->src_mac.b[1],ethhdr->src_mac.b[2],
+                ethhdr->src_mac.b[3],ethhdr->src_mac.b[4],ethhdr->src_mac.b[5],
+                be16toh(ethhdr->eth_type),prec.incl_len);
+#endif
+        }
     }
 
     close(fd);
