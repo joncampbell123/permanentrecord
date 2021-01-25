@@ -51,6 +51,46 @@ typedef struct ethernet_hdr_t {
 static unsigned char tmpbuf[65536];
 static pcap_hdr_t pcaphdr;
 
+static void dump_eth(const struct ethernet_hdr_t *ethhdr,pcaprec_hdr_t *prec,const unsigned char *ethpl,const unsigned char *fence) {
+    fprintf(stderr,"ethernet to-mac:%02x-%02x-%02x-%02x-%02x-%02x from-mac:%02x-%02x-%02x-%02x-%02x-%02x eth-type:0x%04x len:%u\n",
+            ethhdr->dest_mac.b[0],ethhdr->dest_mac.b[1],ethhdr->dest_mac.b[2],
+            ethhdr->dest_mac.b[3],ethhdr->dest_mac.b[4],ethhdr->dest_mac.b[5],
+            ethhdr->src_mac.b[0],ethhdr->src_mac.b[1],ethhdr->src_mac.b[2],
+            ethhdr->src_mac.b[3],ethhdr->src_mac.b[4],ethhdr->src_mac.b[5],
+            be16toh(ethhdr->eth_type),prec->incl_len);
+    fprintf(stderr,"content:\n");
+    {
+        const unsigned char *p = ethpl,*f = fence;
+        unsigned int col = 0;
+
+        while (p < f) {
+            fprintf(stderr,"    ");
+            for (col=0;col < 16;col++) {
+                if ((p+col) < f)
+                    fprintf(stderr,"%02X ",p[col]);
+                else
+                    fprintf(stderr,"   ");
+            }
+
+            fprintf(stderr,"   ");
+            for (col=0;col < 16;col++) {
+                if ((p+col) < f) {
+                    if (p[col] >= 0x20 && p[col] <= 0x7E)
+                        fprintf(stderr,"%c",(char)p[col]);
+                    else
+                        fprintf(stderr,".");
+                }
+                else {
+                    fprintf(stderr," ");
+                }
+            }
+
+            fprintf(stderr,"\n");
+            p += 16;
+        }
+    }
+}
+
 int main(int argc,char **argv) {
     int fd;
 
@@ -84,47 +124,7 @@ int main(int argc,char **argv) {
             struct ethernet_hdr_t *ethhdr = (struct ethernet_hdr_t*)tmpbuf;
             unsigned char *ethpl = tmpbuf + sizeof(struct ethernet_hdr_t);
 
-#if 1
-            fprintf(stderr,"to:%02x%02x%02x%02x%02x%02x from:%02x%02x%02x%02x%02x%02x type:%04x len:%u\n",
-                ethhdr->dest_mac.b[0],ethhdr->dest_mac.b[1],ethhdr->dest_mac.b[2],
-                ethhdr->dest_mac.b[3],ethhdr->dest_mac.b[4],ethhdr->dest_mac.b[5],
-                ethhdr->src_mac.b[0],ethhdr->src_mac.b[1],ethhdr->src_mac.b[2],
-                ethhdr->src_mac.b[3],ethhdr->src_mac.b[4],ethhdr->src_mac.b[5],
-                be16toh(ethhdr->eth_type),prec.incl_len);
-#endif
-#if 1
-            fprintf(stderr,"content:\n");
-            {
-                unsigned char *p = ethpl,*f = fence;
-                unsigned int col = 0;
-
-                while (p < f) {
-                    fprintf(stderr,"    ");
-                    for (col=0;col < 16;col++) {
-                        if ((p+col) < f)
-                            fprintf(stderr,"%02X ",p[col]);
-                        else
-                            fprintf(stderr,"   ");
-                    }
-
-                    fprintf(stderr," - ");
-                    for (col=0;col < 16;col++) {
-                        if ((p+col) < f) {
-                            if (p[col] >= 0x20 && p[col] <= 0x7E)
-                                fprintf(stderr,"%c",(char)p[col]);
-                            else
-                                fprintf(stderr,".");
-                        }
-                        else {
-                            fprintf(stderr," ");
-                        }
-                    }
-
-                    fprintf(stderr,"\n");
-                    p += 16;
-                }
-            }
-#endif
+            dump_eth(ethhdr,&prec,ethpl,fence);
         }
     }
 
