@@ -40,7 +40,7 @@ typedef struct ethernet_hdr_t {
     eth_mac_addr_t      dest_mac;
     eth_mac_addr_t      src_mac;
     uint16_t            eth_type;           // big endian
-} ethernet_hdr_t;
+} ethernet_hdr_t;                           // does NOT include 32-bit CRC from the wire
 #pragma pack(pop)
 
 #define NET_ETHERNET        0x0001
