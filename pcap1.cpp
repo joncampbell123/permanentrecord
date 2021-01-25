@@ -330,6 +330,7 @@ static void dump_eth(const struct ethernet_hdr_t *ethhdr,pcaprec_hdr_t *prec,con
 }
 
 int main(int argc,char **argv) {
+    int mts_fd = -1;
     char *srcfn = NULL;
     int dump = 0;
     int fd;
@@ -426,6 +427,20 @@ int main(int argc,char **argv) {
                         if (rtppl > rtpplf) continue;
 
                         if (dump) dump_rtp(rtphdr,&prec,rtppl,rtpplf);
+
+                        if (mts_fd < 0) {
+                            if ((mts_fd=open("3333.ts",O_WRONLY|O_CREAT|O_TRUNC,0644)) < 0) {
+                                fprintf(stderr,"Cannot open output\n");
+                                return 1;
+                            }
+                        }
+
+                        if (rtppl < rtpplf) {
+                            size_t sz = (size_t)(rtpplf-rtppl);
+                            if (sz != size_t(0)) {
+                                if ((size_t)write(mts_fd,rtppl,sz) != sz) return 1;
+                            }
+                        }
                     }
                 }
             }
