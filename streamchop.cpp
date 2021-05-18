@@ -317,6 +317,7 @@ static void help(void) {
     fprintf(stderr,"-dc show data count\n");
     fprintf(stderr,"-mts content is MPEG transport stream\n");
     fprintf(stderr,"-dt data timeout in seconds\n");
+    fprintf(stderr,"-rt replay time interval (copy this much prev to current fragment)\n");
     fprintf(stderr,"\n");
     fprintf(stderr,"NOTE: -w 500 is appropriate for curl and internet radio.\n");
     fprintf(stderr,"      -w 1 should be used for dvbsnoop and DVB/ATSC sources.\n");
@@ -342,6 +343,12 @@ int main(int argc,char **argv) {
                 if (!strcmp(a,"h")) {
                     help();
                     return 1;
+                }
+                else if (!strcmp(a,"rt")) {
+                    a = argv[i++];
+                    replay_time_interval = (unsigned int)strtoul(a,NULL,0);
+                    if (replay_time_interval > 60)
+                        replay_time_interval = 60;
                 }
                 else if (!strcmp(a,"ca")) {
                     a = argv[i++];
