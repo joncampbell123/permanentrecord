@@ -343,6 +343,12 @@ static int parse_argv(int argc,char **argv) {
             else if (!strcmp(a,"hlsfiles")) {
                 a = argv[i++];
                 if (a == NULL) return 1;
+
+                if (strstr(a,"/") != NULL) {
+                    fprintf(stderr,"Forward slashes not allowed in suffix\n");
+                    return 1;
+                }
+
                 hls_files_suffix = a;
                 hls_files = true;
             }
