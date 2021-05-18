@@ -303,6 +303,8 @@ M3U8                stream_m3u8;
 string              stream_url;
 bool                giveup = false;
 int                 want_bandwidth = -1;
+bool                hls_files = false;
+string              hls_files_suffix;
 
 static void help() {
     fprintf(stderr,"hls_audio [options] <m3u8 url>\n");
@@ -310,6 +312,7 @@ static void help() {
     fprintf(stderr,"  -xlate <n>        Translation mode (default: none)\n");
     fprintf(stderr,"                    none                Do not translate (ID3 tags are stripped)\n");
     fprintf(stderr,"                    ts2aac              Convert .ts to .aac, for HLS audio feeds (requires FFMPEG)\n");
+    fprintf(stderr,"  -hlsfiles <suf>   Record HLS fragments to individual files with given file suffix\n");
 }
 
 static int parse_argv(int argc,char **argv) {
@@ -337,6 +340,12 @@ static int parse_argv(int argc,char **argv) {
                 if (a == NULL) return 1;
                 translate_mode = a;
             }
+            else if (!strcmp(a,"hlsfiles")) {
+                a = argv[i++];
+                if (a == NULL) return 1;
+                hls_files_suffix = a;
+                hls_files = true;
+            }
             else {
                 fprintf(stderr,"Unknown switch %s\n",a);
                 return 1;
@@ -352,6 +361,9 @@ static int parse_argv(int argc,char **argv) {
             }
         }
     }
+
+    if (translate_mode == "none")
+        translate_mode.clear();
 
     if (main_url.empty()) {
         fprintf(stderr,"Need url\n");
@@ -461,31 +473,65 @@ int main(int argc,char **argv) {
                 else if (download_m3u8_fragment("tmp.fragment.bin",downloading) == 0) {
                     fprintf(stderr,"Fragment '%s' obtained\n",downloading.c_str());
 
-                    if (!isatty(1)) {
-                        if (translate_mode == "ts2aac") {
-                            /* WARNING: If FFMPEG emits any warnings about "MPEG TS PES packet corrupt", stop using this
-                             *          mode, it means the HLS source is letting ADTS packets span HLS fragments, and the
-                             *          warning means that the ADTS audio frame that got cut in half is getting discarded.
-                             *
-                             *          A future commit to this project will provide it's own MPEG TS demux that would
-                             *          extract and provide every single byte provided in the fragment, regardless of ADTS
-                             *          boundaries, so that such streams are preserved perfectly. */
-                            unlink("tmp.fragment.aac");
-
-                            int x = system("ffmpeg -f mpegts -i tmp.fragment.bin -acodec copy -y -f adts tmp.fragment.aac");
-                            if (x != 0) fprintf(stderr,"Warning: FFMPEG failed to convert file\n");
-
-                            int w = file_to_stdout("tmp.fragment.aac");
-                            if (w == 0) {
-                                fprintf(stderr,"File to stdout indicates EOF\n");
-                                break;
-                            }
+                    if (hls_files) {
+                        if (!translate_mode.empty()) {
+                            fprintf(stderr,"Unsupported translate mode with HLS files mode\n");
+                            break;
                         }
                         else {
-                            int w = file_to_stdout("tmp.fragment.bin");
-                            if (w == 0) {
-                                fprintf(stderr,"File to stdout indicates EOF\n");
-                                break;
+                            string finalpath;
+
+                            {
+                                char tmp[128];
+                                struct tm *tm;
+                                time_t now;
+
+                                now = time(NULL);
+                                tm = localtime(&now);
+                                assert(tm != NULL);
+                                snprintf(tmp,sizeof(tmp),"%04u%02u%02u-%02u%02u%02u",
+                                        tm->tm_year+1900,
+                                        tm->tm_mon+1,
+                                        tm->tm_mday,
+                                        tm->tm_hour,
+                                        tm->tm_min,
+                                        tm->tm_sec);
+
+                                finalpath = tmp;
+                                finalpath += hls_files_suffix;
+                            }
+
+                            if (rename("tmp.fragment.bin",finalpath.c_str()))
+                                fprintf(stderr,"WARNING: Rename failed\n");
+                        }
+                    }
+                    else {
+                        if (!isatty(1)) {
+                            if (translate_mode == "ts2aac") {
+                                /* WARNING: If FFMPEG emits any warnings about "MPEG TS PES packet corrupt", stop using this
+                                 *          mode, it means the HLS source is letting ADTS packets span HLS fragments, and the
+                                 *          warning means that the ADTS audio frame that got cut in half is getting discarded.
+                                 *
+                                 *          A future commit to this project will provide it's own MPEG TS demux that would
+                                 *          extract and provide every single byte provided in the fragment, regardless of ADTS
+                                 *          boundaries, so that such streams are preserved perfectly. */
+                                unlink("tmp.fragment.aac");
+
+                                int x = system("ffmpeg -f mpegts -i tmp.fragment.bin -acodec copy -y -f adts tmp.fragment.aac");
+                                if (x != 0) fprintf(stderr,"Warning: FFMPEG failed to convert file\n");
+
+                                int w = file_to_stdout("tmp.fragment.aac");
+                                if (w == 0) {
+                                    fprintf(stderr,"File to stdout indicates EOF\n");
+                                    break;
+                                }
+                            }
+                            else {
+                                int w = file_to_stdout("tmp.fragment.bin");
+                                if (w == 0) {
+                                    fprintf(stderr,"File to stdout indicates EOF\n");
+                                    break;
+                                }
                             }
                         }
                     }
