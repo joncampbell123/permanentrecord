@@ -463,6 +463,13 @@ int main(int argc,char **argv) {
 
                     if (!isatty(1)) {
                         if (translate_mode == "ts2aac") {
+                            /* WARNING: If FFMPEG emits any warnings about "MPEG TS PES packed corrupt", stop using this
+                             *          mode, it means the HLS source is letting ADTS packets span HLS fragments, and the
+                             *          warning means that the ADTS audio frame that got cut in half is getting discarded.
+                             *
+                             *          A future commit to this project will provide it's own MPEG TS demux that would
+                             *          extract and provide every single byte provided in the fragment, regardless of ADTS
+                             *          boundaries, so that such streams are preserved perfectly. */
                             unlink("tmp.fragment.aac");
 
                             int x = system("ffmpeg -f mpegts -i tmp.fragment.bin -acodec copy -y -f adts tmp.fragment.aac");
