@@ -463,7 +463,7 @@ int main(int argc,char **argv) {
 
                     if (!isatty(1)) {
                         if (translate_mode == "ts2aac") {
-                            /* WARNING: If FFMPEG emits any warnings about "MPEG TS PES packed corrupt", stop using this
+                            /* WARNING: If FFMPEG emits any warnings about "MPEG TS PES packet corrupt", stop using this
                              *          mode, it means the HLS source is letting ADTS packets span HLS fragments, and the
                              *          warning means that the ADTS audio frame that got cut in half is getting discarded.
                              *
