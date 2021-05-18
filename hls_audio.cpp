@@ -296,6 +296,7 @@ map<string,DownloadTracking>        downloaded;
 list<string>                        download_todo;
 string                              downloading;
 
+string              translate_mode;
 M3U8                main_m3u8;
 string              main_url;
 M3U8                stream_m3u8;
@@ -306,6 +307,9 @@ int                 want_bandwidth = -1;
 static void help() {
     fprintf(stderr,"hls_audio [options] <m3u8 url>\n");
     fprintf(stderr,"  -b <n>            Select stream by bandwidth\n");
+    fprintf(stderr,"  -xlate <n>        Translation mode (default: none)\n");
+    fprintf(stderr,"                    none                Do not translate (ID3 tags are stripped)\n");
+    fprintf(stderr,"                    ts2aac              Convert .ts to .aac, for HLS audio feeds (requires FFMPEG)\n");
 }
 
 static int parse_argv(int argc,char **argv) {
@@ -327,6 +331,11 @@ static int parse_argv(int argc,char **argv) {
                 a = argv[i++];
                 if (a == NULL) return 1;
                 want_bandwidth = atoi(a);
+            }
+            else if (!strcmp(a,"xlate")) {
+                a = argv[i++];
+                if (a == NULL) return 1;
+                translate_mode = a;
             }
             else {
                 fprintf(stderr,"Unknown switch %s\n",a);
@@ -453,10 +462,24 @@ int main(int argc,char **argv) {
                     fprintf(stderr,"Fragment '%s' obtained\n",downloading.c_str());
 
                     if (!isatty(1)) {
-                        int w = file_to_stdout("tmp.fragment.bin");
-                        if (w == 0) {
-                            fprintf(stderr,"File to stdout indicates EOF\n");
-                            break;
+                        if (translate_mode == "ts2aac") {
+                            unlink("tmp.fragment.aac");
+
+                            int x = system("ffmpeg -f mpegts -i tmp.fragment.bin -acodec copy -y -f adts tmp.fragment.aac");
+                            if (x != 0) fprintf(stderr,"Warning: FFMPEG failed to convert file\n");
+
+                            int w = file_to_stdout("tmp.fragment.aac");
+                            if (w == 0) {
+                                fprintf(stderr,"File to stdout indicates EOF\n");
+                                break;
+                            }
+                        }
+                        else {
+                            int w = file_to_stdout("tmp.fragment.bin");
+                            if (w == 0) {
+                                fprintf(stderr,"File to stdout indicates EOF\n");
+                                break;
+                            }
                         }
                     }
 
