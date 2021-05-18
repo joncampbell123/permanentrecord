@@ -489,7 +489,7 @@ int main(int argc,char **argv) {
                                 now = time(NULL);
                                 tm = localtime(&now);
                                 assert(tm != NULL);
-                                snprintf(tmp,sizeof(tmp),"%04u%02u%02u-%02u%02u%02u",
+                                snprintf(tmp,sizeof(tmp),"%04u%02u%02u-%02u%02u%02u-",
                                         tm->tm_year+1900,
                                         tm->tm_mon+1,
                                         tm->tm_mday,
