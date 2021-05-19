@@ -524,7 +524,14 @@ int main(int argc,char **argv) {
                                         const char *r = strrchr(s,'/');
                                         if (r != NULL) {
                                             r++;
-                                            finalpath += r;
+                                            while (*r != 0) {
+                                                if (*r < 33 || *r == '?' || *r == '#' || *r == '/')
+                                                    finalpath += "_";
+                                                else
+                                                    finalpath += *r;
+
+                                                r++;
+                                            }
                                             finalpath += '-';
                                         }
                                     }
