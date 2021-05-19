@@ -305,6 +305,7 @@ bool                giveup = false;
 int                 want_bandwidth = -1;
 bool                hls_files = false;
 string              hls_files_suffix;
+string              hls_frag_exec;
 
 static void help() {
     fprintf(stderr,"hls_audio [options] <m3u8 url>\n");
@@ -313,6 +314,7 @@ static void help() {
     fprintf(stderr,"                    none                Do not translate (ID3 tags are stripped)\n");
     fprintf(stderr,"                    ts2aac              Convert .ts to .aac, for HLS audio feeds (requires FFMPEG)\n");
     fprintf(stderr,"  -hlsfiles <suf>   Record HLS fragments to individual files with given file suffix\n");
+    fprintf(stderr,"  -hlsfragexec <x>  Run command x every HLS fragment (minimum 5 second interval)\n");
 }
 
 static int parse_argv(int argc,char **argv) {
@@ -339,6 +341,12 @@ static int parse_argv(int argc,char **argv) {
                 a = argv[i++];
                 if (a == NULL) return 1;
                 translate_mode = a;
+            }
+            else if (!strcmp(a,"hlsfragexec")) {
+                a = argv[i++];
+                if (a == NULL) return 1;
+
+                hls_frag_exec = a;
             }
             else if (!strcmp(a,"hlsfiles")) {
                 a = argv[i++];
@@ -381,6 +389,7 @@ static int parse_argv(int argc,char **argv) {
 
 int main(int argc,char **argv) {
     time_t now,next_m3u8_dl = 0;
+    time_t next_frag_exec = 0;
 
     if (parse_argv(argc,argv))
         return 1;
@@ -526,6 +535,14 @@ int main(int argc,char **argv) {
 
                             if (rename("tmp.fragment.bin",finalpath.c_str()))
                                 fprintf(stderr,"WARNING: Rename failed\n");
+
+                            if (now >= next_frag_exec) {
+                                next_frag_exec += 5;
+                                if (next_frag_exec < now) next_frag_exec = now + 5;
+
+                                if (!hls_frag_exec.empty())
+                                    system(hls_frag_exec.c_str());
+                            }
                         }
                     }
                     else {
