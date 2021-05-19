@@ -581,6 +581,25 @@ int main(int argc,char **argv) {
                                         }
                                     }
 
+                                    if (!downloaded[downloading].program_date_time.empty()) {
+                                        finalpath += "PDT-";
+                                        const char *r = downloaded[downloading].program_date_time.c_str();
+                                        if (r != NULL) {
+                                            r++;
+                                            while (*r != 0) {
+                                                if (*r < 33 || *r == '?' || *r == '#' || *r == '/')
+                                                    finalpath += "_";
+                                                else if (*r == ':')
+                                                    finalpath += "-";
+                                                else
+                                                    finalpath += *r;
+
+                                                r++;
+                                            }
+                                            finalpath += '-';
+                                        }
+                                    }
+
                                     finalpath += hls_files_suffix;
 
                                     if (stat(finalpath.c_str(),&st) == 0) {
@@ -603,6 +622,18 @@ int main(int argc,char **argv) {
                                     fprintf(m3u8_fp,"%s\n",finalpath.c_str());
                                     fflush(m3u8_fp);
                                 }
+                            }
+
+                            {
+                                std::string dst = finalpath + ".main.m3u8";
+                                std::string cmd = std::string("cp -v tmp.main.m3u8 ") + dst;
+                                system(cmd.c_str());
+                            }
+
+                            {
+                                std::string dst = finalpath + ".stream.m3u8";
+                                std::string cmd = std::string("cp -v tmp.stream.m3u8 ") + dst;
+                                system(cmd.c_str());
                             }
 
                             if (now >= next_frag_exec) {
