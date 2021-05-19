@@ -128,6 +128,7 @@ class M3U8Entry {
         bool                    is_stream_inf = false;  // EXT-X-STREAM-INF
         int                     resolution_width = -1;  // EXT-X-STREAM-INF
         int                     resolution_height = -1; // EXT-X-STREAM-INF
+        string                  program_date_time;      // EXT-X-PROGRAM-DATE-TIME
     public:
         void                    dump(FILE *fp=NULL);
 };
@@ -206,6 +207,8 @@ int M3U8::parse_file(const string path,const string url) {
                 media_sequence = strtoll(value,NULL,10);
             else if (!strcmp(name,"EXT-X-DISCONTINUITY"))
                 ent.discontinuity = true;
+            else if (!strcmp(name,"EXT-X-PROGRAM-DATE-TIME"))
+                ent.program_date_time = value;
             else if (!strcmp(name,"EXTINF")) {
                 /* value, title */
                 if (isdigit(*value)) {
@@ -286,6 +289,7 @@ int M3U8::parse_file(const string path,const string url) {
 
 class DownloadTracking {
     public:
+        string                      program_date_time;
         double                      duration = 0;
         time_t                      expiration = 0;
         bool                        done = false;
@@ -496,6 +500,7 @@ int main(int argc,char **argv) {
                     for (auto i=stream_m3u8.m3u8list.begin();i!=stream_m3u8.m3u8list.end();i++) {
                         if (!((*i).url.empty())) {
                             if (!downloaded[(*i).url].gone) {
+                                downloaded[(*i).url].program_date_time = (*i).program_date_time;
                                 downloaded[(*i).url].duration = (*i).duration;
                                 download_todo.push_back((*i).url);
                             }
@@ -591,6 +596,9 @@ int main(int argc,char **argv) {
                             }
                             else {
                                 if (m3u8_fp != NULL) {
+                                    if (!downloaded[downloading].program_date_time.empty())
+                                        fprintf(m3u8_fp,"#EXT-X-PROGRAM-DATE-TIME:%s\n",downloaded[downloading].program_date_time.c_str());
+
                                     fprintf(m3u8_fp,"#EXTINF:%.3f,\n",downloaded[downloading].duration);
                                     fprintf(m3u8_fp,"%s\n",finalpath.c_str());
                                     fflush(m3u8_fp);
