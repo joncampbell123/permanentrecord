@@ -518,6 +518,17 @@ int main(int argc,char **argv) {
                                         count++);
 
                                     finalpath = tmp;
+
+                                    {
+                                        const char *s = downloading.c_str();
+                                        const char *r = strrchr(s,'/');
+                                        if (r != NULL) {
+                                            r++;
+                                            finalpath += r;
+                                            finalpath += '-';
+                                        }
+                                    }
+
                                     finalpath += hls_files_suffix;
 
                                     if (stat(finalpath.c_str(),&st) == 0) {
