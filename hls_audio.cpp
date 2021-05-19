@@ -501,31 +501,26 @@ int main(int argc,char **argv) {
                                 char tmp[128];
                                 struct tm *tm;
                                 time_t now;
+                                int count=0;
 
                                 now = time(NULL);
                                 tm = localtime(&now);
                                 assert(tm != NULL);
 
                                 while (1) {
-                                    snprintf(tmp,sizeof(tmp),"%04u%02u%02u-%02u%02u%02u-",
+                                    snprintf(tmp,sizeof(tmp),"%04u%02u%02u-%02u%02u%02u-%03u-",
                                         tm->tm_year+1900,
                                         tm->tm_mon+1,
                                         tm->tm_mday,
                                         tm->tm_hour,
                                         tm->tm_min,
-                                        tm->tm_sec);
+                                        tm->tm_sec,
+                                        count++);
 
                                     finalpath = tmp;
                                     finalpath += hls_files_suffix;
 
                                     if (stat(finalpath.c_str(),&st) == 0) {
-                                        if (++(tm->tm_sec) >= 60) {
-                                            tm->tm_sec = 0;
-                                            if (++(tm->tm_min) >= 60) {
-                                                tm->tm_min = 0;
-                                                tm->tm_hour++;
-                                            }
-                                        }
                                     }
                                     else {
                                         break;
