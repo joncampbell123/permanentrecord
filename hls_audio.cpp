@@ -286,6 +286,7 @@ int M3U8::parse_file(const string path,const string url) {
 
 class DownloadTracking {
     public:
+        double                      duration = 0;
         time_t                      expiration = 0;
         bool                        done = false;
         bool                        seen = false;
@@ -306,6 +307,7 @@ int                 want_bandwidth = -1;
 bool                hls_files = false;
 string              hls_files_suffix;
 string              hls_frag_exec;
+string              m3u8_file;
 
 static void help() {
     fprintf(stderr,"hls_audio [options] <m3u8 url>\n");
@@ -315,6 +317,7 @@ static void help() {
     fprintf(stderr,"                    ts2aac              Convert .ts to .aac, for HLS audio feeds (requires FFMPEG)\n");
     fprintf(stderr,"  -hlsfiles <suf>   Record HLS fragments to individual files with given file suffix\n");
     fprintf(stderr,"  -hlsfragexec <x>  Run command x every HLS fragment (minimum 5 second interval)\n");
+    fprintf(stderr,"  -m3u8 <path>      With -hlsfiles, append each new fragment to this .m3u8 file\n");
 }
 
 static int parse_argv(int argc,char **argv) {
@@ -360,6 +363,11 @@ static int parse_argv(int argc,char **argv) {
                 hls_files_suffix = a;
                 hls_files = true;
             }
+            else if (!strcmp(a,"m3u8")) {
+                a = argv[i++];
+                if (a == NULL) return 1;
+                m3u8_file = a;
+            }
             else {
                 fprintf(stderr,"Unknown switch %s\n",a);
                 return 1;
@@ -390,6 +398,8 @@ static int parse_argv(int argc,char **argv) {
 int main(int argc,char **argv) {
     time_t now,next_m3u8_dl = 0;
     time_t next_frag_exec = 0;
+    bool has_m3u8 = false;
+    FILE *m3u8_fp = NULL;
 
     if (parse_argv(argc,argv))
         return 1;
@@ -435,6 +445,35 @@ int main(int argc,char **argv) {
         fprintf(stderr,"Chosen stream URL: %s\n",stream_url.c_str());
     }
 
+    if (!m3u8_file.empty()) {
+        struct stat st;
+
+        if (stat(m3u8_file.c_str(),&st) == 0 && S_ISREG(st.st_mode))
+            has_m3u8 = true; // and therefore append to
+ 
+        if (download_m3u8("tmp.stream.m3u8",stream_url) == 0) {
+            stream_m3u8 = M3U8();
+            if (stream_m3u8.parse_file("tmp.stream.m3u8",stream_url) == 0) {
+            }
+        }
+
+        if (has_m3u8) {
+            m3u8_fp = fopen(m3u8_file.c_str(),"a");
+        }
+        else {
+            FILE *fp = fopen(m3u8_file.c_str(),"w");
+            if (fp != NULL) {
+                fprintf(fp,"#EXTM3U\n");
+                fprintf(fp,"#EXT-X-PLAYLIST-TYPE:EVENT\n");
+                fprintf(fp,"#EXT-X-VERSION:4\n");
+                fprintf(fp,"#EXT-X-MEDIA-SEQUENCE:0\n");
+                if (stream_m3u8.targetduration > 0) fprintf(fp,"#EXT-X-TARGETDURATION:%u\n",(int)(stream_m3u8.targetduration+0.5));
+                fflush(fp);
+                m3u8_fp = fp;
+            }
+        }
+    }
+
     while (!giveup) {
         now = time(NULL);
         if (now >= next_m3u8_dl) {
@@ -457,6 +496,7 @@ int main(int argc,char **argv) {
                     for (auto i=stream_m3u8.m3u8list.begin();i!=stream_m3u8.m3u8list.end();i++) {
                         if (!((*i).url.empty())) {
                             if (!downloaded[(*i).url].gone) {
+                                downloaded[(*i).url].duration = (*i).duration;
                                 download_todo.push_back((*i).url);
                             }
                         }
@@ -546,8 +586,16 @@ int main(int argc,char **argv) {
                                 }
                             }
 
-                            if (rename("tmp.fragment.bin",finalpath.c_str()))
+                            if (rename("tmp.fragment.bin",finalpath.c_str())) {
                                 fprintf(stderr,"WARNING: Rename failed\n");
+                            }
+                            else {
+                                if (m3u8_fp != NULL) {
+                                    fprintf(m3u8_fp,"#EXTINF:%.3f,\n",downloaded[downloading].duration);
+                                    fprintf(m3u8_fp,"%s\n",finalpath.c_str());
+                                    fflush(m3u8_fp);
+                                }
+                            }
 
                             if (now >= next_frag_exec) {
                                 next_frag_exec += 5;
@@ -604,6 +652,11 @@ int main(int argc,char **argv) {
         }
 
         sleep(1);
+    }
+
+    if (m3u8_fp != NULL) {
+        fclose(m3u8_fp);
+        m3u8_fp = NULL;
     }
 
     return 0;
