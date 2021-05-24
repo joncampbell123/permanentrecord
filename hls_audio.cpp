@@ -552,6 +552,19 @@ int main(int argc,char **argv) {
                                 tm = localtime(&now);
                                 assert(tm != NULL);
 
+                                string prefix;
+
+                                sprintf(tmp,"%04u-%02u-%02u",
+                                        tm->tm_year+1900,
+                                        tm->tm_mon+1,
+                                        tm->tm_mday);
+                                prefix = tmp;
+                                mkdir(prefix.c_str(),0755);
+
+                                sprintf(tmp,"/hour-%02u",tm->tm_hour);
+                                prefix += tmp;
+                                mkdir(prefix.c_str(),0755);
+
                                 while (1) {
                                     snprintf(tmp,sizeof(tmp),"%04u%02u%02u-%02u%02u%02u-%03u-",
                                         tm->tm_year+1900,
@@ -562,7 +575,7 @@ int main(int argc,char **argv) {
                                         tm->tm_sec,
                                         count++);
 
-                                    finalpath = tmp;
+                                    finalpath = prefix + "/" + tmp;
 
                                     {
                                         const char *s = downloading.c_str();
