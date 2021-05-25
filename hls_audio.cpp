@@ -36,11 +36,13 @@ static bool valid_url(const string url) {
     return true;
 }
 
+/* NTS: Use --no-use-server-timestamps because Infowars likes to claim it's video stream fragments came from December 1969 (meaning time_t == 0) */
+
 int download_m3u8(const string dpath,const string url) {
     if (!valid_url(url))
         return 1;
 
-    string cmd = string("wget -nv -t 10 --show-progress -O '") + dpath + "' '" + url + "'";
+    string cmd = string("wget --no-use-server-timestamps -nv -t 10 --show-progress -O '") + dpath + "' '" + url + "'";
     int x = system(cmd.c_str());
 
     if (x != 0) {
@@ -55,7 +57,7 @@ int download_m3u8_fragment(const string dpath,const string url) {
     if (!valid_url(url))
         return 1;
 
-    string cmd = string("wget -nv -t 15 --show-progress -O '") + dpath + "' '" + url + "'";
+    string cmd = string("wget --no-use-server-timestamps -nv -t 15 --show-progress -O '") + dpath + "' '" + url + "'";
     int x = system(cmd.c_str());
 
     if (x != 0) {
