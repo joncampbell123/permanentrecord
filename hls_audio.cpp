@@ -309,6 +309,7 @@ string              main_url;
 M3U8                stream_m3u8;
 string              stream_url;
 bool                giveup = false;
+bool                stopifnothing = false;
 int                 want_bandwidth = -1;
 bool                hls_files = false;
 string              hls_files_suffix;
@@ -324,6 +325,7 @@ static void help() {
     fprintf(stderr,"  -hlsfiles <suf>   Record HLS fragments to individual files with given file suffix\n");
     fprintf(stderr,"  -hlsfragexec <x>  Run command x every HLS fragment (minimum 5 second interval)\n");
     fprintf(stderr,"  -m3u8 <path>      With -hlsfiles, append each new fragment to this .m3u8 file\n");
+    fprintf(stderr,"  -stopifnothing    Stop downloading if nothing new is appearing\n");
 }
 
 static int parse_argv(int argc,char **argv) {
@@ -350,6 +352,9 @@ static int parse_argv(int argc,char **argv) {
                 a = argv[i++];
                 if (a == NULL) return 1;
                 translate_mode = a;
+            }
+            else if (!strcmp(a,"stopifnothing")) {
+                stopifnothing = true;
             }
             else if (!strcmp(a,"hlsfragexec")) {
                 a = argv[i++];
@@ -404,6 +409,7 @@ static int parse_argv(int argc,char **argv) {
 int main(int argc,char **argv) {
     time_t now,next_m3u8_dl = 0;
     time_t next_frag_exec = 0;
+    int nothing_count = 0;
     bool has_m3u8 = false;
     FILE *m3u8_fp = NULL;
 
@@ -706,6 +712,13 @@ int main(int argc,char **argv) {
         }
 
         sleep(1);
+        if (downloadcount != 0)
+            nothing_count = 0;
+        else
+            nothing_count++;
+
+        if (stopifnothing && nothing_count >= 10)
+            break;
     }
 
     if (m3u8_fp != NULL) {
