@@ -314,7 +314,9 @@ public:
     virtual int Read(void *buffer,unsigned int bytes) {
         if (IsOpen()) {
             unsigned char *d = (unsigned char*)buffer;
-            int rd = 0;
+            int rd = 0,lrd = 0;
+
+            bytes -= bytes % chosen_format.bytes_per_frame;
 
             while (bytes > 0) {
                 assert(pulse_stream != NULL);
@@ -342,18 +344,26 @@ public:
                 if (pending_data != NULL && pending_data_read < pending_data_fence) {
                     unsigned int proc = (unsigned int)(pending_data_fence - pending_data_read);
                     if (proc > bytes) proc = bytes;
-                    assert(proc != 0);
+                    proc -= proc % chosen_format.bytes_per_frame;
+                    if (proc > 0) {
+                        memcpy(d,pending_data_read,proc);
+                        pending_data_read += proc;
+                        lrd = (int)proc;
+                        rd += (int)proc;
+                        bytes -= proc;
+                        d += proc;
 
-                    memcpy(d,pending_data_read,proc);
-                    pending_data_read += proc;
-                    rd += (int)proc;
-                    bytes -= proc;
-                    d += proc;
-
-                    assert(pending_data_read <= pending_data_fence);
-                    if (pending_data_read >= pending_data_fence)
-                        pending_data_free();
+                        assert(pending_data_read <= pending_data_fence);
+                        if (pending_data_read >= pending_data_fence)
+                            pending_data_free();
+                    }
+                    else {
+                        assert(pending_data_read <= pending_data_fence);
+                    }
                 }
+
+                if (lrd == 0)
+                    break;
             }
 
             if (rd == 0)
