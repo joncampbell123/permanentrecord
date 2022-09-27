@@ -266,17 +266,28 @@ public:
         if (IsOpen())
             return -EBUSY;
 
-        if (!format_is_valid(fmt))
+        AudioFormat tmp = fmt;
+
+	/* PulseAudio supports only unsigned 8-bit and signed 16/24/32-bit */
+        if (tmp.bits_per_sample == 8) {
+            if (tmp.format_tag == AFMT_PCMS)
+                tmp.format_tag = AFMT_PCMU;
+        }
+        else if (tmp.bits_per_sample > 8) {
+            if (tmp.format_tag == AFMT_PCMU)
+                tmp.format_tag = AFMT_PCMS;
+        }
+
+        if (!format_is_valid(tmp))
             return -EINVAL;
 
-        chosen_format = fmt;
+        chosen_format = tmp;
         if (!pulse_open()) {
             pulse_close();
             chosen_format.format_tag = 0;
             return -ENODEV;
         }
 
-        chosen_format = fmt;
         chosen_format.updateFrameInfo();
         pulse_close();
         return 0;
@@ -291,6 +302,16 @@ public:
     virtual int QueryFormat(struct AudioFormat &fmt) {
         if (IsOpen())
             return -EBUSY;
+
+	/* PulseAudio supports only unsigned 8-bit and signed 16/24/32-bit */
+        if (fmt.bits_per_sample == 8) {
+            if (fmt.format_tag == AFMT_PCMS)
+                fmt.format_tag = AFMT_PCMU;
+        }
+        else if (fmt.bits_per_sample > 8) {
+            if (fmt.format_tag == AFMT_PCMU)
+                fmt.format_tag = AFMT_PCMS;
+        }
 
         if (!format_is_valid(fmt))
             return -EINVAL;
