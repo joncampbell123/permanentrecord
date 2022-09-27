@@ -419,6 +419,21 @@ private:
                     return false;
             };
 
+            /* Careful! Sometimes when ALSA means S24/U24, it means 24 bits in the MSB of a 32-bit word! */
+            if (alsafmt == SND_PCM_FORMAT_S24 || alsafmt == SND_PCM_FORMAT_U24) {
+                    if (snd_pcm_format_width(alsafmt) == 24 && snd_pcm_format_physical_width(alsafmt) == 24) {
+                            /* OK */
+                    }
+                    else if (snd_pcm_format_width(alsafmt) == 24 && snd_pcm_format_physical_width(alsafmt) == 32) {
+                            /* Surprisingly common! */
+			    fprintf(stderr,"ALSA: Recording 24-bit PCM as 32-bit PCM because the hardware provides it that way\n");
+                            fmt.bits_per_sample = 32;
+                    }
+                    else {
+                            return false;
+                    }
+            }
+
             return true;
         }
 
