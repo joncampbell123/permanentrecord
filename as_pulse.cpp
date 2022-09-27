@@ -458,6 +458,8 @@ private:
         pulse_close();
     }
     bool pulse_open(void) { // does NOT start capture
+        pa_buffer_attr pba;
+
         pulse_atexit_init();
 
         if (chosen_format.format_tag == 0)
@@ -504,6 +506,14 @@ private:
             pulse_close();
             return false;
         }
+
+        memset(&pba,0,sizeof(pba));
+        pba.maxlength = (uint32_t)(-1);
+        pba.tlength = (uint32_t)(-1);
+        pba.minreq = (uint32_t)(-1);
+        pba.prebuf = (uint32_t)(-1);
+        pba.fragsize = (chosen_format.bits_per_sample / 8) * (unsigned int)chosen_format.channels * (chosen_format.sample_rate / 15); /* 1/15th of a second, please */
+
         if (pulse_device_string.substr(0,11) == ":sinkinput:") {
             std::string x = pulse_device_string.substr(11);
             uint32_t idx = (uint32_t)strtoul(x.c_str(),NULL,10);
@@ -513,14 +523,14 @@ private:
                 pulse_close();
                 return false;
             }
-            if (pa_stream_connect_record(pulse_stream,NULL,NULL,(pa_stream_flags_t)(PA_STREAM_DONT_MOVE | PA_STREAM_NOFLAGS)) < 0) {
+            if (pa_stream_connect_record(pulse_stream,NULL,&pba,(pa_stream_flags_t)(PA_STREAM_DONT_MOVE | PA_STREAM_ADJUST_LATENCY)) < 0) {
                 fprintf(stderr,"Unable to connect record\n");
                 pulse_close();
                 return false;
             }
         }
         else {
-            if (pa_stream_connect_record(pulse_stream,pulse_device_string.empty() ? NULL : pulse_device_string.c_str(),NULL,(pa_stream_flags_t)0) < 0) {
+            if (pa_stream_connect_record(pulse_stream,pulse_device_string.empty() ? NULL : pulse_device_string.c_str(),&pba,(pa_stream_flags_t)(PA_STREAM_ADJUST_LATENCY)) < 0) {
                 pulse_close();
                 return false;
             }
