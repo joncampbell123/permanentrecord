@@ -385,19 +385,6 @@ void VU_init(const AudioFormat &fmt) {
     if (VU_dec == 0) VU_dec = 1;
 }
 
-// FIXME: Byte order?
-uint32_t __leu24(const unsigned char *p) {
-    return ((uint32_t)p[0]) +
-           ((uint32_t)p[1] << (uint32_t)8u) +
-	   ((uint32_t)p[2] << (uint32_t)16);
-}
-
-// FIXME: Byte order?
-int32_t __les24(const unsigned char *p) {
-	const uint32_t r = __leu24(p);
-	return (int32_t)r - (int32_t)((r & 0x800000u) << 1u);
-}
-
 void VU_advance_ch(const unsigned int ch,const unsigned int val) {
     if (VU[ch] < val)
         VU[ch] = val;
