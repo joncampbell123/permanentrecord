@@ -426,12 +426,19 @@ private:
                     }
                     else if (snd_pcm_format_width(alsafmt) == 24 && snd_pcm_format_physical_width(alsafmt) == 32) {
                             /* Surprisingly common! */
-			    fprintf(stderr,"ALSA: Recording 24-bit PCM as 32-bit PCM because the hardware provides it that way\n");
+                            fprintf(stderr,"ALSA: Recording 24-bit PCM as 32-bit PCM because the hardware provides it that way\n");
                             fmt.bits_per_sample = 32;
+                            alsafmt = fmt.format_tag == AFMT_PCMS ? SND_PCM_FORMAT_S32 : SND_PCM_FORMAT_U32;
                     }
                     else {
                             return false;
                     }
+            }
+
+            /* Double check the format, make sure it matches what we expect it to! */
+            if (snd_pcm_format_width(alsafmt) != fmt.bits_per_sample || snd_pcm_format_physical_width(alsafmt) != fmt.bits_per_sample) {
+                    fprintf(stderr,"ALSA: Recording format provided by hardware does not match expected physical/logical bit width!\n");
+                    return false;
             }
 
             return true;
