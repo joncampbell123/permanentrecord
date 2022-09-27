@@ -56,6 +56,16 @@ dnl Setup for automake
 AM_INIT_AUTOMAKE([foreign subdir-objects])
 AC_CONFIG_HEADER(config.h)
 
+dnl Mac OS Homebrew
+if [[ -d "/opt/homebrew/include" ]]; then
+  if [[ -d "/opt/homebrew/lib" ]]; then
+    CXXFLAGS+=" -I/opt/homebrew/include"
+    CPPFLAGS+=" -I/opt/homebrew/include"
+    CFLAGS+=" -I/opt/homebrew/include"
+    LDFLAGS+=" -L/opt/homebrew/lib"
+  fi
+fi
+
 dnl Checks for programs.
 AC_PROG_MAKE_SET
 AC_PROG_CC
