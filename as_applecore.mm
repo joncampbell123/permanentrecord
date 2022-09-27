@@ -392,9 +392,20 @@ private:
             OSStatus err;
 
             if ((err=AudioQueueNewInput(&audio_stream_desc,aq_cb,(void*)this,NULL,NULL,0,&audio_queue_obj)) != noErr) {
-                fprintf(stderr,"AudioQueueNewInput err %d\n",(int)err);
-                applecore_close();
-                return false;
+                /* Mac OS likely does not support unsigned 16/24/32-bit (my system doesn't!) so try switching to signed */
+                if (chosen_format.format_tag == AFMT_PCMU && chosen_format.bits_per_sample > 8)
+                    chosen_format.format_tag = AFMT_PCMS;
+                if (chosen_format.format_tag == AFMT_PCMS && chosen_format.bits_per_sample == 8)
+                    chosen_format.format_tag = AFMT_PCMU;
+
+                if (!FormatToStreamDesc(audio_stream_desc,chosen_format))
+                    return false;
+
+                if ((err=AudioQueueNewInput(&audio_stream_desc,aq_cb,(void*)this,NULL,NULL,0,&audio_queue_obj)) != noErr) {
+                    fprintf(stderr,"AudioQueueNewInput err %d\n",(int)err);
+                    applecore_close();
+                    return false;
+                }
             }
 
             UInt32 dataSize = sizeof(audio_stream_desc);
