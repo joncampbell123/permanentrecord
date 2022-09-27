@@ -107,6 +107,22 @@ bool MP3Writer::IsOpen(void) const {
     return (fd >= 0);
 }
 
+template <const bool flip_sign> static void _convert_type24(long *dst[2],const unsigned char* buffer,unsigned int tmp_len_samples,const unsigned int channels) {
+    const long half = 1u << (24u - 1u);
+    const long shf = (sizeof(long) - 3u/*24 bit*/) * 8u;
+    const uint32_t xorT = flip_sign ? half : 0u;
+
+    for (unsigned int c=0;c < channels;c++) {
+        assert(dst[c] != NULL);
+
+        const unsigned char* sp = buffer + c * 3u;
+        long *dp = dst[c];
+
+        for (unsigned int s=0;s < tmp_len_samples;s++,sp += channels*3u)
+            *dp++ = (long)__lesx24(__leu24(sp) ^ xorT) << (long)shf;
+    }
+}
+
 template <typename T,typename sT,const bool flip_sign> static void _convert_type(long *dst[2],const T* buffer,unsigned int tmp_len_samples,const unsigned int channels) {
     static_assert(sizeof(long) >= sizeof(T), "long type not large enough");
     const long half = ((T)1u << ((T)((sizeof(T) * size_t(8u)) - size_t(1u))));
@@ -139,6 +155,8 @@ void MP3Writer::_convert(const size_t dstlen_b,long *dst,const size_t bpf,const 
             _convert_type<uint8_t,int8_t,/*flipsign*/true>(dstp,(const uint8_t*)buffer,tmp_len_samples,source_channels);
         else if (source_bits_per_sample == 16)
             _convert_type<uint16_t,int16_t,/*flipsign*/true>(dstp,(const uint16_t*)buffer,tmp_len_samples,source_channels);
+        else if (source_bits_per_sample == 24)
+            _convert_type24</*flipsign*/true>(dstp,(const unsigned char*)buffer,tmp_len_samples,source_channels);
         else if (source_bits_per_sample == 32)
             _convert_type<uint32_t,int32_t,/*flipsign*/true>(dstp,(const uint32_t*)buffer,tmp_len_samples,source_channels);
         else
@@ -149,6 +167,8 @@ void MP3Writer::_convert(const size_t dstlen_b,long *dst,const size_t bpf,const 
             _convert_type<uint8_t,int8_t,/*flipsign*/false>(dstp,(const uint8_t*)buffer,tmp_len_samples,source_channels);
         else if (source_bits_per_sample == 16)
             _convert_type<uint16_t,int16_t,/*flipsign*/false>(dstp,(const uint16_t*)buffer,tmp_len_samples,source_channels);
+        else if (source_bits_per_sample == 24)
+            _convert_type24</*flipsign*/false>(dstp,(const unsigned char*)buffer,tmp_len_samples,source_channels);
         else if (source_bits_per_sample == 32)
             _convert_type<uint32_t,int32_t,/*flipsign*/false>(dstp,(const uint32_t*)buffer,tmp_len_samples,source_channels);
         else
