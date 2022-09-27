@@ -158,6 +158,22 @@ bool VorbisWriter::IsOpen(void) const {
     return (fd >= 0);
 }
 
+template <const bool flip_sign> static void _convert_type24(float **dst,const unsigned char* buffer,unsigned int tmp_len_samples,const unsigned int channels) {
+    const long half = 1u << (24u - 1u);
+    const float fhalf = float(half);
+    const uint32_t xorT = flip_sign ? half : 0u;
+
+    for (unsigned int c=0;c < channels;c++) {
+        assert(dst[c] != NULL);
+
+        const unsigned char* sp = buffer + c * 3u;
+        float *dp = dst[c];
+
+        for (unsigned int s=0;s < tmp_len_samples;s++,sp += channels*3u)
+            *dp++ = (float)__lesx24(__leu24(sp) ^ xorT) / fhalf;
+    }
+}
+
 template <typename T,typename sT,const bool flip_sign> static void _convert_type(float **dst,const T* buffer,unsigned int tmp_len_samples,const unsigned int channels) {
     const long half = ((T)1u << ((T)((sizeof(T) * size_t(8u)) - size_t(1u))));
     const float fhalf = float(half);
@@ -190,6 +206,8 @@ bool VorbisWriter::_convert(const size_t bpf,const void* &buffer,unsigned int tm
             _convert_type<uint8_t,int8_t,/*flipsign*/true>(dstp,(const uint8_t*)buffer,tmp_len_samples,source_channels);
         else if (source_bits_per_sample == 16)
             _convert_type<uint16_t,int16_t,/*flipsign*/true>(dstp,(const uint16_t*)buffer,tmp_len_samples,source_channels);
+        else if (source_bits_per_sample == 24)
+            _convert_type24</*flipsign*/true>(dstp,(const unsigned char*)buffer,tmp_len_samples,source_channels);
         else if (source_bits_per_sample == 32)
             _convert_type<uint32_t,int32_t,/*flipsign*/true>(dstp,(const uint32_t*)buffer,tmp_len_samples,source_channels);
         else
@@ -200,6 +218,8 @@ bool VorbisWriter::_convert(const size_t bpf,const void* &buffer,unsigned int tm
             _convert_type<uint8_t,int8_t,/*flipsign*/false>(dstp,(const uint8_t*)buffer,tmp_len_samples,source_channels);
         else if (source_bits_per_sample == 16)
             _convert_type<uint16_t,int16_t,/*flipsign*/false>(dstp,(const uint16_t*)buffer,tmp_len_samples,source_channels);
+        else if (source_bits_per_sample == 24)
+            _convert_type24</*flipsign*/false>(dstp,(const unsigned char*)buffer,tmp_len_samples,source_channels);
         else if (source_bits_per_sample == 32)
             _convert_type<uint32_t,int32_t,/*flipsign*/false>(dstp,(const uint32_t*)buffer,tmp_len_samples,source_channels);
         else
