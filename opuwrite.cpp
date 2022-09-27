@@ -112,6 +112,15 @@ bool OpusWriter::IsOpen(void) const {
     return (opus_enc != NULL);
 }
 
+template <const bool flip_sign> static void _convert_type24(float *dst,const unsigned char* buffer,unsigned int raw_samples/*combined*/) {
+    const long half = 1u << (24u - 1u);
+    const float fhalf = float(half);
+    const uint32_t xorT = flip_sign ? half : 0u;
+
+    for (unsigned int s=0;s < raw_samples;s++,buffer += 3u)
+        *dst++ = (float)__lesx24(__leu24(buffer) ^ xorT) / fhalf;
+}
+
 template <typename T,typename sT,const bool flip_sign> static void _convert_type(float *dst,const T* buffer,unsigned int raw_samples/*combined*/) {
     const long half = ((T)1u << ((T)((sizeof(T) * size_t(8u)) - size_t(1u))));
     const float fhalf = float(half);
@@ -134,6 +143,8 @@ bool OpusWriter::_convert(const size_t tmpsz,float *tmp,const size_t bpf,const v
             _convert_type<uint8_t,int8_t,/*flipsign*/true>(tmp,(const uint8_t*)buffer,raw_samples);
         else if (source_bits_per_sample == 16)
             _convert_type<uint16_t,int16_t,/*flipsign*/true>(tmp,(const uint16_t*)buffer,raw_samples);
+        else if (source_bits_per_sample == 24)
+            _convert_type24</*flipsign*/true>(tmp,(const unsigned char*)buffer,raw_samples);
         else if (source_bits_per_sample == 32)
             _convert_type<uint32_t,int32_t,/*flipsign*/true>(tmp,(const uint32_t*)buffer,raw_samples);
         else
@@ -144,6 +155,8 @@ bool OpusWriter::_convert(const size_t tmpsz,float *tmp,const size_t bpf,const v
             _convert_type<uint8_t,int8_t,/*flipsign*/false>(tmp,(const uint8_t*)buffer,raw_samples);
         else if (source_bits_per_sample == 16)
             _convert_type<uint16_t,int16_t,/*flipsign*/false>(tmp,(const uint16_t*)buffer,raw_samples);
+        else if (source_bits_per_sample == 24)
+            _convert_type24</*flipsign*/false>(tmp,(const unsigned char*)buffer,raw_samples);
         else if (source_bits_per_sample == 32)
             _convert_type<uint32_t,int32_t,/*flipsign*/false>(tmp,(const uint32_t*)buffer,raw_samples);
         else
