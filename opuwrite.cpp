@@ -118,7 +118,7 @@ template <typename T,typename sT,const bool flip_sign> static void _convert_type
     const T xorT = flip_sign ? half : (T)0;
 
     for (unsigned int s=0;s < raw_samples;s++)
-        *dst++ = ((long)((sT)((*buffer++) ^ xorT))) / fhalf;
+        *dst++ = (float)((long)((sT)((*buffer++) ^ xorT))) / fhalf;
 }
 
 bool OpusWriter::_convert(const size_t tmpsz,float *tmp,const size_t bpf,const void* &buffer,unsigned int tmp_samples/*combined*/) {

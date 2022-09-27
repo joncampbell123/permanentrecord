@@ -170,7 +170,7 @@ template <typename T,typename sT,const bool flip_sign> static void _convert_type
         float *dp = dst[c];
 
         for (unsigned int s=0;s < tmp_len_samples;s++,sp += channels)
-            *dp++ = ((long)((sT)(*sp ^ xorT))) / fhalf;
+            *dp++ = (float)((long)((sT)(*sp ^ xorT))) / fhalf;
     }
 }
 
