@@ -463,7 +463,7 @@ private:
     bool FormatToStreamDesc(AudioStreamBasicDescription &d,AudioFormat &f) {
         if (f.format_tag == AFMT_PCMU || f.format_tag == AFMT_PCMS) {
             memset(&d,0,sizeof(d));
-            d.mFormatFlags = kAudioFormatFlagsNativeEndian | kAudioFormatFlagIsSignedInteger | kAudioFormatFlagIsPacked;
+            d.mFormatFlags = kAudioFormatFlagsNativeEndian | (f.format_tag == AFMT_PCMS ? kAudioFormatFlagIsSignedInteger : 0) | kAudioFormatFlagIsPacked;
             d.mFormatID = kAudioFormatLinearPCM;
             d.mBitsPerChannel = f.bits_per_sample;
             d.mChannelsPerFrame = f.channels;
