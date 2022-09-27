@@ -385,6 +385,19 @@ void VU_init(const AudioFormat &fmt) {
     if (VU_dec == 0) VU_dec = 1;
 }
 
+// FIXME: Byte order?
+uint32_t __leu24(const unsigned char *p) {
+    return ((uint32_t)p[0]) +
+           ((uint32_t)p[1] << (uint32_t)8u) +
+	   ((uint32_t)p[2] << (uint32_t)16);
+}
+
+// FIXME: Byte order?
+int32_t __les24(const unsigned char *p) {
+	const uint32_t r = __leu24(p);
+	return (int32_t)r - (int32_t)((r & 0x800000u) << 1u);
+}
+
 void VU_advance_ch(const unsigned int ch,const unsigned int val) {
     if (VU[ch] < val)
         VU[ch] = val;
@@ -422,6 +435,18 @@ void VU_advance_pcmu_16(const uint16_t *audio_tmp,unsigned int rds) {
         }
 
         audio_tmp += rec_fmt.channels;
+    }
+}
+
+void VU_advance_pcmu_24(const unsigned char *audio_tmp,unsigned int rds) {
+    unsigned int ch;
+
+    while (rds-- > 0u) {
+        for (ch=0;ch < rec_fmt.channels;ch++) {
+            unsigned int val = (unsigned int)labs((__leu24(audio_tmp) - 0x800000l) / 128l);
+            VU_advance_ch(ch,val);
+	    audio_tmp += 3;
+        }
     }
 }
 
@@ -464,6 +489,18 @@ void VU_advance_pcms_16(const int16_t *audio_tmp,unsigned int rds) {
     }
 }
 
+void VU_advance_pcms_24(const unsigned char *audio_tmp,unsigned int rds) {
+    unsigned int ch;
+
+    while (rds-- > 0u) {
+        for (ch=0;ch < rec_fmt.channels;ch++) {
+            unsigned int val = (unsigned int)labs(__les24(audio_tmp) / 128l);
+            VU_advance_ch(ch,val);
+	    audio_tmp += 3;
+        }
+    }
+}
+
 void VU_advance_pcms_32(const int32_t *audio_tmp,unsigned int rds) {
     unsigned int ch;
 
@@ -482,6 +519,8 @@ void VU_advance_pcmu(const void *audio_tmp,unsigned int rds) {
         VU_advance_pcmu_8((const uint8_t*)audio_tmp,rds);
     else if (rec_fmt.bits_per_sample == 16)
         VU_advance_pcmu_16((const uint16_t*)audio_tmp,rds);
+    else if (rec_fmt.bits_per_sample == 24)
+        VU_advance_pcmu_24((const unsigned char*)audio_tmp,rds);
     else if (rec_fmt.bits_per_sample == 32)
         VU_advance_pcmu_32((const uint32_t*)audio_tmp,rds);
 }
@@ -491,6 +530,8 @@ void VU_advance_pcms(const void *audio_tmp,unsigned int rds) {
         VU_advance_pcms_8((const int8_t*)audio_tmp,rds);
     else if (rec_fmt.bits_per_sample == 16)
         VU_advance_pcms_16((const int16_t*)audio_tmp,rds);
+    else if (rec_fmt.bits_per_sample == 24)
+        VU_advance_pcms_24((const unsigned char*)audio_tmp,rds);
     else if (rec_fmt.bits_per_sample == 32)
         VU_advance_pcms_32((const int32_t*)audio_tmp,rds);
 }
