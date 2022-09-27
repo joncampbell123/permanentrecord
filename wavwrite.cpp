@@ -222,7 +222,7 @@ void WAVWriter::_xlat(unsigned char *d,const unsigned char *s,unsigned int len) 
         uint32_t *d32 = (uint32_t*)d;
 
         while (len >= bytes_per_sample) {
-            *d32++ = htole16(*s32++ ^ x);
+            *d32++ = htole32(*s32++ ^ x);
             len -= bytes_per_sample;
         }
     }
